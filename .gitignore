@@ -1,0 +1,25 @@
+# Backend
+backend/node_modules/
+backend/.env
+backend/uploads/temp/
+backend/uploads/generated/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+
+# MongoDB - IMPORTANT
+data/
+bin/
+*.pdb
+*.exe
+WiredTiger*
+mongod.lock
+diagnostic.data/
+journal/
+
+# General
+.DS_Store
+*.log
+npm-debug.log
+Thumbs.db
