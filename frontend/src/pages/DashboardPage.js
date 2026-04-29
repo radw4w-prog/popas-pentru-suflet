@@ -17,7 +17,7 @@ const DashboardPage = () => {
 
   const fetchData = async () => {
     try {
-      const postsRes = await axios.get('/api/posts?limit=5');
+      const postsRes = await api.get('/api/posts?limit=5');
       const data = postsRes.data;
 
       // ✅ Detectăm automat formatul răspunsului

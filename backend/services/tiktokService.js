@@ -18,7 +18,7 @@ class TikTokService {
     try {
       // TikTok Content Posting API
       // Inițiem încărcarea
-      const initResponse = await axios.post(
+      const initResponse = await api.post(
         `${this.baseUrl}/post/publish/inbox/video/init/`,
         {
           post_info: {
@@ -61,7 +61,7 @@ class TikTokService {
    */
   async verifyAccount() {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${this.baseUrl}/user/info/`,
         {
           headers: {

@@ -85,7 +85,7 @@ const handleSchedule = async () => {
   try {
     const descriere = generated.variante?.[variantaActiva] || generated.descriere;
 
-    const r = await axios.post('/api/social/schedule', {
+    const r = await api.post('/api/social/schedule', {
       content: descriere,
       hashtags: generated.hashtags,
       imageBase64: generatedImageBase64 || null,
@@ -129,7 +129,7 @@ const handleSchedule = async () => {
   // ═══ FETCH ═══
   const fetchTemplates = async () => {
     try {
-      const r = await axios.get('/api/generate/templates');
+      const r = await api.get('/api/generate/templates');
       const builtIn = r.data?.builtIn?.length > 0 ? r.data.builtIn : DEFAULT_TEMPLATES;
       setTemplates({ builtIn, uploadate: r.data?.uploadate || [] });
     } catch (e) {
@@ -139,7 +139,7 @@ const handleSchedule = async () => {
 
   const fetchTeme = async () => {
     try {
-      const r = await axios.get('/api/generate/teme');
+      const r = await api.get('/api/generate/teme');
       setTeme(r.data.teme || []);
     } catch (e) {}
   };
@@ -148,7 +148,7 @@ const handleSchedule = async () => {
     if (!versetSearch.trim()) return;
     setSearching(true);
     try {
-      const r = await axios.get(`/api/verses?search=${encodeURIComponent(versetSearch)}&limit=8`);
+      const r = await api.get(`/api/verses?search=${encodeURIComponent(versetSearch)}&limit=8`);
       setVerseteGasite(r.data.versete || []);
     } catch (e) {}
     finally { setSearching(false); }
@@ -161,7 +161,7 @@ const handleSchedule = async () => {
     const formData = new FormData();
     formData.append('template', file);
     try {
-      const r = await axios.post('/api/generate/upload', formData,
+      const r = await api.post('/api/generate/upload', formData,
         { headers: { 'Content-Type': 'multipart/form-data' } });
       if (r.data.success) {
         await fetchTemplates();
@@ -188,7 +188,7 @@ const handleSchedule = async () => {
     setVariantaActiva(0);
     setPublishResult(null);
     try {
-      const r = await axios.post('/api/generate', {
+      const r = await api.post('/api/generate', {
         tema, platform,
         versetCustom: versetSelectat || null
       });
@@ -206,7 +206,7 @@ const handleSchedule = async () => {
   const handleSave = async () => {
     if (!generated) return;
     try {
-      await axios.post('/api/posts', {
+      await api.post('/api/posts', {
         content: generated.variante?.[variantaActiva] || generated.descriere,
         hashtags: generated.hashtags,
         platform, tema,
@@ -226,7 +226,7 @@ const handleSchedule = async () => {
     setPublishResult(null);
     try {
       const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-      const r = await axios.post('/api/social/publish-direct', {
+      const r = await api.post('/api/social/publish-direct', {
         content: descriere,
         hashtags: generated.hashtags,
         imageBase64: generatedImageBase64 || null,

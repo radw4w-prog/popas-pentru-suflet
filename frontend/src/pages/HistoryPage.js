@@ -12,7 +12,7 @@ const HistoryPage = () => {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get('/api/posts');
+      const res = await api.get('/api/posts');
       setPosts(res.data.posts || res.data || []);
     } catch (err) {
       console.error(err);

@@ -15,7 +15,7 @@ class InstagramService {
   async publishImagePost(caption, imageUrl) {
     try {
       // Pasul 1: Creăm container-ul media
-      const containerResponse = await axios.post(
+      const containerResponse = await api.post(
         `${this.baseUrl}/${this.accountId}/media`,
         {
           image_url: imageUrl, // Trebuie să fie URL public
@@ -30,7 +30,7 @@ class InstagramService {
       // Așteptăm puțin pentru procesare
       await new Promise(resolve => setTimeout(resolve, 5000));
 
-      const publishResponse = await axios.post(
+      const publishResponse = await api.post(
         `${this.baseUrl}/${this.accountId}/media_publish`,
         {
           creation_id: containerId,
@@ -61,7 +61,7 @@ class InstagramService {
       const containerIds = [];
       
       for (const imageUrl of imageUrls) {
-        const response = await axios.post(
+        const response = await api.post(
           `${this.baseUrl}/${this.accountId}/media`,
           {
             image_url: imageUrl,
@@ -73,7 +73,7 @@ class InstagramService {
       }
 
       // Creăm carousel container
-      const carouselResponse = await axios.post(
+      const carouselResponse = await api.post(
         `${this.baseUrl}/${this.accountId}/media`,
         {
           caption: caption,
@@ -86,7 +86,7 @@ class InstagramService {
       // Publicăm
       await new Promise(resolve => setTimeout(resolve, 5000));
 
-      const publishResponse = await axios.post(
+      const publishResponse = await api.post(
         `${this.baseUrl}/${this.accountId}/media_publish`,
         {
           creation_id: carouselResponse.data.id,
@@ -108,7 +108,7 @@ class InstagramService {
    */
   async verifyAccount() {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${this.baseUrl}/${this.accountId}`,
         {
           params: {

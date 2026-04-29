@@ -15,8 +15,8 @@ const SchedulePage = () => {
     setLoading(true);
     try {
       const [scheduledRes, historyRes] = await Promise.all([
-        axios.get('/api/social/scheduled'),
-        axios.get('/api/social/history')
+        api.get('/api/social/scheduled'),
+        api.get('/api/social/history')
       ]);
       setScheduledPosts(scheduledRes.data || []);
       setHistoryPosts(historyRes.data || []);
@@ -40,7 +40,7 @@ const SchedulePage = () => {
   const publishNow = async (id) => {
     if (!window.confirm('Publici acum această postare?')) return;
     try {
-      await axios.post(`/api/social/publish/${id}`);
+      await api.post(`/api/social/publish/${id}`);
       fetchData();
       alert('✅ Publicată!');
     } catch (e) {

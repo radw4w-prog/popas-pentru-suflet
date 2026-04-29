@@ -6,7 +6,14 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://serene-khapse-8c6464.netlify.app',
+    /\.netlify\.app$/
+  ],
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -45,7 +52,7 @@ app.get('/health', (req, res) => {
 if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
   setInterval(async () => {
     try {
-      await axios.get(`${process.env.RENDER_EXTERNAL_URL}/health`);
+      await api.get(`${process.env.RENDER_EXTERNAL_URL}/health`);
       console.log('💓 Keep-alive OK');
     } catch (e) {
       console.log('💓 Keep-alive failed:', e.message);

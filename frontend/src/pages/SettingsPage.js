@@ -20,7 +20,7 @@ const SettingsPage = () => {
   const checkStatus = async () => {
     setLoading(true);
     try {
-      const r = await axios.get('/api/social/status');
+      const r = await api.get('/api/social/status');
       setFbStatus(r.data.facebook);
     } catch (e) {
       console.error(e);
@@ -33,7 +33,7 @@ const SettingsPage = () => {
     setSaving(true);
     try {
       // Salveaza in settings
-      await axios.post('/api/settings', {
+      await api.post('/api/settings', {
         FACEBOOK_ACCESS_TOKEN: config.fbToken,
         FACEBOOK_PAGE_ID: config.fbPageId,
         OPENAI_API_KEY: config.openaiKey
@@ -55,7 +55,7 @@ const SettingsPage = () => {
     )) return;
 
     try {
-      const r = await axios.post('/api/social/publish-direct', {
+      const r = await api.post('/api/social/publish-direct', {
         content: 'Test conexiune - Popas pentru Suflet 🕊️\n\nAcesta este un mesaj de test.',
         hashtags: '#Test #PopasPentruSuflet',
         platform: 'facebook'

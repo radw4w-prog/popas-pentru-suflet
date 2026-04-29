@@ -34,7 +34,7 @@ const VersesPage = () => {
 
   const fetchStats = async () => {
     try {
-      const r = await axios.get('/api/verses/statistici');
+      const r = await api.get('/api/verses/statistici');
       setStats(r.data);
     } catch (e) {
       console.error('Stats error:', e);
@@ -43,7 +43,7 @@ const VersesPage = () => {
 
   const fetchCarti = async () => {
     try {
-      const r = await axios.get('/api/verses/carti');
+      const r = await api.get('/api/verses/carti');
       setCarti(Array.isArray(r.data) ? r.data : []);
     } catch (e) {
       console.error('Carti error:', e);
@@ -52,7 +52,7 @@ const VersesPage = () => {
 
   const fetchVersetulZilei = async () => {
     try {
-      const r = await axios.get('/api/verses/versetul-zilei');
+      const r = await api.get('/api/verses/versetul-zilei');
       setVersetulZilei(r.data);
     } catch (e) {
       console.error('Versetul zilei error:', e);
@@ -69,7 +69,7 @@ const VersesPage = () => {
       if (testament !== 'all') params.append('testament', testament);
       if (carte !== 'all') params.append('carte', carte);
 
-      const r = await axios.get(`/api/verses?${params}`);
+      const r = await api.get(`/api/verses?${params}`);
       const data = r.data;
       const lista = data.versete || [];
 
@@ -100,7 +100,7 @@ const VersesPage = () => {
   const getRandomVerse = async () => {
     try {
       const params = testament !== 'all' ? `?testament=${testament}` : '';
-      const r = await axios.get(`/api/verses/random${params}`);
+      const r = await api.get(`/api/verses/random${params}`);
       if (r.data) {
         setVersete([r.data]);
         setTotal(1);
