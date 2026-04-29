@@ -1,13 +1,14 @@
-FROM node:20-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+
+RUN npm install --only=production
 
 COPY . .
 
-RUN mkdir -p uploads/templates uploads/temp uploads/generated data
+RUN mkdir -p uploads/templates uploads/temp uploads/generated
 
 EXPOSE 5000
 

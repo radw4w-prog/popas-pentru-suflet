@@ -1,7 +1,6 @@
 {
   "name": "popas-pentru-suflet-backend",
   "version": "1.0.0",
-  "description": "Backend pentru Popas pentru Suflet",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -17,8 +16,7 @@
     "mongoose": "^7.6.3",
     "multer": "^2.0.0",
     "node-cron": "^3.0.3",
-    "openai": "^4.20.1",
-    "sharp": "^0.32.6"
+    "openai": "^4.20.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
