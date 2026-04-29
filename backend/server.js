@@ -32,6 +32,27 @@ app.use('/api/social', socialRouter);
 const schedulerService = require('./services/schedulerService');
 schedulerService.init();
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: Math.round(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Keep-alive pentru Render free
+if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+  setInterval(async () => {
+    try {
+      await axios.get(`${process.env.RENDER_EXTERNAL_URL}/health`);
+      console.log('💓 Keep-alive OK');
+    } catch (e) {
+      console.log('💓 Keep-alive failed:', e.message);
+    }
+  }, 14 * 60 * 1000);
+}
+
 // Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
@@ -39,21 +60,3 @@ app.listen(PORT, () => {
   console.log(`📍 http://localhost:${PORT}`);
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
-});
-
-// Keep-alive - previne oprirea pe Render free
-if (process.env.NODE_ENV === 'production') {
-  const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
-  if (RENDER_URL) {
-    setInterval(async () => {
-      try {
-        const axios = require('axios');
-        await axios.get(`${RENDER_URL}/health`);
-        console.log('💓 Keep-alive ping');
-      } catch (e) {}
-    }, 14 * 60 * 1000); // la 14 minute
-  }
-}

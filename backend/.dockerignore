@@ -1,6 +1,6 @@
 node_modules
 .env
-uploads/temp/*
-uploads/generated/*
+uploads/temp
+uploads/generated
 *.log
-npm-debug.log
+scripts
