@@ -144,15 +144,20 @@ const handleSchedule = async () => {
     } catch (e) {}
   };
 
-  const searchVerset = async () => {
-    if (!versetSearch.trim()) return;
-    setSearching(true);
-    try {
-      const r = await api.get(`/api/verses?search=${encodeURIComponent(versetSearch)}&limit=8`);
-      setVerseteGasite(r.data.versete || []);
-    } catch (e) {}
-    finally { setSearching(false); }
-  };
+const searchVerset = async () => {
+  if (!versetSearch.trim()) return;
+  setSearching(true);
+  try {
+    const r = await axios.get(
+      `/api/verses?search=${encodeURIComponent(versetSearch)}&limit=50`
+    );
+    setVerseteGasite(r.data.versete || []);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setSearching(false);
+  }
+};
 
   // ═══ UPLOAD ═══
   const handleUpload = async (file) => {

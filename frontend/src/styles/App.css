@@ -1157,3 +1157,122 @@ body::before {
     grid-template-columns: 1fr;
   }
 }
+/* ═══ MOBILE RESPONSIVE ═══ */
+@media (max-width: 768px) {
+
+  /* Sidebar ascuns pe mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 200;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  /* Header mobile */
+  .header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .header-time {
+    display: none;
+  }
+
+  /* Page content mobile */
+  .page-content {
+    padding: 1rem;
+  }
+
+  /* Stats grid - 2 coloane pe mobile */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem !important;
+  }
+
+  /* Grid 2 și 3 - 1 coloană pe mobile */
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Generator - 1 coloană */
+  .generator-layout,
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards */
+  .card {
+    padding: 1rem;
+  }
+
+  /* Tabs scroll horizontal */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  /* Template grid mobile */
+  [style*="minmax(150px"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* Butoane mobile */
+  .btn-lg {
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  /* Post preview */
+  .post-preview {
+    font-size: 0.88rem;
+  }
+
+  /* Steps bar mobile */
+  .steps-bar {
+    gap: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  [style*="minmax(150px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .header-title {
+    font-size: 1rem;
+  }
+}
+@media (max-width: 768px) {
+  #menu-toggle {
+    display: flex !important;
+  }
+}

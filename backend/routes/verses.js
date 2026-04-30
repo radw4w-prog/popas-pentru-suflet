@@ -176,7 +176,8 @@ router.get('/', async (req, res) => {
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const limitNr = Math.min(parseInt(limit), 100);
+    // ✅ Mărim limita maximă la 500
+    const limitNr = Math.min(parseInt(limit), 500);
 
     const [versete, total] = await Promise.all([
       Verse.find(filter)

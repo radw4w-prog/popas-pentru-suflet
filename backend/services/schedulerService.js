@@ -9,7 +9,6 @@ function init() {
 
   console.log('🕐 Inițializare scheduler...');
 
-  // verifică la fiecare minut
   cron.schedule('* * * * *', async () => {
     await checkAndPublish();
   });
@@ -29,8 +28,7 @@ async function checkAndPublish() {
 
     const posts = await Post.find({
       status: 'scheduled',
-      scheduledDate: { $lte: now },
-      platform: 'facebook'
+      scheduledDate: { $lte: now }
     }).sort({ scheduledDate: 1 });
 
     if (!posts.length) {
@@ -38,11 +36,13 @@ async function checkAndPublish() {
       return;
     }
 
-    console.log(`\n📅 Scheduler: ${posts.length} postări de publicat`);
+    console.log(`\n📅 ${posts.length} postări de publicat`);
 
     for (const post of posts) {
       try {
-        console.log(`➡️ Publicare postare: ${post._id}`);
+        console.log(`➡️  Publicare: ${post._id}`);
+        console.log(`   Data programată: ${post.scheduledDate}`);
+        console.log(`   Are imagine: ${post.imageUrl ? 'DA' : 'NU'}`);
 
         const result = await facebookService.publishPost(post);
 
@@ -56,8 +56,7 @@ async function checkAndPublish() {
 
         console.log(`✅ Publicată: ${post._id}`);
       } catch (err) {
-        console.error(`❌ Eroare la postarea ${post._id}:`, err.message);
-
+        console.error(`❌ Eroare ${post._id}:`, err.message);
         await Post.findByIdAndUpdate(post._id, {
           status: 'failed',
           failedReason: err.message
@@ -65,13 +64,10 @@ async function checkAndPublish() {
       }
     }
   } catch (error) {
-    console.error('❌ Scheduler general error:', error.message);
+    console.error('❌ Scheduler error:', error.message);
   } finally {
     running = false;
   }
 }
 
-module.exports = {
-  init,
-  checkAndPublish
-};
+module.exports = { init, checkAndPublish };

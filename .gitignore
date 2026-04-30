@@ -9,7 +9,6 @@ frontend/node_modules/
 frontend/build/
 
 # MongoDB - IMPORTANT
-data/
 bin/
 *.pdb
 *.exe

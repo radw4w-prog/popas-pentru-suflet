@@ -1,0 +1,266 @@
+{
+  "versiune": "BVDCS",
+  "carti": [
+    {
+      "id": 1,
+      "abreviere": "Gen",
+      "nume": "Geneza",
+      "testament": "VT",
+      "capitole": {
+        "1": {
+          "1": "La inceput, Dumnezeu a facut cerurile si pamantul.",
+          "2": "Pamantul era pustiu si gol; peste fata adancului de ape era intuneric, si Duhul lui Dumnezeu se misca pe deasupra apelor.",
+          "3": "Dumnezeu a zis: Sa fie lumina! Si a fost lumina.",
+          "26": "Apoi Dumnezeu a zis: Sa facem om dupa chipul Nostru, dupa asemanarea Noastra.",
+          "27": "Dumnezeu a facut pe om dupa chipul Sau, l-a facut dupa chipul lui Dumnezeu."
+        },
+        "3": {
+          "15": "Vrajmasie voi pune intre tine si femeie, intre samanta ta si samanta ei."
+        }
+      }
+    },
+    {
+      "id": 19,
+      "abreviere": "Ps",
+      "nume": "Psalmi",
+      "testament": "VT",
+      "capitole": {
+        "1": {
+          "1": "Ferice de omul care nu se duce la sfatul celor rai, nu se opreste pe calea pacatosilor.",
+          "2": "Ci isi gaseste placerea in Legea Domnului, si zi si noapte cugeata la Legea Lui.",
+          "3": "El este ca un pom sadit langa un izvor de apa, care isi da rodul la vremea lui."
+        },
+        "23": {
+          "1": "Domnul este Pastorul meu: nu voi duce lipsa de nimic.",
+          "2": "El ma paste in pasuni verzi si ma duce la ape de odihna.",
+          "3": "Imi invivoreaza sufletul si ma povatatuieste pe carari drepte, din pricina Numelui Sau.",
+          "4": "Chiar daca ar fi sa umblu prin valea umbrei mortii, nu ma tem de niciun rau, caci Tu esti cu mine.",
+          "5": "Tu imi intinzi masa in fata potrivnicilor mei; imi ungi capul cu untdelemn.",
+          "6": "Da, fericirea si indurarea ma vor insoti in toate zilele vietii mele."
+        },
+        "46": {
+          "1": "Dumnezeu este adapostul si sprijinul nostru, un ajutor care nu lipseste niciodata in nevoi.",
+          "10": "Opriti-va si stiti ca Eu sunt Dumnezeu!"
+        },
+        "91": {
+          "1": "Cel ce locuieste sub ocrotirea Celui Preainalt si se odihneste la umbra Celui Atotputernic.",
+          "2": "Zice despre Domnul: El este refugiul meu si cetatuia mea, Dumnezeul meu in care ma incred!",
+          "11": "Caci El va porunci ingerilor Sai sa te pazeasca pe toate caile tale."
+        },
+        "119": {
+          "105": "Cuvantul Tau este o candela pentru picioarele mele si o lumina pe cararea mea.",
+          "130": "Descoperirea cuvintelor Tale da lumina, da pricepere celor fara experienta."
+        }
+      }
+    },
+    {
+      "id": 20,
+      "abreviere": "Prov",
+      "nume": "Proverbe",
+      "testament": "VT",
+      "capitole": {
+        "3": {
+          "5": "Increde-te in Domnul din toata inima ta si nu te bizui pe intelepciunea ta!",
+          "6": "Recunoaste-L in toate caile tale, si El iti va netezi cararile.",
+          "9": "Cinsteste pe Domnul cu avutia ta si cu cel dintai rod al tuturor roadelor tale."
+        },
+        "4": {
+          "23": "Pazeste-ti inima mai mult decat orice, caci din ea ies izvoarele vietii."
+        },
+        "16": {
+          "3": "Lasa-ti lucrarile in seama Domnului, si planurile tale vor izbuti.",
+          "9": "Inima omului isi face planuri, dar Domnul ii hotaraste pasii."
+        }
+      }
+    },
+    {
+      "id": 23,
+      "abreviere": "Is",
+      "nume": "Isaia",
+      "testament": "VT",
+      "capitole": {
+        "40": {
+          "29": "El da tarie celui obosit si mareste puterea celui ce cade.",
+          "31": "Dar cei ce se incred in Domnul isi innoiesc puterea, ei zboara ca vulturii."
+        },
+        "41": {
+          "10": "Nu te teme, caci Eu sunt cu tine; nu te uita cu ingrijorare, caci Eu sunt Dumnezeul tau."
+        },
+        "53": {
+          "5": "Dar El era strapuns pentru pacatele noastre, zdrobit pentru faradelegile noastre.",
+          "6": "Noi rataceam cu totii ca niste oi, fiecare isi vedea de drumul lui."
+        }
+      }
+    },
+    {
+      "id": 40,
+      "abreviere": "Mat",
+      "nume": "Matei",
+      "testament": "NT",
+      "capitole": {
+        "5": {
+          "3": "Ferice de cei saraci in duh, caci a lor este Imparatia cerurilor!",
+          "4": "Ferice de cei ce plang, caci ei vor fi mangaiati!",
+          "5": "Ferice de cei blanzi, caci ei vor mosteni pamantul!",
+          "6": "Ferice de cei ce flamanzesc si inseteaza dupa neprihanie, caci ei vor fi saturati!",
+          "7": "Ferice de cei milostivi, caci ei vor capata mila!",
+          "8": "Ferice de cei cu inima curata, caci ei vor vedea pe Dumnezeu!",
+          "9": "Ferice de cei impaciuitori, caci ei vor fi chemati fii ai lui Dumnezeu!",
+          "14": "Voi sunteti lumina lumii. O cetate asezata pe un munte nu poate sa ramana ascunsa.",
+          "16": "Tot astfel sa lumineze si lumina voastra inaintea oamenilor."
+        },
+        "6": {
+          "9": "Voi sa va rugati astfel: Tatal nostru care esti in ceruri! Sfinteasca-se Numele Tau.",
+          "33": "Cautati mai intai Imparatia lui Dumnezeu si neprihania Lui, si toate aceste lucruri vi se vor da pe deasupra."
+        },
+        "11": {
+          "28": "Veniti la Mine, toti cei truditi si impovarati, si Eu va voi da odihna.",
+          "29": "Luati jugul Meu asupra voastra si invatati de la Mine, caci Eu sunt bland si smerit cu inima.",
+          "30": "Caci jugul Meu este bun si sarcina Mea este usoara."
+        },
+        "28": {
+          "19": "Duceti-va si faceti ucenici din toate neamurile, botezandu-i in Numele Tatalui si al Fiului si al Sfantului Duh.",
+          "20": "Si invatati-i sa pazeasca tot ce v-am poruncit. Si iata ca Eu sunt cu voi in toate zilele, pana la sfarsitul veacului."
+        }
+      }
+    },
+    {
+      "id": 43,
+      "abreviere": "Ioan",
+      "nume": "Ioan",
+      "testament": "NT",
+      "capitole": {
+        "1": {
+          "1": "La inceput era Cuvantul, si Cuvantul era cu Dumnezeu, si Cuvantul era Dumnezeu.",
+          "14": "Si Cuvantul S-a facut trup si a locuit printre noi, plin de har si de adevar."
+        },
+        "3": {
+          "16": "Fiindca atat de mult a iubit Dumnezeu lumea, ca a dat pe singurul Lui Fiu, pentru ca oricine crede in El sa nu piara, ci sa aiba viata vesnica.",
+          "17": "Dumnezeu, in adevar, n-a trimis pe Fiul Sau in lume ca sa judece lumea, ci ca lumea sa fie mantuita prin El."
+        },
+        "8": {
+          "12": "Eu sunt Lumina lumii. Cine Ma urmeaza pe Mine nu va umbla in intuneric, ci va avea lumina vietii."
+        },
+        "10": {
+          "10": "Eu am venit ca oile sa aiba viata, si s-o aiba din belsug.",
+          "11": "Eu sunt Pastorul cel bun. Pastorul cel bun Isi da viata pentru oi."
+        },
+        "11": {
+          "25": "Eu sunt invierea si viata. Cine crede in Mine, chiar daca ar fi murit, va trai."
+        },
+        "14": {
+          "1": "Sa nu vi se tulbure inima. Aveti credinta in Dumnezeu si aveti credinta in Mine.",
+          "6": "Eu sunt Calea, Adevarul si Viata. Nimeni nu vine la Tatal decat prin Mine.",
+          "27": "Va las pacea, va dau pacea Mea. Nu va dau pacea cum v-o da lumea."
+        },
+        "15": {
+          "5": "Eu sunt Vita, voi sunteti mladitele. Cine ramane in Mine si in cine raman Eu aduce multa roada.",
+          "13": "Nu este mai mare dragoste decat sa-si dea cineva viata pentru prietenii sai."
+        }
+      }
+    },
+    {
+      "id": 45,
+      "abreviere": "Rom",
+      "nume": "Romani",
+      "testament": "NT",
+      "capitole": {
+        "5": {
+          "1": "Deci, fiindca suntem indreptati prin credinta, avem pace cu Dumnezeu prin Domnul nostru Isus Hristos.",
+          "8": "Dar Dumnezeu Isi arata dragostea fata de noi prin faptul ca, pe cand eram noi inca pacatosi, Hristos a murit pentru noi."
+        },
+        "8": {
+          "1": "Acum, dar, nu este nicio osandire pentru cei ce sunt in Hristos Isus.",
+          "28": "De altfel, stim ca toate lucrurile lucreaza impreuna spre binele celor ce iubesc pe Dumnezeu.",
+          "38": "Caci sunt sigur ca nici moartea, nici viata, nici ingerii, nici stapanirile, nici puterile nu vor fi in stare sa ne desparta de dragostea lui Dumnezeu.",
+          "39": "Nici inaltimea, nici adancimea, nici o alta faptura nu va fi in stare sa ne desparta de dragostea lui Dumnezeu, care este in Isus Hristos, Domnul nostru."
+        },
+        "12": {
+          "1": "Va indemn deci, fratilor, sa aduceti trupurile voastre ca o jertfa vie, sfanta, placuta lui Dumnezeu.",
+          "2": "Sa nu va potriviti chipului veacului acestuia, ci sa va prefaceti prin innoirea mintii voastre."
+        }
+      }
+    },
+    {
+      "id": 46,
+      "abreviere": "1Cor",
+      "nume": "1 Corinteni",
+      "testament": "NT",
+      "capitole": {
+        "13": {
+          "4": "Dragostea este indelung rabdatoare, este plina de bunatate; dragostea nu invidiaza.",
+          "5": "Nu se poarta necuviincios, nu cauta folosul sau, nu se manies, nu se gandeste la rau.",
+          "7": "Acopera totul, crede totul, nadajduieste totul, sufera totul.",
+          "8": "Dragostea nu va pieri niciodata.",
+          "13": "Acum deci raman acestea trei: credinta, nadejdea si dragostea; dar cea mai mare dintre ele este dragostea."
+        }
+      }
+    },
+    {
+      "id": 49,
+      "abreviere": "Ef",
+      "nume": "Efeseni",
+      "testament": "NT",
+      "capitole": {
+        "2": {
+          "8": "Caci prin har ati fost mantuiti, prin credinta. Si aceasta nu vine de la voi; ci este darul lui Dumnezeu.",
+          "9": "Nu prin fapte, ca sa nu se laude nimeni.",
+          "10": "Caci noi suntem lucrarea Lui si am fost ziditi in Hristos Isus pentru faptele bune."
+        },
+        "6": {
+          "10": "Intariti-va in Domnul si in puterea tariei Lui.",
+          "11": "Imbracati-va cu toata armatura lui Dumnezeu, ca sa puteti tine piept impotriva uneltirilor diavolului."
+        }
+      }
+    },
+    {
+      "id": 50,
+      "abreviere": "Fil",
+      "nume": "Filipeni",
+      "testament": "NT",
+      "capitole": {
+        "4": {
+          "4": "Bucurati-va intotdeauna in Domnul! Iarasi zic: Bucurati-va!",
+          "6": "Nu va ingrijorati de nimic; ci, in orice lucru, aduceti cererile voastre la cunostinta lui Dumnezeu.",
+          "7": "Si pacea lui Dumnezeu, care intrece orice pricepere, va va pazi inimile si gandurile in Hristos Isus.",
+          "8": "Tot ce este adevarat, tot ce este vrednic de cinste, tot ce este drept, tot ce este curat, aceea sa va indeletniceasca gandurile.",
+          "13": "Pot totul in Hristos, care ma intareste."
+        }
+      }
+    },
+    {
+      "id": 58,
+      "abreviere": "Evr",
+      "nume": "Evrei",
+      "testament": "NT",
+      "capitole": {
+        "11": {
+          "1": "Si credinta este o incredere neclintita in lucrurile nadajduite, o puternica incredintare despre lucrurile care nu se vad.",
+          "6": "Si fara credinta este cu neputinta sa fim placuti Lui!"
+        },
+        "12": {
+          "1": "Sa dam la o parte orice piedica si pacatul care ne infasoara asa de lesne si sa alergam cu staruinta in alergarea care ne sta inainte.",
+          "2": "Sa ne uitam tinta la Isus, Capetenia si Desavarsitorul credintei noastre."
+        }
+      }
+    },
+    {
+      "id": 66,
+      "abreviere": "Apoc",
+      "nume": "Apocalipsa",
+      "testament": "NT",
+      "capitole": {
+        "3": {
+          "20": "Iata Eu stau la usa si bat. Daca aude cineva glasul Meu si deschide usa, voi intra la el."
+        },
+        "21": {
+          "4": "El va sterge orice lacrima din ochii lor. Si moartea nu va mai fi. Nu va mai fi nici tanaguire, nici tipat, nici durere."
+        },
+        "22": {
+          "20": "Cel ce adevereaza aceste lucruri zice: Da, Eu vin curand. Amin! Vino, Doamne Isuse!",
+          "21": "Harul Domnului Isus Hristos sa fie cu voi cu toti! Amin."
+        }
+      }
+    }
+  ]
+}

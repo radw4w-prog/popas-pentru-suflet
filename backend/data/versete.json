@@ -1,0 +1,365 @@
+// backend/data/versete.json
+{
+  "versete": [
+    {
+      "text": "Căci atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viață veșnică.",
+      "reference": "Ioan 3:16",
+      "book": "Ioan",
+      "chapter": 3,
+      "verseNumber": "16",
+      "category": "dragoste",
+      "tags": ["dragoste", "salvare", "credință", "viață veșnică"]
+    },
+    {
+      "text": "Domnul este păstorul meu: nu voi duce lipsă de nimic.",
+      "reference": "Psalmii 23:1",
+      "book": "Psalmii",
+      "chapter": 23,
+      "verseNumber": "1",
+      "category": "pace",
+      "tags": ["pace", "încredere", "protecție", "Dumnezeu"]
+    },
+    {
+      "text": "Încrede-te în Domnul din toată inima ta și nu te bizui pe înțelepciunea ta!",
+      "reference": "Proverbe 3:5",
+      "book": "Proverbe",
+      "chapter": 3,
+      "verseNumber": "5",
+      "category": "credință",
+      "tags": ["credință", "încredere", "înțelepciune"]
+    },
+    {
+      "text": "Nu ți-am poruncit Eu: 'Întărește-te și îmbărbătează-te? Nu te înspăimânta și nu te îngrozi, căci Domnul Dumnezeul tău este cu tine oriunde vei merge.'",
+      "reference": "Iosua 1:9",
+      "book": "Iosua",
+      "chapter": 1,
+      "verseNumber": "9",
+      "category": "curaj",
+      "tags": ["curaj", "putere", "prezența lui Dumnezeu"]
+    },
+    {
+      "text": "Eu sunt Calea, Adevărul și Viața. Nimeni nu vine la Tatăl decât prin Mine.",
+      "reference": "Ioan 14:6",
+      "book": "Ioan",
+      "chapter": 14,
+      "verseNumber": "6",
+      "category": "credință",
+      "tags": ["Isus", "adevăr", "viață", "cale"]
+    },
+    {
+      "text": "Pace vă las, pacea Mea v-o dau. Nu v-o dau cum o dă lumea. Să nu vi se tulbure inima, nici să nu se înspăimânte.",
+      "reference": "Ioan 14:27",
+      "book": "Ioan",
+      "chapter": 14,
+      "verseNumber": "27",
+      "category": "pace",
+      "tags": ["pace", "liniște", "Isus", "încredere"]
+    },
+    {
+      "text": "Toate lucrurile lucrează împreună spre binele celor ce iubesc pe Dumnezeu.",
+      "reference": "Romani 8:28",
+      "book": "Romani",
+      "chapter": 8,
+      "verseNumber": "28",
+      "category": "speranță",
+      "tags": ["speranță", "bine", "dragoste", "plan divin"]
+    },
+    {
+      "text": "Și iată că Eu sunt cu voi în toate zilele, până la sfârșitul veacului.",
+      "reference": "Matei 28:20",
+      "book": "Matei",
+      "chapter": 28,
+      "verseNumber": "20",
+      "category": "mângâiere",
+      "tags": ["prezență", "Isus", "mângâiere", "promisiune"]
+    },
+    {
+      "text": "Nu vă îngrijorați de nimic, ci în orice lucru aduceți cererile voastre la cunoștința lui Dumnezeu, prin rugăciuni și cereri cu mulțumiri.",
+      "reference": "Filipeni 4:6",
+      "book": "Filipeni",
+      "chapter": 4,
+      "verseNumber": "6",
+      "category": "rugăciune",
+      "tags": ["rugăciune", "pace", "încredere", "mulțumire"]
+    },
+    {
+      "text": "Veniți la Mine, toți cei trudiți și împovărați, și Eu vă voi da odihnă.",
+      "reference": "Matei 11:28",
+      "book": "Matei",
+      "chapter": 11,
+      "verseNumber": "28",
+      "category": "mângâiere",
+      "tags": ["odihnă", "mângâiere", "Isus", "pace"]
+    },
+    {
+      "text": "Isus Hristos este același ieri și azi și în veci!",
+      "reference": "Evrei 13:8",
+      "book": "Evrei",
+      "chapter": 13,
+      "verseNumber": "8",
+      "category": "credință",
+      "tags": ["Isus", "veșnicie", "neschimbare", "credință"]
+    },
+    {
+      "text": "Dragostea îndelung rabdă, este plină de bunătate; dragostea nu pizmuiește; dragostea nu se laudă, nu se umflă de mândrie.",
+      "reference": "1 Corinteni 13:4",
+      "book": "1 Corinteni",
+      "chapter": 13,
+      "verseNumber": "4",
+      "category": "dragoste",
+      "tags": ["dragoste", "răbdare", "bunătate", "smerenie"]
+    },
+    {
+      "text": "Bucurați-vă întotdeauna. Rugați-vă neîncetat. Mulțumiți lui Dumnezeu pentru toate lucrurile.",
+      "reference": "1 Tesaloniceni 5:16-18",
+      "book": "1 Tesaloniceni",
+      "chapter": 5,
+      "verseNumber": "16-18",
+      "category": "bucurie",
+      "tags": ["bucurie", "rugăciune", "recunoștință"]
+    },
+    {
+      "text": "Fiindcă atât de mult ne iubește Dumnezeu, trebuie și noi să ne iubim unii pe alții.",
+      "reference": "1 Ioan 4:11",
+      "book": "1 Ioan",
+      "chapter": 4,
+      "verseNumber": "11",
+      "category": "dragoste",
+      "tags": ["dragoste", "iubire", "Dumnezeu", "unitate"]
+    },
+    {
+      "text": "Domnul este aproape de cei cu inima zdrobită și mântuiește pe cei cu duhul zdrobit.",
+      "reference": "Psalmii 34:18",
+      "book": "Psalmii",
+      "chapter": 34,
+      "verseNumber": "18",
+      "category": "mângâiere",
+      "tags": ["mângâiere", "vindecare", "Dumnezeu", "suferință"]
+    },
+    {
+      "text": "Pot totul în Hristos care mă întărește.",
+      "reference": "Filipeni 4:13",
+      "book": "Filipeni",
+      "chapter": 4,
+      "verseNumber": "13",
+      "category": "putere",
+      "tags": ["putere", "Hristos", "victorie", "credință"]
+    },
+    {
+      "text": "Cerul și pământul vor trece, dar cuvintele Mele nu vor trece.",
+      "reference": "Matei 24:35",
+      "book": "Matei",
+      "chapter": 24,
+      "verseNumber": "35",
+      "category": "credință",
+      "tags": ["cuvântul lui Dumnezeu", "veșnicie", "adevăr"]
+    },
+    {
+      "text": "El vindecă pe cei cu inima zdrobită și le leagă rănile.",
+      "reference": "Psalmii 147:3",
+      "book": "Psalmii",
+      "chapter": 147,
+      "verseNumber": "3",
+      "category": "vindecare",
+      "tags": ["vindecare", "mângâiere", "Dumnezeu", "restaurare"]
+    },
+    {
+      "text": "Să nu obosim în facerea binelui; căci la vremea potrivită, vom secera, dacă nu vom cădea de oboseală.",
+      "reference": "Galateni 6:9",
+      "book": "Galateni",
+      "chapter": 6,
+      "verseNumber": "9",
+      "category": "răbdare",
+      "tags": ["răbdare", "perseverență", "bine", "răsplată"]
+    },
+    {
+      "text": "Gustați și vedeți ce bun este Domnul! Ferice de omul care se încrede în El!",
+      "reference": "Psalmii 34:8",
+      "book": "Psalmii",
+      "chapter": 34,
+      "verseNumber": "8",
+      "category": "binecuvântare",
+      "tags": ["binecuvântare", "bunătate", "încredere", "Dumnezeu"]
+    },
+    {
+      "text": "Căci Eu știu gândurile pe care le am cu privire la voi, zice Domnul, gânduri de pace, și nu de nenorocire, ca să vă dau un viitor și o nădejde.",
+      "reference": "Ieremia 29:11",
+      "book": "Ieremia",
+      "chapter": 29,
+      "verseNumber": "11",
+      "category": "speranță",
+      "tags": ["speranță", "viitor", "plan divin", "pace"]
+    },
+    {
+      "text": "Nu te teme, căci Eu sunt cu tine; nu te uita cu îngrijorare, căci Eu sunt Dumnezeul tău; Eu te întăresc, tot Eu îți vin în ajutor.",
+      "reference": "Isaia 41:10",
+      "book": "Isaia",
+      "chapter": 41,
+      "verseNumber": "10",
+      "category": "curaj",
+      "tags": ["curaj", "putere", "ajutor", "protecție"]
+    },
+    {
+      "text": "Mare este credincioșia Ta, Doamne! În fiecare dimineață, îndurările Tale se înnoiesc.",
+      "reference": "Plângerile 3:23",
+      "book": "Plângerile lui Ieremia",
+      "chapter": 3,
+      "verseNumber": "23",
+      "category": "dimineață",
+      "tags": ["dimineață", "credincioșie", "îndurare", "nou început"]
+    },
+    {
+      "text": "Eu sunt lumina lumii; cine Mă urmează pe Mine nu va umbla în întuneric, ci va avea lumina vieții.",
+      "reference": "Ioan 8:12",
+      "book": "Ioan",
+      "chapter": 8,
+      "verseNumber": "12",
+      "category": "credință",
+      "tags": ["lumină", "Isus", "viață", "călăuzire"]
+    },
+    {
+      "text": "Binecuvântarea Domnului îmbogățește și El nu lasă să fie urmată de niciun necaz.",
+      "reference": "Proverbe 10:22",
+      "book": "Proverbe",
+      "chapter": 10,
+      "verseNumber": "22",
+      "category": "binecuvântare",
+      "tags": ["binecuvântare", "bogăție", "Dumnezeu", "pace"]
+    },
+    {
+      "text": "Fiți buni unii cu alții, miloși, și iertați-vă unul pe altul, cum v-a iertat și Dumnezeu pe voi în Hristos.",
+      "reference": "Efeseni 4:32",
+      "book": "Efeseni",
+      "chapter": 4,
+      "verseNumber": "32",
+      "category": "iertare",
+      "tags": ["iertare", "bunătate", "milă", "Hristos"]
+    },
+    {
+      "text": "Domnul este tăria mea și scutul meu; în El mi se încrede inima și sunt ajutat.",
+      "reference": "Psalmii 28:7",
+      "book": "Psalmii",
+      "chapter": 28,
+      "verseNumber": "7",
+      "category": "putere",
+      "tags": ["putere", "protecție", "încredere", "ajutor"]
+    },
+    {
+      "text": "Dar cei ce se încred în Domnul își înnoiesc puterea, ei zboară ca vulturii; aleargă și nu obosesc, umblă și nu ostenesc.",
+      "reference": "Isaia 40:31",
+      "book": "Isaia",
+      "chapter": 40,
+      "verseNumber": "31",
+      "category": "putere",
+      "tags": ["putere", "încredere", "înnoire", "perseverență"]
+    },
+    {
+      "text": "Mulțumesc Dumnezeului meu pentru toată aducerea aminte pe care o păstrez despre voi.",
+      "reference": "Filipeni 1:3",
+      "book": "Filipeni",
+      "chapter": 1,
+      "verseNumber": "3",
+      "category": "recunoștință",
+      "tags": ["recunoștință", "mulțumire", "comunitate"]
+    },
+    {
+      "text": "Și pacea lui Dumnezeu, care întrece orice pricepere, vă va păzi inimile și gândurile în Hristos Isus.",
+      "reference": "Filipeni 4:7",
+      "book": "Filipeni",
+      "chapter": 4,
+      "verseNumber": "7",
+      "category": "pace",
+      "tags": ["pace", "protecție", "Hristos", "liniște"]
+    },
+    {
+      "text": "Ajutorul meu vine de la Domnul, care a făcut cerurile și pământul.",
+      "reference": "Psalmii 121:2",
+      "book": "Psalmii",
+      "chapter": 121,
+      "verseNumber": "2",
+      "category": "protecție",
+      "tags": ["ajutor", "protecție", "Creator", "Dumnezeu"]
+    },
+    {
+      "text": "Doamne, Tu ești locul nostru de adăpost din neam în neam.",
+      "reference": "Psalmii 90:1",
+      "book": "Psalmii",
+      "chapter": 90,
+      "verseNumber": "1",
+      "category": "protecție",
+      "tags": ["adăpost", "protecție", "Dumnezeu", "veșnicie"]
+    },
+    {
+      "text": "Lumina Ta și adevărul Tău mă vor călăuzi și mă vor duce la muntele Tău cel sfânt.",
+      "reference": "Psalmii 43:3",
+      "book": "Psalmii",
+      "chapter": 43,
+      "verseNumber": "3",
+      "category": "înțelepciune",
+      "tags": ["lumină", "adevăr", "călăuzire", "sfințenie"]
+    },
+    {
+      "text": "Dumnezeu este adăpostul și sprijinul nostru, un ajutor care nu lipsește niciodată în nevoi.",
+      "reference": "Psalmii 46:1",
+      "book": "Psalmii",
+      "chapter": 46,
+      "verseNumber": "1",
+      "category": "protecție",
+      "tags": ["adăpost", "ajutor", "sprijin", "nevoi"]
+    },
+    {
+      "text": "Roada Duhului este: dragostea, bucuria, pacea, îndelunga răbdare, bunătatea, facerea de bine, credincioșia, blândețea, înfrânarea poftelor.",
+      "reference": "Galateni 5:22-23",
+      "book": "Galateni",
+      "chapter": 5,
+      "verseNumber": "22-23",
+      "category": "general",
+      "tags": ["Duhul Sfânt", "dragoste", "bucurie", "pace", "roade"]
+    },
+    {
+      "text": "Cuvântul Tău este o candelă pentru picioarele mele și o lumină pe cărarea mea.",
+      "reference": "Psalmii 119:105",
+      "book": "Psalmii",
+      "chapter": 119,
+      "verseNumber": "105",
+      "category": "înțelepciune",
+      "tags": ["cuvântul lui Dumnezeu", "lumină", "călăuzire", "înțelepciune"]
+    },
+    {
+      "text": "Dar Dumnezeu Își arată dragostea față de noi prin faptul că, pe când eram noi încă păcătoși, Hristos a murit pentru noi.",
+      "reference": "Romani 5:8",
+      "book": "Romani",
+      "chapter": 5,
+      "verseNumber": "8",
+      "category": "dragoste",
+      "tags": ["dragoste", "jertfă", "Hristos", "salvare"]
+    },
+    {
+      "text": "Dimineața, umple-ne de bunătatea Ta, și noi vom jubila și ne vom bucura în toate zilele noastre.",
+      "reference": "Psalmii 90:14",
+      "book": "Psalmii",
+      "chapter": 90,
+      "verseNumber": "14",
+      "category": "dimineață",
+      "tags": ["dimineață", "bunătate", "bucurie", "Dumnezeu"]
+    },
+    {
+      "text": "Căci unde sunt doi sau trei adunați în Numele Meu, sunt și Eu în mijlocul lor.",
+      "reference": "Matei 18:20",
+      "book": "Matei",
+      "chapter": 18,
+      "verseNumber": "20",
+      "category": "rugăciune",
+      "tags": ["rugăciune", "comunitate", "prezența lui Dumnezeu"]
+    },
+    {
+      "text": "Seara vin lacrimile, iar dimineața vine veselia.",
+      "reference": "Psalmii 30:5",
+      "book": "Psalmii",
+      "chapter": 30,
+      "verseNumber": "5",
+      "category": "speranță",
+      "tags": ["speranță", "mângâiere", "bucurie", "dimineață"]
+    }
+  ]
+}
