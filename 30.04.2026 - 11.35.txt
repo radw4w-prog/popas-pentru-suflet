@@ -1,0 +1,309 @@
+Raport Complet - Popas pentru Suflet
+🌐 URL-uri Online (Producție)
+text
+
+Frontend:  https://serene-khapse-8c6464.netlify.app
+Backend:   https://popas-pentru-suflet-backend.onrender.com
+Database:  MongoDB Atlas (cluster0.1glnnk8.mongodb.net)
+Cod:       https://github.com/radw4w-prog/popas-pentru-suflet
+💻 Local (Development)
+text
+
+Frontend:  http://localhost:3000
+Backend:   http://localhost:5000
+Database:  MongoDB local (127.0.0.1:27017)
+Folder:    E:\popas-pentru-suflet\
+📁 Structura completă a proiectului
+text
+
+E:\popas-pentru-suflet\
+│
+├── 📄 start.bat              ← Pornește local (backend + frontend)
+├── 📄 stop.bat               ← Oprește tot
+├── 📄 install.bat            ← Instalare inițială
+├── 📄 .gitignore
+│
+├── 📂 backend\
+│   ├── 📄 server.js          ← Punctul de intrare backend
+│   ├── 📄 package.json
+│   ├── 📄 .env               ← Variabile locale (nu e pe GitHub!)
+│   ├── 📄 Dockerfile         ← Pentru Render deploy
+│   ├── 📄 .dockerignore
+│   │
+│   ├── 📂 config\
+│   │   └── 📄 database.js    ← Conectare MongoDB
+│   │
+│   ├── 📂 models\
+│   │   ├── 📄 Post.js              ← Model postări
+│   │   ├── 📄 Verse.js             ← Model versete (col: versets)
+│   │   ├── 📄 Description.js       ← Model descrieri
+│   │   ├── 📄 ReadingProgress.js   ← Model progres citire
+│   │   ├── 📄 Schedule.js          ← Model programări
+│   │   └── 📄 Settings.js          ← Model setări
+│   │
+│   ├── 📂 routes\
+│   │   ├── 📄 posts.js       ← CRUD postări
+│   │   ├── 📄 verses.js      ← API versete + statistici
+│   │   ├── 📄 generate.js    ← Generator conținut + templates
+│   │   ├── 📄 social.js      ← Facebook publish + schedule
+│   │   ├── 📄 reading.js     ← Tracking citire Biblie
+│   │   ├── 📄 schedule.js    ← Programări
+│   │   └── 📄 settings.js    ← Setări aplicație
+│   │
+│   ├── 📂 services\
+│   │   ├── 📄 facebookService.js     ← Facebook Graph API
+│   │   ├── 📄 schedulerService.js    ← Cron job auto-post
+│   │   ├── 📄 aiContentGenerator.js  ← OpenAI (neactivat)
+│   │   ├── 📄 imageGenerator.js
+│   │   ├── 📄 instagramService.js    ← Instagram (neactivat)
+│   │   └── 📄 tiktokService.js       ← TikTok (neactivat)
+│   │
+│   ├── 📂 data\
+│   │   ├── 📄 templates.json         ← 62 template-uri imagini
+│   │   ├── 📄 versete_complete.json  ← 31.093 versete (backup)
+│   │   └── 📄 biblia_bvdcs.json     ← Biblia backup
+│   │
+│   ├── 📂 uploads\
+│   │   ├── 📂 templates\    ← Template-uri uploadate de user
+│   │   ├── 📂 generated\    ← Imagini generate pentru schedule
+│   │   └── 📂 temp\         ← Temporar pentru Facebook upload
+│   │
+│   └── 📂 scripts\
+│       ├── 📄 importBible.js          ← Import Biblie în MongoDB
+│       ├── 📄 generateLocalBible.js   ← Generator versete local
+│       ├── 📄 downloadBible.py        ← Download Biblie Python
+│       ├── 📄 downloadOffline.py      ← Download offline
+│       ├── 📄 generateDescrieri.cjs   ← Generator 4850 descrieri
+│       ├── 📄 importDescrieri.cjs     ← Import descrieri
+│       ├── 📄 migrateToAtlas.cjs      ← Migrare local → Atlas
+│       ├── 📄 testFB.cjs              ← Test Facebook API
+│       └── 📄 getFbToken.cjs          ← Helper token Facebook
+│
+└── 📂 frontend\
+    ├── 📄 package.json
+    ├── 📄 .env.production    ← REACT_APP_API_URL pentru Netlify
+    │
+    ├── 📂 public\
+    │   ├── 📄 index.html     ← Cu theme detection + Google Fonts
+    │   ├── 📄 logo.png       ← Logo pagina Facebook
+    │   └── 📄 _redirects     ← Netlify proxy pentru API
+    │
+    └── 📂 src\
+        ├── 📄 App.js         ← Router + Theme management
+        ├── 📄 index.js
+        │
+        ├── 📂 components\
+        │   ├── 📄 Sidebar.js        ← Navigare laterală
+        │   ├── 📄 Header.js         ← Header + Theme toggle
+        │   ├── 📄 Dashboard.js
+        │   ├── 📄 PostGenerator.js
+        │   ├── 📄 ImageGenerator.js
+        │   ├── 📄 Scheduler.js
+        │   ├── 📄 SocialAccounts.js
+        │   ├── 📄 PostPreview.js
+        │   └── 📄 Settings.js
+        │
+        ├── 📂 pages\
+        │   ├── 📄 DashboardPage.js   ← Dashboard principal
+        │   ├── 📄 GeneratePage.js    ← Generator postări
+        │   ├── 📄 SchedulePage.js    ← Programări
+        │   ├── 📄 HistoryPage.js     ← Istoric postări
+        │   ├── 📄 VersesPage.js      ← Biblioteca biblică
+        │   └── 📄 SettingsPage.js    ← Setări + Facebook
+        │
+        ├── 📂 services\
+        │   └── 📄 api.js             ← Axios instance
+        │
+        └── 📂 styles\
+            └── 📄 App.css            ← Dark + Light theme CSS
+🗄️ Baza de Date - MongoDB Atlas
+text
+
+Database: popas-pentru-suflet
+
+Colecții:
+┌─────────────────────┬──────────────┬────────────────────────────────┐
+│ Colecție            │ Documente    │ Conținut                       │
+├─────────────────────┼──────────────┼────────────────────────────────┤
+│ versets             │ 31.093       │ Biblia completă Cornilescu     │
+│ descriptions        │ 4.850        │ 12 teme × 400 + 50 default     │
+│ posts               │ ~10          │ Postări salvate/publicate       │
+│ settings            │ 1            │ Setări aplicație               │
+│ reading_progress    │ 0            │ Progres citire Biblie          │
+│ schedules           │ 0            │ Programări active              │
+└─────────────────────┴──────────────┴────────────────────────────────┘
+
+Total: ~35.955 documente
+🔌 API Endpoints Backend
+text
+
+BASE URL: https://popas-pentru-suflet-backend.onrender.com
+
+VERSETE:
+GET  /api/verses                    ← Lista cu filtre + paginare
+GET  /api/verses/statistici         ← Total, VT, NT, cărți
+GET  /api/verses/random             ← Verset aleatoriu
+GET  /api/verses/versetul-zilei     ← Verset consistent pe zi
+GET  /api/verses/carti              ← Lista cărților cu statistici
+GET  /api/verses/capitol/:ab/:cap   ← Capitol specific
+
+GENERATOR:
+GET  /api/generate/templates        ← 62 template-uri + custom
+GET  /api/generate/teme             ← 12 teme disponibile
+POST /api/generate                  ← Generează descriere + hashtags
+POST /api/generate/upload           ← Upload template custom
+DELETE /api/generate/templates/:f   ← Șterge template custom
+
+POSTĂRI:
+GET  /api/posts                     ← Lista postărilor
+GET  /api/posts/:id                 ← Postare specifică
+POST /api/posts                     ← Salvează postare
+PUT  /api/posts/:id                 ← Actualizează postare
+DELETE /api/posts/:id               ← Șterge postare
+GET  /api/posts/stats/summary       ← Statistici postări
+
+SOCIAL / FACEBOOK:
+GET  /api/social/status             ← Status conectare FB
+POST /api/social/publish-direct     ← Publică imediat
+POST /api/social/schedule           ← Programează postare
+GET  /api/social/scheduled          ← Lista programărilor
+GET  /api/social/history            ← Istoric publicări
+POST /api/social/publish/:id        ← Publică din DB
+DELETE /api/social/scheduled/:id    ← Anulează programare
+
+CITIRE BIBLIE:
+GET  /api/reading/progress          ← Progres general
+POST /api/reading/mark              ← Marchează capitol citit
+GET  /api/reading/carte/:abrev      ← Progres per carte
+GET  /api/reading/suggest           ← Sugestie zilnică
+
+SISTEM:
+GET  /health                        ← Health check
+🎨 Pagini Frontend
+text
+
+/ → redirect la /dashboard
+
+/dashboard    ← Dashboard principal
+              → Greeting cu nume Facebook
+              → Verset aleatoriu (se schimbă la 30 min)
+              → Progres citire Biblie
+              → Stats: versete, publicate, programate, descrieri
+              → Status Facebook live
+              → Programări active cu countdown
+              → Activitate recentă
+              → Progres bars Biblie
+
+/generate     ← Generator postări
+              → Pasul 1: Alegere imagine (62+ template-uri)
+              → Pasul 2: Alegere verset + temă + platformă
+              → Pasul 3: Descriere + hashtags + publicare
+              → Preview imagine cu verset + logo
+              → Download PNG 1080×1350
+              → Publică pe Facebook
+              → Programează cu dată/oră
+
+/schedule     ← Programări
+              → Lista postărilor programate
+              → Countdown până la publicare
+              → Buton "Publică acum"
+              → Buton "Șterge"
+              → Istoric publicări cu link Facebook
+
+/history      ← Istoric postări
+              → Toate postările cu status
+              → Filtrare: draft/scheduled/published/failed
+
+/verses       ← Biblioteca biblică
+              → 31.093 versete răsfoibile
+              → Căutare full-text
+              → Filtrare pe carte/testament
+              → Statistici Biblie
+              → Verset aleatoriu 🎲
+              → Copiere verset
+
+/settings     ← Setări
+              → Status Facebook (valid/invalid)
+              → Token Facebook
+              → Teste publicare
+
+GLOBAL:
+              → Toggle Dark/Light theme ☀️🌙
+              → Tema salvată în localStorage
+              → Mobile responsive
+✅ Funcționalități Active
+text
+
+✅ Biblia completă Cornilescu (31.093 versete)
+✅ 66 cărți biblice (VT + NT)
+✅ Generator imagini verticale 1080×1350
+✅ 62 template-uri premium (Unsplash)
+✅ Upload template-uri custom
+✅ Editor text pe imagine (font, culoare, poziție)
+✅ Logo + branding pe imagine
+✅ 4.850 descrieri generate (12 teme)
+✅ Hashtag-uri per temă + platformă
+✅ Publicare directă Facebook
+✅ Programare automată Facebook
+✅ Scheduler 24/7 în cloud
+✅ Token Facebook permanent
+✅ Dark Theme Premium
+✅ Light Theme Premium
+✅ Toggle temă ☀️🌙
+✅ Mobile responsive
+✅ Auto-refresh date
+✅ Verset aleatoriu la 30 min
+✅ Progres citire Biblie
+✅ Sugestie zilnică citire
+✅ Hosting 100% gratuit
+⚠️ Funcționalități Parțiale / Neactivate
+text
+
+⚠️ Instagram auto-post (serviciu existent, fără token)
+⚠️ TikTok auto-post (serviciu existent, fără token)
+⚠️ OpenAI generator (serviciu existent, fără API key)
+⚠️ Citire Biblie tracking (backend OK, UI parțial)
+⚠️ Analytics postări (likes/comments/shares)
+⚠️ Plan citire zilnică personalizat
+⚠️ HistoryPage (funcționează parțial)
+🔑 Chei și Tokens
+text
+
+MongoDB Atlas:
+  URI: mongodb+srv://popas_admin:***@cluster0.1glnnk8.mongodb.net
+
+Facebook:
+  Page ID:      540289746005128
+  Access Token: EAAaaYxU6e2s*** (permanent, expiră Data Access în iulie 2026)
+  App ID:       1858600208857963
+
+Render:
+  Service: popas-pentru-suflet-backend
+  URL: popas-pentru-suflet-backend.onrender.com
+
+Netlify:
+  Site: serene-khapse-8c6464.netlify.app
+
+GitHub:
+  Repo: github.com/radw4w-prog/popas-pentru-suflet
+📅 Reminder Important
+text
+
+⚠️ 29 Iulie 2026 - Regenerează token Facebook!
+   Data Access expiră în 3 luni.
+💰 Costuri Lunare
+text
+
+Render.com (backend):   GRATUIT
+Netlify (frontend):     GRATUIT
+MongoDB Atlas (DB):     GRATUIT (512MB)
+GitHub (cod):           GRATUIT
+Total:                  0 lei/lună ✅
+🎯 Ce urmează (recomandat)
+text
+
+Prioritate 1: Plan citire Biblie complet
+Prioritate 2: Instagram auto-post
+Prioritate 3: Analytics postări Facebook
+Prioritate 4: OpenAI descrieri unice
+Prioritate 5: Domeniu custom (.ro)
