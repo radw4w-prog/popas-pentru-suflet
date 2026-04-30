@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const Sidebar = () => {
+const Sidebar = ({ theme }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,7 +29,14 @@ const Sidebar = () => {
           <div
             key={item.path}
             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-            onClick={() => navigate(item.path)}
+            onClick={() => {
+              navigate(item.path);
+              // Închide sidebar pe mobile
+              const sidebar = document.querySelector('.sidebar');
+              if (window.innerWidth <= 768 && sidebar) {
+                sidebar.classList.remove('open');
+              }
+            }}
           >
             <span className="nav-icon">{item.icon}</span>
             <span>{item.label}</span>
@@ -38,7 +45,9 @@ const Sidebar = () => {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="sidebar-version">v1.0.0 • Premium</div>
+        <div className="sidebar-version">
+          {theme === 'dark' ? '🌙' : '☀️'} v1.0 • Premium
+        </div>
       </div>
     </div>
   );

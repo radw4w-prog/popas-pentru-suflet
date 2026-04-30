@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const Header = () => {
+const Header = ({ theme, toggleTheme }) => {
   const location = useLocation();
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(
-    localStorage.getItem('theme') || 'dark'
-  );
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
 
   const toggleMenu = () => {
     const sidebar = document.querySelector('.sidebar');
@@ -58,8 +46,8 @@ const Header = () => {
   return (
     <div className="header">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button className="menu-btn" onClick={toggleMenu}
-          id="menu-toggle" style={{
+        <button className="menu-btn" onClick={toggleMenu} id="menu-toggle"
+          style={{
             display: 'none', background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             borderRadius: 'var(--radius-md)', padding: '0.5rem',
@@ -87,17 +75,19 @@ const Header = () => {
       <div className="header-actions">
         {/* Theme Toggle */}
         <button onClick={toggleTheme} style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
+          background: theme === 'dark'
+            ? 'linear-gradient(135deg, rgba(244,208,63,0.15), rgba(244,208,63,0.05))'
+            : 'linear-gradient(135deg, rgba(30,30,60,0.15), rgba(30,30,60,0.05))',
+          border: `1px solid ${theme === 'dark' ? 'rgba(244,208,63,0.3)' : 'rgba(30,30,60,0.2)'}`,
           borderRadius: 'var(--radius-md)',
           padding: '0.45rem 0.85rem',
           cursor: 'pointer', fontSize: '0.85rem',
           color: 'var(--text-secondary)',
           display: 'flex', alignItems: 'center', gap: '6px',
-          transition: 'var(--transition)'
+          transition: 'all 0.3s ease'
         }}>
           {theme === 'dark' ? '☀️' : '🌙'}
-          <span style={{ fontSize: '0.78rem' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 500 }}>
             {theme === 'dark' ? 'Light' : 'Dark'}
           </span>
         </button>
@@ -105,9 +95,6 @@ const Header = () => {
         <div className="header-time">
           🕐 {time.toLocaleTimeString('ro-RO')}
         </div>
-        <button className="header-btn" onClick={() => window.location.reload()}>
-          🔄
-        </button>
       </div>
     </div>
   );

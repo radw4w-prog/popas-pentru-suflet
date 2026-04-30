@@ -432,7 +432,31 @@ setReadingSuggestion(suggestR.data);
       📖
     </div>
 
-    {/* Motivare */}
+   
+
+          {/* Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexShrink: 0 }}>
+            <button className="btn btn-outline btn-sm" onClick={fetchRandomVerset}
+              title="Alt verset">
+              🎲
+            </button>
+            <button className="btn btn-secondary btn-sm"
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `"${randomVerset.text}" — ${randomVerset.carte} ${randomVerset.capitol}:${randomVerset.verset}`
+                );
+              }}
+              title="Copiază">
+              📋
+            </button>
+          </div>
+        </div>
+      )}
+	  
+	  
+	  
+	  
+	   {/* Motivare */}
     <div style={{ flex: 1, minWidth: '200px' }}>
       <div style={{
         fontFamily: "'Playfair Display', serif",
@@ -494,25 +518,6 @@ setReadingSuggestion(suggestR.data);
     </button>
   </div>
 </div>
-
-          {/* Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexShrink: 0 }}>
-            <button className="btn btn-outline btn-sm" onClick={fetchRandomVerset}
-              title="Alt verset">
-              🎲
-            </button>
-            <button className="btn btn-secondary btn-sm"
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `"${randomVerset.text}" — ${randomVerset.carte} ${randomVerset.capitol}:${randomVerset.verset}`
-                );
-              }}
-              title="Copiază">
-              📋
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ═══════════════════════════════════════
            MAIN GRID
