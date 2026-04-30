@@ -61,7 +61,7 @@ const DashboardPage = () => {
         vtVerses: versesR.data?.testamentVechi || 0,
         ntVerses: versesR.data?.testamentNou || 0,
         totalCarti: versesR.data?.totalCarti || 0,
-        totalDescriptions: 62
+        totalDescriptions: 4850
       });
 
       setRecentPosts(allPosts.slice(0, 5));
