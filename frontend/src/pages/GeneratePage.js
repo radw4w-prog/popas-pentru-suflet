@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
+import axios from 'axios';
+
+const API = process.env.REACT_APP_API_URL || '';
 
 const DEFAULT_TEMPLATES = [
   { id: 'v_apus1', name: 'Apus dramatic', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
@@ -8,6 +10,7 @@ const DEFAULT_TEMPLATES = [
   { id: 'v_mare1', name: 'Mare liniștită', url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=500&fit=crop&q=60', categorie: 'apa' },
   { id: 'v_cer1', name: 'Cer înstelat', url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
   { id: 'v_sp1', name: 'Cruce la apus', url: 'https://images.unsplash.com/photo-1445445290350-18a3b86e0b5a?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1445445290350-18a3b86e0b5a?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 'v_sp2', name: 'Biblie deschisă', url: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
   { id: 'v_min1', name: 'Abstract dark', url: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
   { id: 'v_flori1', name: 'Câmp cu flori', url: 'https://images.unsplash.com/photo-1490750967868-88df5691cc5e?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1490750967868-88df5691cc5e?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
   { id: 'v_dim1', name: 'Dimineață de aur', url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&h=500&fit=crop&q=60', categorie: 'dimineata' },
@@ -36,7 +39,6 @@ const FONTURI = [
 ];
 
 const GeneratePage = () => {
-  // ═══ STATE ═══
   const [step, setStep] = useState(1);
   const [templates, setTemplates] = useState({ builtIn: DEFAULT_TEMPLATES, uploadate: [] });
   const [templateSelectat, setTemplateSelectat] = useState(null);
@@ -54,65 +56,19 @@ const GeneratePage = () => {
   const [saved, setSaved] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState(null);
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduleResult, setScheduleResult] = useState(null);
   const [categorieFiltre, setCategorieFiltre] = useState('all');
   const [generatedImageBase64, setGeneratedImageBase64] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [stilText, setStilText] = useState({
-    fontSize: 26,
-    culoare: '#FFFFFF',
-    pozitie: 'center',
-    umbra: true,
-    font: 'Playfair Display'
+    fontSize: 26, culoare: '#FFFFFF', pozitie: 'center',
+    umbra: true, font: 'Playfair Display'
   });
 
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
-  const [scheduledAt, setScheduledAt] = useState('');
-const [scheduling, setScheduling] = useState(false);
-const [scheduleResult, setScheduleResult] = useState(null);
-
-
-const handleSchedule = async () => {
-  if (!generated) return;
-
-  if (!scheduledAt) {
-    alert('Alege data și ora programării!');
-    return;
-  }
-
-  setScheduling(true);
-  setScheduleResult(null);
-
-  try {
-    const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-
-    const r = await api.post('/api/social/schedule', {
-      content: descriere,
-      hashtags: generated.hashtags,
-      imageBase64: generatedImageBase64 || null,
-      imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
-      platform: 'facebook',
-      scheduledDate: scheduledAt,
-      tema,
-      verset: generated.verset
-    });
-
-    if (r.data.success) {
-      setScheduleResult({
-        success: true,
-        message: r.data.message || '✅ Programat cu succes!'
-      });
-    }
-  } catch (e) {
-    setScheduleResult({
-      success: false,
-      message: '❌ ' + (e.response?.data?.error || e.message)
-    });
-  } finally {
-    setScheduling(false);
-  }
-};
-
-
 
   // ═══ EFFECTS ═══
   useEffect(() => {
@@ -129,7 +85,7 @@ const handleSchedule = async () => {
   // ═══ FETCH ═══
   const fetchTemplates = async () => {
     try {
-      const r = await api.get('/api/generate/templates');
+      const r = await axios.get(`${API}/api/generate/templates`);
       const builtIn = r.data?.builtIn?.length > 0 ? r.data.builtIn : DEFAULT_TEMPLATES;
       setTemplates({ builtIn, uploadate: r.data?.uploadate || [] });
     } catch (e) {
@@ -139,25 +95,25 @@ const handleSchedule = async () => {
 
   const fetchTeme = async () => {
     try {
-      const r = await api.get('/api/generate/teme');
+      const r = await axios.get(`${API}/api/generate/teme`);
       setTeme(r.data.teme || []);
     } catch (e) {}
   };
 
-const searchVerset = async () => {
-  if (!versetSearch.trim()) return;
-  setSearching(true);
-  try {
-    const r = await axios.get(
-      `/api/verses?search=${encodeURIComponent(versetSearch)}&limit=50`
-    );
-    setVerseteGasite(r.data.versete || []);
-  } catch (e) {
-    console.error(e);
-  } finally {
-    setSearching(false);
-  }
-};
+  const searchVerset = async () => {
+    if (!versetSearch.trim()) return;
+    setSearching(true);
+    try {
+      const r = await axios.get(
+        `${API}/api/verses?search=${encodeURIComponent(versetSearch)}&limit=50`
+      );
+      setVerseteGasite(r.data.versete || []);
+    } catch (e) {
+      console.error('Search error:', e);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   // ═══ UPLOAD ═══
   const handleUpload = async (file) => {
@@ -166,7 +122,7 @@ const searchVerset = async () => {
     const formData = new FormData();
     formData.append('template', file);
     try {
-      const r = await api.post('/api/generate/upload', formData,
+      const r = await axios.post(`${API}/api/generate/upload`, formData,
         { headers: { 'Content-Type': 'multipart/form-data' } });
       if (r.data.success) {
         await fetchTemplates();
@@ -178,9 +134,9 @@ const searchVerset = async () => {
   };
 
   const handleDeleteTemplate = async (filename) => {
-    if (!window.confirm('Ștergi acest template?')) return;
+    if (!window.confirm('Ștergi?')) return;
     try {
-      await axios.delete(`/api/generate/templates/${filename}`);
+      await axios.delete(`${API}/api/generate/templates/${filename}`);
       await fetchTemplates();
       if (templateSelectat?.id === filename) setTemplateSelectat(null);
     } catch (e) {}
@@ -192,8 +148,9 @@ const searchVerset = async () => {
     setGenerated(null);
     setVariantaActiva(0);
     setPublishResult(null);
+    setScheduleResult(null);
     try {
-      const r = await api.post('/api/generate', {
+      const r = await axios.post(`${API}/api/generate`, {
         tema, platform,
         versetCustom: versetSelectat || null
       });
@@ -211,7 +168,7 @@ const searchVerset = async () => {
   const handleSave = async () => {
     if (!generated) return;
     try {
-      await api.post('/api/posts', {
+      await axios.post(`${API}/api/posts`, {
         content: generated.variante?.[variantaActiva] || generated.descriere,
         hashtags: generated.hashtags,
         platform, tema,
@@ -231,7 +188,7 @@ const searchVerset = async () => {
     setPublishResult(null);
     try {
       const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-      const r = await api.post('/api/social/publish-direct', {
+      const r = await axios.post(`${API}/api/social/publish-direct`, {
         content: descriere,
         hashtags: generated.hashtags,
         imageBase64: generatedImageBase64 || null,
@@ -249,177 +206,207 @@ const searchVerset = async () => {
     } finally { setPublishing(false); }
   };
 
-  // ═══ CANVAS RENDER ═══
-  const renderCanvas = () => {
-  const canvas = canvasRef.current;
-  if (!canvas || !templateSelectat || !versetSelectat) return;
-
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.src = templateSelectat.url || templateSelectat.thumbnail;
-
-  img.onload = () => {
-    const W = 1080;
-    const H = 1350;
-    canvas.width = W;
-    canvas.height = H;
-
-    // Cover crop
-    const imgR = img.width / img.height;
-    const canR = W / H;
-    let sx = 0, sy = 0, sw = img.width, sh = img.height;
-    if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
-    else { sh = img.width / canR; sy = (img.height - sh) / 2; }
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-
-    // Overlay gradient
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, 'rgba(0,0,0,0.05)');
-    grad.addColorStop(0.25, 'rgba(0,0,0,0.2)');
-    grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
-    grad.addColorStop(0.75, 'rgba(0,0,0,0.6)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.8)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const sc = W / 1080;
-    const fz = Math.round(stilText.fontSize * 2 * sc);
-
-    // Text settings
-    ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-    ctx.fillStyle = stilText.culoare;
-    ctx.textAlign = 'center';
-
-    if (stilText.umbra) {
-      ctx.shadowColor = 'rgba(0,0,0,0.9)';
-      ctx.shadowBlur = 25 * sc;
-      ctx.shadowOffsetX = 2 * sc;
-      ctx.shadowOffsetY = 3 * sc;
+  // ═══ SCHEDULE ═══
+  const handleSchedule = async () => {
+    if (!generated) {
+      alert('Generează mai întâi postarea!');
+      return;
     }
-
-    // Word wrap
-    const maxW = W * 0.82;
-    const lh = fz * 1.5;
-    const ref = versetSelectat.referintaCompleta || versetSelectat.referinta;
-    const raw = `\u201C${versetSelectat.text}\u201D`;
-    const words = raw.split(' ');
-    const lines = [];
-    let cur = '';
-    words.forEach(w => {
-      const t = cur + w + ' ';
-      if (ctx.measureText(t).width > maxW && cur) {
-        lines.push(cur.trim());
-        cur = w + ' ';
-      } else { cur = t; }
-    });
-    lines.push(cur.trim());
-
-    const maxLines = 8;
-    const dl = lines.slice(0, maxLines);
-    if (lines.length > maxLines) dl[maxLines - 1] += '...';
-    const th = dl.length * lh;
-
-    // Pozitie Y
-    let startY;
-    if (stilText.pozitie === 'top') startY = H * 0.12;
-    else if (stilText.pozitie === 'bottom') startY = H - th - H * 0.25;
-    else startY = (H - th) / 2 - 30;
-
-    // Linie decorativă sus
-    ctx.strokeStyle = 'rgba(212,175,55,0.6)';
-    ctx.lineWidth = 2 * sc;
-    const lineW = 70 * sc;
-    ctx.beginPath();
-    ctx.moveTo(W / 2 - lineW, startY - 35 * sc);
-    ctx.lineTo(W / 2 + lineW, startY - 35 * sc);
-    ctx.stroke();
-
-    // Desenează versetul
-    dl.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lh));
-
-    // Linie decorativă jos
-    ctx.beginPath();
-    ctx.moveTo(W / 2 - lineW, startY + th + 15 * sc);
-    ctx.lineTo(W / 2 + lineW, startY + th + 15 * sc);
-    ctx.stroke();
-
-    // Referinta
-    ctx.shadowBlur = 12 * sc;
-    ctx.font = `bold ${Math.round(fz * 0.48)}px '${stilText.font}', Georgia, serif`;
-    ctx.fillStyle = '#D4AF37';
-    ctx.fillText(`\u2014 ${ref}`, W / 2, startY + th + 55 * sc);
-
-    // ═══ LOGO ═══
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-
-    const logo = new Image();
-    logo.crossOrigin = 'anonymous';
-    logo.src = '/logo.png';
-
-    logo.onload = () => {
-      const logoH = 95 * sc;   // era 60
-const logoW = logoH;
-const logoX = W / 2 - logoW / 2;
-const logoY = H - logoH - 85 * sc;  // puțin mai sus
-
-      // Cerc semi-transparent în spate
-      ctx.beginPath();
-      ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 5 * sc, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fill();
-
-      // Border auriu
-      ctx.beginPath();
-      ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 7 * sc, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(212,175,55,0.6)';
-      ctx.lineWidth = 2 * sc;
-      ctx.stroke();
-
-      // Clip circular + desenează logo
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(W / 2, logoY + logoH / 2, logoH / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-      ctx.restore();
-
-      // Text sub logo
-     const wmFz = Math.round(fz * 0.38); // era 0.26
-ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
-ctx.fillStyle = 'rgba(255,255,255,0.88)';
-ctx.textAlign = 'center';
-ctx.fillText('Popas pentru Suflet', W / 2, logoY + logoH + 36 * sc);
-
-      // ✅ Salvează base64 DUPĂ ce logo-ul e desenat
-      try {
-        const base64 = canvas.toDataURL('image/jpeg', 0.92);
-        setGeneratedImageBase64(base64);
-      } catch (e) {
-        setGeneratedImageBase64(null);
+    if (!scheduledAt) {
+      alert('Alege data și ora!');
+      return;
+    }
+    setScheduling(true);
+    setScheduleResult(null);
+    try {
+      const descriere = generated.variante?.[variantaActiva] || generated.descriere;
+      const r = await axios.post(`${API}/api/social/schedule`, {
+        content: descriere,
+        hashtags: generated.hashtags,
+        imageBase64: generatedImageBase64 || null,
+        imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
+        platform: 'facebook',
+        scheduledDate: scheduledAt,
+        tema,
+        verset: generated.verset
+      });
+      if (r.data.success) {
+        setScheduleResult({ success: true, message: r.data.message });
       }
-    };
-
-    // Fallback fără logo
-    logo.onerror = () => {
-      const wmFz = Math.round(fz * 0.42);
-ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
-ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
-
-      try {
-        const base64 = canvas.toDataURL('image/jpeg', 0.92);
-        setGeneratedImageBase64(base64);
-      } catch (e) {
-        setGeneratedImageBase64(null);
-      }
-    };
+    } catch (e) {
+      setScheduleResult({
+        success: false,
+        message: '❌ ' + (e.response?.data?.error || e.message)
+      });
+    } finally { setScheduling(false); }
   };
 
-  img.onerror = () => console.error('Eroare încărcare imagine');
-};
+  // ═══ CANVAS ═══
+  const renderCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !templateSelectat || !versetSelectat) return;
 
-  // ═══ DOWNLOAD ═══
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = templateSelectat.url || templateSelectat.thumbnail;
+
+    img.onload = () => {
+      const W = 1080;
+      const H = 1350;
+      canvas.width = W;
+      canvas.height = H;
+
+      // Cover crop
+      const imgR = img.width / img.height;
+      const canR = W / H;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
+      else { sh = img.width / canR; sy = (img.height - sh) / 2; }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+
+      // Overlay
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, 'rgba(0,0,0,0.05)');
+      grad.addColorStop(0.25, 'rgba(0,0,0,0.2)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
+      grad.addColorStop(0.75, 'rgba(0,0,0,0.6)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      const sc = W / 1080;
+      const fz = Math.round(stilText.fontSize * 2 * sc);
+
+      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = stilText.culoare;
+      ctx.textAlign = 'center';
+
+      if (stilText.umbra) {
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = 25 * sc;
+        ctx.shadowOffsetX = 2 * sc;
+        ctx.shadowOffsetY = 3 * sc;
+      }
+
+      // Word wrap
+      const maxW = W * 0.82;
+      const lh = fz * 1.5;
+      const ref = versetSelectat.referintaCompleta || versetSelectat.referinta;
+      const raw = `\u201C${versetSelectat.text}\u201D`;
+      const words = raw.split(' ');
+      const lines = [];
+      let cur = '';
+      words.forEach(w => {
+        const t = cur + w + ' ';
+        if (ctx.measureText(t).width > maxW && cur) {
+          lines.push(cur.trim());
+          cur = w + ' ';
+        } else { cur = t; }
+      });
+      lines.push(cur.trim());
+
+      const maxLines = 8;
+      const dl = lines.slice(0, maxLines);
+      if (lines.length > maxLines) dl[maxLines - 1] += '...';
+      const th = dl.length * lh;
+
+      let startY;
+      if (stilText.pozitie === 'top') startY = H * 0.12;
+      else if (stilText.pozitie === 'bottom') startY = H - th - H * 0.25;
+      else startY = (H - th) / 2 - 30;
+
+      // Linie decorativă
+      ctx.strokeStyle = 'rgba(212,175,55,0.6)';
+      ctx.lineWidth = 2 * sc;
+      const lineW = 70 * sc;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - lineW, startY - 35 * sc);
+      ctx.lineTo(W / 2 + lineW, startY - 35 * sc);
+      ctx.stroke();
+
+      dl.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lh));
+
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - lineW, startY + th + 15 * sc);
+      ctx.lineTo(W / 2 + lineW, startY + th + 15 * sc);
+      ctx.stroke();
+
+      // Referinta
+      ctx.shadowBlur = 12 * sc;
+      ctx.font = `bold ${Math.round(fz * 0.48)}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = '#D4AF37';
+      ctx.fillText(`\u2014 ${ref}`, W / 2, startY + th + 55 * sc);
+
+      // Logo
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      const logo = new Image();
+      logo.crossOrigin = 'anonymous';
+      logo.src = '/logo.png';
+
+      logo.onload = () => {
+        const logoH = 95 * sc;
+        const logoW = logoH;
+        const logoX = W / 2 - logoW / 2;
+        const logoY = H - logoH - 85 * sc;
+
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 7 * sc, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 7 * sc, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(212,175,55,0.7)';
+        ctx.lineWidth = 2.5 * sc;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+        ctx.restore();
+
+        const wmFz = Math.round(fz * 0.38);
+        ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.textAlign = 'center';
+        ctx.fillText('Popas pentru Suflet', W / 2, logoY + logoH + 36 * sc);
+
+        saveCanvasImage();
+      };
+
+      logo.onerror = () => {
+        const wmFz = Math.round(fz * 0.42);
+        ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.textAlign = 'center';
+        ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
+
+        saveCanvasImage();
+      };
+    };
+
+    img.onerror = () => console.error('Eroare încărcare imagine');
+  };
+
+  const saveCanvasImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      const base64 = canvas.toDataURL('image/jpeg', 0.92);
+      setGeneratedImageBase64(base64);
+      setPreviewUrl(base64);
+    } catch (e) {
+      console.error('Canvas save error:', e);
+      setGeneratedImageBase64(null);
+      setPreviewUrl(templateSelectat?.thumbnail || null);
+    }
+  };
+
   const downloadImage = () => {
     if (generatedImageBase64) {
       const link = document.createElement('a');
@@ -451,7 +438,8 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
       <div style={{
         display: 'flex', alignItems: 'center', marginBottom: '1.5rem',
         background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)',
-        padding: '0.5rem', border: '1px solid var(--border-subtle)'
+        padding: '0.5rem', border: '1px solid var(--border-subtle)',
+        overflowX: 'auto'
       }}>
         {[
           { nr: 1, label: 'Imaginea', icon: '🖼️' },
@@ -459,23 +447,17 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
           { nr: 3, label: 'Publică', icon: '✨' }
         ].map((s, idx) => (
           <React.Fragment key={s.nr}>
-            <div
-              onClick={() => step > s.nr && setStep(s.nr)}
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '0.75rem 1rem', borderRadius: 'var(--radius-lg)',
-                background: step === s.nr
-                  ? 'linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05))'
-                  : 'transparent',
-                border: step === s.nr ? '1px solid var(--border-color)' : '1px solid transparent',
-                cursor: step > s.nr ? 'pointer' : 'default',
-                transition: 'var(--transition)'
-              }}
-            >
+            <div onClick={() => step > s.nr && setStep(s.nr)} style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-lg)',
+              background: step === s.nr ? 'linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05))' : 'transparent',
+              border: step === s.nr ? '1px solid var(--border-color)' : '1px solid transparent',
+              cursor: step > s.nr ? 'pointer' : 'default', transition: 'var(--transition)',
+              minWidth: 'fit-content'
+            }}>
               <div style={{
-                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                background: step > s.nr ? 'var(--accent-green)'
-                  : step === s.nr ? 'var(--gold-primary)' : 'var(--bg-input)',
+                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                background: step > s.nr ? 'var(--accent-green)' : step === s.nr ? 'var(--gold-primary)' : 'var(--bg-input)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '0.8rem', fontWeight: 700,
                 color: step >= s.nr ? '#000' : 'var(--text-muted)'
@@ -486,29 +468,25 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                 <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
                   Pasul {s.nr}
                 </div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: step === s.nr ? 'var(--gold-primary)' : 'var(--text-secondary)' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: step === s.nr ? 'var(--gold-primary)' : 'var(--text-secondary)' }}>
                   {s.icon} {s.label}
                 </div>
               </div>
             </div>
-            {idx < 2 && (
-              <div style={{
-                width: 25, height: 2, flexShrink: 0,
-                background: step > s.nr ? 'var(--accent-green)' : 'var(--border-subtle)'
-              }} />
-            )}
+            {idx < 2 && <div style={{ width: 20, height: 2, flexShrink: 0, background: step > s.nr ? 'var(--accent-green)' : 'var(--border-subtle)' }} />}
           </React.Fragment>
         ))}
       </div>
 
-      {/* ═══════════════════════════════════════
-           STEP 1 — ALEGE IMAGINEA
-         ═══════════════════════════════════════ */}
+      {/* Canvas ascuns - mereu prezent */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+      {/* ═══ STEP 1 ═══ */}
       {step === 1 && (
         <div className="card card-gold animate-in">
           <div className="card-header">
             <div className="card-title"><span className="icon">🖼️</span> Alege Imaginea</div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }}
                 accept="image/*" onChange={e => handleUpload(e.target.files[0])} />
               <button className="btn btn-gold btn-sm"
@@ -518,7 +496,6 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
             </div>
           </div>
 
-          {/* Filtre categorii */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1.25rem' }}>
             {CATEGORII.map(c => (
               <button key={c.id} onClick={() => setCategorieFiltre(c.id)} style={{
@@ -526,65 +503,50 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                 border: `1px solid ${categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`,
                 background: categorieFiltre === c.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)',
                 color: categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--text-muted)',
-                cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, transition: 'var(--transition)'
+                cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500
               }}>{c.label}</button>
             ))}
           </div>
 
-          {/* Info */}
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-            📐 Toate imaginile sunt verticale <strong>1080×1350</strong> (format 4:5)
-            — ideal pentru Facebook, Instagram și TikTok
+            📐 Imagine verticală <strong>1080×1350</strong> — ideal pentru Facebook, Instagram, TikTok
           </div>
 
-          {/* Grid imagini — VERTICAL 4:5 */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
             gap: '0.75rem'
           }}>
-            {/* Upload card */}
             <div onClick={() => fileInputRef.current.click()} style={{
               aspectRatio: '4/5', borderRadius: 'var(--radius-lg)',
               border: '2px dashed var(--border-color)',
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', background: 'var(--bg-input)',
-              color: 'var(--text-muted)', transition: 'var(--transition)'
+              color: 'var(--text-muted)'
             }}>
               <div style={{ fontSize: '2rem' }}>⬆️</div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>Upload</div>
-              <div style={{ fontSize: '0.65rem' }}>JPG/PNG</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600 }}>Upload</div>
             </div>
 
-            {/* Template cards */}
             {allTemplates.map(t => (
-              <div key={t.id} onClick={() => { setTemplateSelectat(t); setStep(2); }} style={{
+              <div key={t.id} onClick={() => { setTemplateSelectat(t); setPreviewUrl(null); setStep(2); }} style={{
                 position: 'relative', aspectRatio: '4/5',
                 borderRadius: 'var(--radius-lg)', overflow: 'hidden', cursor: 'pointer',
-                border: templateSelectat?.id === t.id
-                  ? '3px solid var(--gold-primary)' : '2px solid var(--border-subtle)',
-                boxShadow: templateSelectat?.id === t.id ? 'var(--shadow-gold)' : 'none',
-                transition: 'var(--transition)'
+                border: templateSelectat?.id === t.id ? '3px solid var(--gold-primary)' : '2px solid var(--border-subtle)',
+                boxShadow: templateSelectat?.id === t.id ? 'var(--shadow-gold)' : 'none'
               }}>
                 <img src={t.thumbnail} alt={t.name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   onError={e => { e.target.style.display = 'none'; }} />
-
                 <div style={{
                   position: 'absolute', inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent 50%)',
                   display: 'flex', flexDirection: 'column',
                   justifyContent: 'flex-end', padding: '0.5rem'
                 }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'white', lineHeight: 1.3 }}>
-                    {t.name}
-                  </div>
-                  {t.custom && (
-                    <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)' }}>📁 Custom</div>
-                  )}
+                  <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'white' }}>{t.name}</div>
                 </div>
-
                 {templateSelectat?.id === t.id && (
                   <div style={{
                     position: 'absolute', top: 6, right: 6, width: 24, height: 24,
@@ -593,7 +555,6 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                     fontSize: '0.75rem', fontWeight: 700, color: '#000'
                   }}>✓</div>
                 )}
-
                 {t.custom && (
                   <button onClick={e => { e.stopPropagation(); handleDeleteTemplate(t.id); }} style={{
                     position: 'absolute', top: 6, left: 6, width: 22, height: 22,
@@ -605,24 +566,13 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
               </div>
             ))}
           </div>
-
-          {allTemplates.length === 0 && (
-            <div className="empty-state" style={{ padding: '2rem' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
-              <div>Niciun template în această categorie</div>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ═══════════════════════════════════════
-           STEP 2 — ALEGE VERSETUL
-         ═══════════════════════════════════════ */}
+      {/* ═══ STEP 2 ═══ */}
       {step === 2 && (
-        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Stânga */}
+        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Teme */}
             <div className="card card-gold">
               <div className="card-header">
                 <div className="card-title"><span className="icon">📖</span> Alege Versetul</div>
@@ -637,7 +587,7 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                     background: tema === t.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)',
                     color: tema === t.id ? 'var(--gold-primary)' : 'var(--text-muted)',
                     cursor: 'pointer', fontSize: '0.73rem', display: 'flex',
-                    flexDirection: 'column', alignItems: 'center', gap: 2, transition: 'var(--transition)'
+                    flexDirection: 'column', alignItems: 'center', gap: 2
                   }}>
                     <span style={{ fontSize: '1.1rem' }}>{t.icon}</span>
                     <span>{t.label}</span>
@@ -645,11 +595,10 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                 ))}
               </div>
 
-              {/* Căutare verset */}
               <div className="form-group">
                 <label className="form-label">🔍 Caută verset:</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" className="form-input" placeholder="Ioan 3:16, dragoste..."
+                  <input type="text" className="form-input" placeholder="Ioan 3:16, dragoste, pace..."
                     value={versetSearch} onChange={e => setVersetSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && searchVerset()} />
                   <button className="btn btn-gold" onClick={searchVerset} disabled={searching}>
@@ -659,7 +608,7 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
               </div>
 
               {verseteGasite.length > 0 && (
-                <div style={{ maxHeight: 250, overflowY: 'auto' }}>
+                <div style={{ maxHeight: 250, overflowY: 'auto', marginTop: '0.5rem' }}>
                   {verseteGasite.map((v, i) => (
                     <div key={i} onClick={() => {
                       setVersetSelectat({
@@ -668,9 +617,9 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                       });
                       setVerseteGasite([]); setVersetSearch('');
                     }} style={{
-                      padding: '0.7rem', marginBottom: '0.35rem', background: 'var(--bg-input)',
+                      padding: '0.65rem', marginBottom: '0.35rem', background: 'var(--bg-input)',
                       borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)',
-                      cursor: 'pointer', transition: 'var(--transition)'
+                      cursor: 'pointer'
                     }}>
                       <div style={{ fontSize: '0.82rem', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: 3, lineHeight: 1.5 }}>
                         "{v.text.substring(0, 85)}{v.text.length > 85 ? '...' : ''}"
@@ -696,7 +645,9 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                     — {versetSelectat.referintaCompleta || versetSelectat.referinta}
                   </div>
                   <button className="btn btn-secondary btn-sm" style={{ marginTop: '0.5rem' }}
-                    onClick={() => setVersetSelectat(null)}>✕ Schimbă</button>
+                    onClick={() => { setVersetSelectat(null); setPreviewUrl(null); setGeneratedImageBase64(null); }}>
+                    ✕ Schimbă
+                  </button>
                 </div>
               ) : (
                 <div style={{ padding: '0.6rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)',
@@ -706,7 +657,6 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
               )}
             </div>
 
-            {/* Platformă + Generare */}
             <div className="card">
               <div className="card-header">
                 <div className="card-title"><span className="icon">📱</span> Platformă</div>
@@ -718,14 +668,12 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                 ))}
               </div>
               <button className="btn btn-gold btn-lg btn-block" onClick={handleGenerate} disabled={generating}>
-                {generating ? (
-                  <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</>
-                ) : '✨ Generează Descriere & Hashtags'}
+                {generating ? <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</> : '✨ Generează Descriere & Hashtags'}
               </button>
             </div>
           </div>
 
-          {/* Dreapta — Preview */}
+          {/* Preview */}
           <div className="card">
             <div className="card-header">
               <div className="card-title"><span className="icon">👁️</span> Preview</div>
@@ -734,7 +682,32 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
 
             <div style={{ width: '100%', aspectRatio: '4/5', borderRadius: 'var(--radius-md)',
               overflow: 'hidden', background: 'var(--bg-input)', marginBottom: '1rem' }}>
-              <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+              {previewUrl ? (
+                <img src={previewUrl} alt="Preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : templateSelectat ? (
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <img src={templateSelectat.thumbnail} alt="Template"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {!versetSelectat && (
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.5)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontSize: '0.88rem', textAlign: 'center', padding: '1rem'
+                    }}>
+                      📖 Selectează un verset<br />pentru preview complet
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex',
+                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '3rem', opacity: 0.3 }}>🖼️</div>
+                  <div>Nicio imagine</div>
+                </div>
+              )}
             </div>
 
             {templateSelectat && (
@@ -779,7 +752,6 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                   </div>
                 </div>
 
-                {/* Font preview */}
                 <div style={{ padding: '0.5rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)',
                   fontFamily: stilText.font, fontSize: '0.85rem', fontStyle: 'italic',
                   color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '0.75rem' }}>
@@ -797,12 +769,9 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
         </div>
       )}
 
-      {/* ═══════════════════════════════════════
-           STEP 3 — CONȚINUT GENERAT & PUBLICĂ
-         ═══════════════════════════════════════ */}
+      {/* ═══ STEP 3 ═══ */}
       {step === 3 && generated && (
-        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Stânga — Imagine finală */}
+        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
           <div className="card">
             <div className="card-header">
               <div className="card-title"><span className="icon">🖼️</span> Imagine Finală</div>
@@ -811,12 +780,13 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
 
             <div style={{ width: '100%', aspectRatio: '4/5', borderRadius: 'var(--radius-md)',
               overflow: 'hidden', marginBottom: '1rem' }}>
-              {generatedImageBase64 ? (
-                <img src={generatedImageBase64} alt="Generated"
+              {generatedImageBase64 || previewUrl ? (
+                <img src={generatedImageBase64 || previewUrl} alt="Generated"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              ) : (
-                <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-              )}
+              ) : templateSelectat ? (
+                <img src={templateSelectat.thumbnail} alt="Template"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : null}
             </div>
 
             <div className="verse-card">
@@ -832,10 +802,7 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
             </div>
           </div>
 
-          {/* Dreapta — Conținut */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-            {/* Variante */}
             {generated.variante?.length > 1 && (
               <div className="tabs">
                 {generated.variante.slice(0, 5).map((_, i) => (
@@ -847,7 +814,6 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
               </div>
             )}
 
-            {/* Descriere */}
             <div className="card card-gold">
               <div className="card-header">
                 <div className="card-title"><span className="icon">📝</span> Descriere</div>
@@ -856,12 +822,11 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                 }>📋 Copiază</button>
               </div>
               <div style={{ background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', padding: '1rem',
-                whiteSpace: 'pre-wrap', fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.7, minHeight: 120 }}>
+                whiteSpace: 'pre-wrap', fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.7, minHeight: 100 }}>
                 {generated.variante?.[variantaActiva] || generated.descriere}
               </div>
             </div>
 
-            {/* Hashtags */}
             <div className="card">
               <div className="card-header">
                 <div className="card-title"><span className="icon">#️⃣</span> Hashtags</div>
@@ -875,15 +840,24 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
               </div>
             </div>
 
-            {/* Publish result */}
+            {/* Rezultate */}
             {publishResult && (
               <div style={{
-                padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                padding: '0.75rem', borderRadius: 'var(--radius-md)',
                 background: publishResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                 border: `1px solid ${publishResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
                 color: publishResult.success ? 'var(--accent-green)' : 'var(--accent-red)',
                 fontSize: '0.85rem', fontWeight: 600
               }}>{publishResult.message}</div>
+            )}
+            {scheduleResult && (
+              <div style={{
+                padding: '0.75rem', borderRadius: 'var(--radius-md)',
+                background: scheduleResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                border: `1px solid ${scheduleResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                color: scheduleResult.success ? 'var(--accent-green)' : 'var(--accent-red)',
+                fontSize: '0.85rem', fontWeight: 600
+              }}>{scheduleResult.message}</div>
             )}
 
             {/* Acțiuni */}
@@ -892,90 +866,41 @@ ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
                 {saved ? '✅ Salvat!' : '💾 Salvează'}
               </button>
               <button className="btn btn-outline" onClick={downloadImage}>⬇️ PNG</button>
-
               <button onClick={handlePublish} disabled={publishing} style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                padding: '0.75rem', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
                 fontSize: '0.85rem', fontWeight: 600,
                 background: publishing ? 'rgba(24,119,242,0.5)' : 'linear-gradient(135deg,#1877F2,#0C5DC7)',
-                color: 'white', boxShadow: '0 4px 15px rgba(24,119,242,0.3)',
-                transition: 'var(--transition)'
+                color: 'white', boxShadow: '0 4px 15px rgba(24,119,242,0.3)'
               }}>
-                {publishing ? '⏳ Se publică...' : '📘 Publică pe Facebook'}
+                {publishing ? '⏳...' : '📘 Facebook Acum'}
               </button>
-
               <button className="btn btn-secondary" onClick={() => {
                 setStep(1); setGenerated(null); setVersetSelectat(null);
-                setPublishResult(null); setGeneratedImageBase64(null);
+                setPublishResult(null); setScheduleResult(null);
+                setGeneratedImageBase64(null); setPreviewUrl(null);
               }}>🔄 Nouă</button>
             </div>
-			
-			{/* Programare automată */}
-<div className="card" style={{ marginTop: '1rem' }}>
-  <div className="card-header">
-    <div className="card-title">
-      <span className="icon">📅</span>
-      Programare automată Facebook
-    </div>
-  </div>
 
-  <div className="form-group">
-    <label className="form-label">Alege data și ora:</label>
-    <input
-      type="datetime-local"
-      className="form-input"
-      value={scheduledAt}
-      onChange={(e) => setScheduledAt(e.target.value)}
-    />
-  </div>
-
-  <button
-    className="btn btn-gold btn-block"
-    onClick={handleSchedule}
-    disabled={scheduling}
-  >
-    {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
-  </button>
-
-  {scheduleResult && (
-    <div style={{
-      marginTop: '0.75rem',
-      padding: '0.75rem 1rem',
-      borderRadius: 'var(--radius-md)',
-      background: scheduleResult.success
-        ? 'rgba(16,185,129,0.1)'
-        : 'rgba(239,68,68,0.1)',
-      border: `1px solid ${scheduleResult.success
-        ? 'rgba(16,185,129,0.3)'
-        : 'rgba(239,68,68,0.3)'}`,
-      color: scheduleResult.success
-        ? 'var(--accent-green)'
-        : 'var(--accent-red)',
-      fontSize: '0.85rem',
-      fontWeight: '600'
-    }}>
-      {scheduleResult.message}
-    </div>
-  )}
-</div>
-			
-
-            {/* Info */}
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', fontSize: '0.72rem' }}>
-              <span className="badge badge-gold">🎯 {generated.tema}</span>
-              <span className="badge badge-blue">📱 {generated.platform}</span>
-              <span className="badge badge-purple">📐 1080×1350</span>
+            {/* Programare */}
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title"><span className="icon">📅</span> Programare Automată</div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data și ora (ora României):</label>
+                <input type="datetime-local" className="form-input"
+                  value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} />
+              </div>
+              <button className="btn btn-gold btn-block" onClick={handleSchedule} disabled={scheduling}>
+                {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Canvas ascuns pentru renderare în step 3 */}
-      {step === 3 && <canvas ref={canvasRef} style={{ display: 'none' }} />}
     </div>
   );
 };
-
-
 
 export default GeneratePage;

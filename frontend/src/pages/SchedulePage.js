@@ -49,15 +49,16 @@ const SchedulePage = () => {
   };
 
   const formatDate = (d) => {
-    if (!d) return '-';
-    return new Date(d).toLocaleString('ro-RO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  if (!d) return '-';
+  return new Date(d).toLocaleString('ro-RO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Bucharest'
+  });
+};
 
   return (
     <div className="animate-in">
