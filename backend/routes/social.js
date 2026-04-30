@@ -213,21 +213,37 @@ router.post('/publish/:id', async (req, res) => {
 // DELETE /api/social/scheduled/:id
 router.delete('/scheduled/:id', async (req, res) => {
   try {
+    console.log('🗑️ Delete scheduled:', req.params.id);
+
     const post = await Post.findById(req.params.id);
+
     if (!post) {
-      return res.status(404).json({ error: 'Nu există!' });
+      console.log('❌ Post not found:', req.params.id);
+      return res.status(404).json({ error: 'Postarea nu există!' });
     }
 
-    // Șterge imaginea salvată
-    if (post.imageUrl && path.isAbsolute(post.imageUrl)) {
-      if (fs.existsSync(post.imageUrl)) {
-        try { fs.unlinkSync(post.imageUrl); } catch (e) {}
+    // Șterge imaginea locală dacă există
+    if (post.imageUrl && !post.imageUrl.startsWith('http')) {
+      try {
+        const absPath = path.isAbsolute(post.imageUrl)
+          ? post.imageUrl
+          : path.join(__dirname, '..', post.imageUrl);
+
+        if (fs.existsSync(absPath)) {
+          fs.unlinkSync(absPath);
+          console.log('🗑️ Imagine ștearsă:', absPath);
+        }
+      } catch (e) {
+        console.log('⚠️ Nu am putut șterge imaginea:', e.message);
       }
     }
 
     await Post.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
+    console.log('✅ Post șters:', req.params.id);
+
+    res.json({ success: true, message: 'Programare ștearsă.' });
   } catch (error) {
+    console.error('❌ Delete error:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -207,39 +207,41 @@ const GeneratePage = () => {
   };
 
   // ═══ SCHEDULE ═══
-  const handleSchedule = async () => {
-    if (!generated) {
-      alert('Generează mai întâi postarea!');
-      return;
+  {/* În handleSchedule, înainte de axios.post */}
+const handleSchedule = async () => {
+  if (!generated) { alert('Generează mai întâi!'); return; }
+  if (!scheduledAt) { alert('Alege data și ora!'); return; }
+
+  setScheduling(true);
+  setScheduleResult(null);
+
+  try {
+    const descriere = generated.variante?.[variantaActiva] || generated.descriere;
+
+    // ✅ Trimitem direct datetime-ul local - browserul îl convertește automat la UTC
+    const r = await axios.post(`${API}/api/social/schedule`, {
+      content: descriere,
+      hashtags: generated.hashtags,
+      imageBase64: generatedImageBase64 || null,
+      imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
+      platform: 'facebook',
+      scheduledDate: new Date(scheduledAt).toISOString(), // ✅ Convertit corect la UTC
+      tema,
+      verset: generated.verset
+    });
+
+    if (r.data.success) {
+      setScheduleResult({ success: true, message: r.data.message });
     }
-    if (!scheduledAt) {
-      alert('Alege data și ora!');
-      return;
-    }
-    setScheduling(true);
-    setScheduleResult(null);
-    try {
-      const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-      const r = await axios.post(`${API}/api/social/schedule`, {
-        content: descriere,
-        hashtags: generated.hashtags,
-        imageBase64: generatedImageBase64 || null,
-        imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
-        platform: 'facebook',
-        scheduledDate: scheduledAt,
-        tema,
-        verset: generated.verset
-      });
-      if (r.data.success) {
-        setScheduleResult({ success: true, message: r.data.message });
-      }
-    } catch (e) {
-      setScheduleResult({
-        success: false,
-        message: '❌ ' + (e.response?.data?.error || e.message)
-      });
-    } finally { setScheduling(false); }
-  };
+  } catch (e) {
+    setScheduleResult({
+      success: false,
+      message: '❌ ' + (e.response?.data?.error || e.message)
+    });
+  } finally { setScheduling(false); }
+};
+  
+  
 
   // ═══ CANVAS ═══
   const renderCanvas = () => {
