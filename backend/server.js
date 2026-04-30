@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const app = express();
 
+
+app.use('/api/reading', require('./routes/reading'));
 // Middleware
 app.use(cors({
   origin: [

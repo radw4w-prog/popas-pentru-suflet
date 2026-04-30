@@ -16,6 +16,8 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [readingProgress, setReadingProgress] = useState(null);
+const [readingSuggestion, setReadingSuggestion] = useState(null);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -58,7 +60,13 @@ const DashboardPage = () => {
         axios.get(`${API}/api/posts?limit=10`).catch(() => ({ data: { posts: [] } })),
         axios.get(`${API}/api/social/scheduled`).catch(() => ({ data: [] })),
         axios.get(`${API}/api/social/status`).catch(() => ({ data: { facebook: {} } })),
+		// Adaugă în Promise.all:
+axios.get(`${API}/api/reading/progress`).catch(() => ({ data: null })),
+axios.get(`${API}/api/reading/suggest`).catch(() => ({ data: null })),
       ]);
+	  setReadingProgress(readingR.data);
+setReadingSuggestion(suggestR.data);
+	  
 
       const posts = postsR.data?.posts || postsR.data || [];
       const allPosts = Array.isArray(posts) ? posts : [];
@@ -391,6 +399,101 @@ const DashboardPage = () => {
               — {randomVerset.carte} {randomVerset.capitol}:{randomVerset.verset}
             </div>
           </div>
+		  
+		  
+		  
+		  {/* ═══ CITEȘTE BIBLIA ═══ */}
+<div style={{
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border-color)',
+  borderRadius: 'var(--radius-xl)',
+  padding: '1.5rem 2rem',
+  marginBottom: '1.5rem',
+  position: 'relative',
+  overflow: 'hidden'
+}}>
+  <div style={{
+    position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+    background: 'linear-gradient(90deg, var(--accent-green), var(--gold-primary), var(--accent-purple))'
+  }} />
+
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: '1.5rem',
+    flexWrap: 'wrap'
+  }}>
+    {/* Icon */}
+    <div style={{
+      width: '60px', height: '60px', borderRadius: '50%', flexShrink: 0,
+      background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(212,175,55,0.1))',
+      border: '2px solid rgba(16,185,129,0.2)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '1.5rem'
+    }}>
+      📖
+    </div>
+
+    {/* Motivare */}
+    <div style={{ flex: 1, minWidth: '200px' }}>
+      <div style={{
+        fontFamily: "'Playfair Display', serif",
+        fontSize: '1.15rem', fontWeight: 700,
+        color: 'var(--text-primary)', marginBottom: '0.35rem'
+      }}>
+        Citește Biblia zilnic 📖
+      </div>
+      <div style={{
+        fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6
+      }}>
+        {readingSuggestion ? (
+          <>
+            Sugestie: <strong style={{ color: 'var(--gold-primary)' }}>
+              {readingSuggestion.carte} {readingSuggestion.capitol}
+            </strong> — {readingSuggestion.descriere}
+          </>
+        ) : (
+          'Descoperă cuvântul lui Dumnezeu în fiecare zi!'
+        )}
+      </div>
+    </div>
+
+    {/* Progress */}
+    <div style={{ minWidth: '180px', textAlign: 'right' }}>
+      <div style={{
+        fontSize: '1.8rem', fontWeight: 700,
+        fontFamily: "'Playfair Display', serif",
+        color: 'var(--accent-green)', lineHeight: 1
+      }}>
+        {readingProgress?.procent || 0}%
+      </div>
+      <div style={{
+        fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem'
+      }}>
+        {readingProgress?.capitoleCitite || 0} / 1.189 capitole
+      </div>
+
+      {/* Progress bar */}
+      <div style={{
+        height: '8px', borderRadius: '4px',
+        background: 'var(--bg-input)', marginTop: '0.5rem',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          height: '100%', borderRadius: '4px',
+          width: `${readingProgress?.procent || 0}%`,
+          background: 'linear-gradient(90deg, var(--accent-green), var(--gold-primary))',
+          transition: 'width 1.5s ease',
+          minWidth: readingProgress?.procent > 0 ? '4px' : '0'
+        }} />
+      </div>
+    </div>
+
+    {/* CTA */}
+    <button className="btn btn-outline" style={{ flexShrink: 0 }}
+      onClick={() => window.location.href = '/verses'}>
+      📖 Citește acum
+    </button>
+  </div>
+</div>
 
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexShrink: 0 }}>
