@@ -4,6 +4,8 @@ const Verse = require('../models/Verse');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { protect, optionalAuth } = require('../middleware/auth');
+const { checkGenerateLimit, getGenerateStatus, registerGeneration } = require('../middleware/rateLimit');
 
 let Description = null;
 try {
@@ -221,6 +223,10 @@ async function getRelevantVerse(tema) {
   };
 }
 
+
+// GET /api/generate/limit-status - verifică generări rămase
+router.get('/limit-status', optionalAuth, getGenerateStatus);
+
 // ═══════════════════════════════════════
 // ROUTES
 // ═══════════════════════════════════════
@@ -313,7 +319,8 @@ router.get('/teme', (req, res) => {
 });
 
 // POST /api/generate
-router.post('/', async (req, res) => {
+// POST /api/generate
+router.post('/', optionalAuth, checkGenerateLimit, async (req, res) => {
   try {
     const { tema = 'default', platform = 'facebook', versetCustom = null } = req.body;
 
@@ -338,6 +345,13 @@ router.post('/', async (req, res) => {
     const descriere = variante[0] || `“${verseData.text}”\n— ${ref}`;
     const hashtags = generateHashtags(tema, platform);
 
+    // Log generare reușită
+    await registerGeneration(req, { tema, platform });
+
+    const remainingAfter = req.limitInfo?.type === 'admin'
+      ? null
+      : Math.max(0, (req.limitInfo?.limit || 0) - ((req.limitInfo?.used || 0) + 1));
+
     res.json({
       success: true,
       verset: verseData,
@@ -346,7 +360,13 @@ router.post('/', async (req, res) => {
       variante: variante.slice(0, 5),
       tema,
       platform,
-      generatLa: new Date().toISOString()
+      generatLa: new Date().toISOString(),
+      limitInfo: {
+        type: req.limitInfo?.type || 'guest',
+        limit: req.limitInfo?.limit || null,
+        used: req.limitInfo?.type === 'admin' ? null : (req.limitInfo.used + 1),
+        remaining: remainingAfter
+      }
     });
   } catch (error) {
     console.error('Generate error:', error);

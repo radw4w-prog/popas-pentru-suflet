@@ -1,0 +1,592 @@
+{
+  "versiune": "3.1",
+  "total": 81,
+  "format": "vertical 1080x1350",
+  "categorii": [
+    "apus",
+    "biserica",
+    "cascada",
+    "ceata",
+    "cer",
+    "flori",
+    "iarna",
+    "luna",
+    "mare",
+    "minimalist",
+    "munte",
+    "padure",
+    "rasarit",
+    "spiritual",
+    "stele"
+  ],
+  "validat": "2026-05-01T10:57:54.262Z",
+  "templates": [
+    {
+      "id": "t0001",
+      "name": "Apus 1",
+      "url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0002",
+      "name": "Apus 2",
+      "url": "https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0003",
+      "name": "Apus 3",
+      "url": "https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0004",
+      "name": "Apus 4",
+      "url": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0005",
+      "name": "Apus 5",
+      "url": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0006",
+      "name": "Apus 6",
+      "url": "https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0007",
+      "name": "Apus 7",
+      "url": "https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0008",
+      "name": "Apus 8",
+      "url": "https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0009",
+      "name": "Apus 9",
+      "url": "https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0011",
+      "name": "Apus 11",
+      "url": "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0012",
+      "name": "Apus 12",
+      "url": "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0013",
+      "name": "Apus 13",
+      "url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0014",
+      "name": "Apus 14",
+      "url": "https://images.unsplash.com/photo-1501179691627-eeaa65ea017c?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1501179691627-eeaa65ea017c?w=400&h=500&fit=crop&q=60",
+      "categorie": "apus"
+    },
+    {
+      "id": "t0016",
+      "name": "Răsărit 1",
+      "url": "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0017",
+      "name": "Răsărit 2",
+      "url": "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0018",
+      "name": "Răsărit 3",
+      "url": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0019",
+      "name": "Răsărit 4",
+      "url": "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0020",
+      "name": "Răsărit 5",
+      "url": "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0021",
+      "name": "Răsărit 6",
+      "url": "https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0022",
+      "name": "Răsărit 7",
+      "url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0023",
+      "name": "Răsărit 8",
+      "url": "https://images.unsplash.com/photo-1511300636408-a63a89df3482?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1511300636408-a63a89df3482?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0024",
+      "name": "Răsărit 9",
+      "url": "https://images.unsplash.com/photo-1490049350474-498de43bc885?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1490049350474-498de43bc885?w=400&h=500&fit=crop&q=60",
+      "categorie": "rasarit"
+    },
+    {
+      "id": "t0026",
+      "name": "Cer 1",
+      "url": "https://images.unsplash.com/photo-1517483000871-1dbf64a6e1c6?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1517483000871-1dbf64a6e1c6?w=400&h=500&fit=crop&q=60",
+      "categorie": "cer"
+    },
+    {
+      "id": "t0027",
+      "name": "Cer 2",
+      "url": "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400&h=500&fit=crop&q=60",
+      "categorie": "cer"
+    },
+    {
+      "id": "t0028",
+      "name": "Cer 3",
+      "url": "https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=400&h=500&fit=crop&q=60",
+      "categorie": "cer"
+    },
+    {
+      "id": "t0029",
+      "name": "Cer 4",
+      "url": "https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=400&h=500&fit=crop&q=60",
+      "categorie": "cer"
+    },
+    {
+      "id": "t0030",
+      "name": "Cer 5",
+      "url": "https://images.unsplash.com/photo-1499346030926-9a72daac6c63?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1499346030926-9a72daac6c63?w=400&h=500&fit=crop&q=60",
+      "categorie": "cer"
+    },
+    {
+      "id": "t0031",
+      "name": "Stele 1",
+      "url": "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=500&fit=crop&q=60",
+      "categorie": "stele"
+    },
+    {
+      "id": "t0032",
+      "name": "Stele 2",
+      "url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=400&h=500&fit=crop&q=60",
+      "categorie": "stele"
+    },
+    {
+      "id": "t0033",
+      "name": "Stele 3",
+      "url": "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=400&h=500&fit=crop&q=60",
+      "categorie": "stele"
+    },
+    {
+      "id": "t0034",
+      "name": "Stele 4",
+      "url": "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=400&h=500&fit=crop&q=60",
+      "categorie": "stele"
+    },
+    {
+      "id": "t0035",
+      "name": "Stele 5",
+      "url": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=500&fit=crop&q=60",
+      "categorie": "stele"
+    },
+    {
+      "id": "t0036",
+      "name": "Lună 1",
+      "url": "https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=400&h=500&fit=crop&q=60",
+      "categorie": "luna"
+    },
+    {
+      "id": "t0037",
+      "name": "Munte 1",
+      "url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0038",
+      "name": "Munte 2",
+      "url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0039",
+      "name": "Munte 3",
+      "url": "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0040",
+      "name": "Munte 4",
+      "url": "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0041",
+      "name": "Munte 5",
+      "url": "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0042",
+      "name": "Munte 6",
+      "url": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0043",
+      "name": "Munte 7",
+      "url": "https://images.unsplash.com/photo-1439853949127-fa647821eba0?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1439853949127-fa647821eba0?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0044",
+      "name": "Munte 8",
+      "url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0045",
+      "name": "Munte 9",
+      "url": "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=400&h=500&fit=crop&q=60",
+      "categorie": "munte"
+    },
+    {
+      "id": "t0046",
+      "name": "Pădure 1",
+      "url": "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0047",
+      "name": "Pădure 2",
+      "url": "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0048",
+      "name": "Pădure 3",
+      "url": "https://images.unsplash.com/photo-1511497584788-876760111969?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1511497584788-876760111969?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0049",
+      "name": "Pădure 4",
+      "url": "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0050",
+      "name": "Pădure 5",
+      "url": "https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0051",
+      "name": "Pădure 6",
+      "url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0052",
+      "name": "Pădure 7",
+      "url": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0053",
+      "name": "Pădure 8",
+      "url": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0054",
+      "name": "Pădure 9",
+      "url": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0055",
+      "name": "Pădure 10",
+      "url": "https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0056",
+      "name": "Pădure 11",
+      "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0057",
+      "name": "Pădure 12",
+      "url": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=500&fit=crop&q=60",
+      "categorie": "padure"
+    },
+    {
+      "id": "t0058",
+      "name": "Mare 1",
+      "url": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=500&fit=crop&q=60",
+      "categorie": "mare"
+    },
+    {
+      "id": "t0059",
+      "name": "Mare 2",
+      "url": "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=500&fit=crop&q=60",
+      "categorie": "mare"
+    },
+    {
+      "id": "t0060",
+      "name": "Mare 3",
+      "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=500&fit=crop&q=60",
+      "categorie": "mare"
+    },
+    {
+      "id": "t0061",
+      "name": "Mare 4",
+      "url": "https://images.unsplash.com/photo-1468581264429-2548ef9eb732?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1468581264429-2548ef9eb732?w=400&h=500&fit=crop&q=60",
+      "categorie": "mare"
+    },
+    {
+      "id": "t0062",
+      "name": "Cascadă 1",
+      "url": "https://images.unsplash.com/photo-1431794062232-2a99a5431c6c?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1431794062232-2a99a5431c6c?w=400&h=500&fit=crop&q=60",
+      "categorie": "cascada"
+    },
+    {
+      "id": "t0063",
+      "name": "Cascadă 2",
+      "url": "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=400&h=500&fit=crop&q=60",
+      "categorie": "cascada"
+    },
+    {
+      "id": "t0064",
+      "name": "Cascadă 3",
+      "url": "https://images.unsplash.com/photo-1494472155656-f34e81b17ddc?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1494472155656-f34e81b17ddc?w=400&h=500&fit=crop&q=60",
+      "categorie": "cascada"
+    },
+    {
+      "id": "t0065",
+      "name": "Flori 1",
+      "url": "https://images.unsplash.com/photo-1468327768560-75b778cbb551?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1468327768560-75b778cbb551?w=400&h=500&fit=crop&q=60",
+      "categorie": "flori"
+    },
+    {
+      "id": "t0066",
+      "name": "Flori 2",
+      "url": "https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=400&h=500&fit=crop&q=60",
+      "categorie": "flori"
+    },
+    {
+      "id": "t0067",
+      "name": "Flori 3",
+      "url": "https://images.unsplash.com/photo-1444021465936-c6ca81d39b84?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1444021465936-c6ca81d39b84?w=400&h=500&fit=crop&q=60",
+      "categorie": "flori"
+    },
+    {
+      "id": "t0068",
+      "name": "Flori 4",
+      "url": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=500&fit=crop&q=60",
+      "categorie": "flori"
+    },
+    {
+      "id": "t0069",
+      "name": "Flori 5",
+      "url": "https://images.unsplash.com/photo-1469521669194-babb45599def?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1469521669194-babb45599def?w=400&h=500&fit=crop&q=60",
+      "categorie": "flori"
+    },
+    {
+      "id": "t0070",
+      "name": "Ceață 1",
+      "url": "https://images.unsplash.com/photo-1485236715568-ddc5ee6ca227?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1485236715568-ddc5ee6ca227?w=400&h=500&fit=crop&q=60",
+      "categorie": "ceata"
+    },
+    {
+      "id": "t0071",
+      "name": "Spiritual 1",
+      "url": "https://images.unsplash.com/photo-1445445290350-18a3b86e0b5a?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1445445290350-18a3b86e0b5a?w=400&h=500&fit=crop&q=60",
+      "categorie": "spiritual"
+    },
+    {
+      "id": "t0072",
+      "name": "Spiritual 2",
+      "url": "https://images.unsplash.com/photo-1474649107449-ea4f014b7e9f?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1474649107449-ea4f014b7e9f?w=400&h=500&fit=crop&q=60",
+      "categorie": "spiritual"
+    },
+    {
+      "id": "t0073",
+      "name": "Spiritual 3",
+      "url": "https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=500&fit=crop&q=60",
+      "categorie": "spiritual"
+    },
+    {
+      "id": "t0074",
+      "name": "Biserică 1",
+      "url": "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=400&h=500&fit=crop&q=60",
+      "categorie": "biserica"
+    },
+    {
+      "id": "t0075",
+      "name": "Biserică 2",
+      "url": "https://images.unsplash.com/photo-1490644658840-3f2e3f8c5625?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1490644658840-3f2e3f8c5625?w=400&h=500&fit=crop&q=60",
+      "categorie": "biserica"
+    },
+    {
+      "id": "t0076",
+      "name": "Minimalist 1",
+      "url": "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&h=500&fit=crop&q=60",
+      "categorie": "minimalist"
+    },
+    {
+      "id": "t0077",
+      "name": "Minimalist 2",
+      "url": "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400&h=500&fit=crop&q=60",
+      "categorie": "minimalist"
+    },
+    {
+      "id": "t0078",
+      "name": "Minimalist 3",
+      "url": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400&h=500&fit=crop&q=60",
+      "categorie": "minimalist"
+    },
+    {
+      "id": "t0079",
+      "name": "Minimalist 4",
+      "url": "https://images.unsplash.com/photo-1517999144091-3d9dca6d1e43?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1517999144091-3d9dca6d1e43?w=400&h=500&fit=crop&q=60",
+      "categorie": "minimalist"
+    },
+    {
+      "id": "t0080",
+      "name": "Minimalist 5",
+      "url": "https://images.unsplash.com/photo-1553356084-58ef4a67b2a7?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1553356084-58ef4a67b2a7?w=400&h=500&fit=crop&q=60",
+      "categorie": "minimalist"
+    },
+    {
+      "id": "t0081",
+      "name": "Iarnă 1",
+      "url": "https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=400&h=500&fit=crop&q=60",
+      "categorie": "iarna"
+    },
+    {
+      "id": "t0082",
+      "name": "Iarnă 2",
+      "url": "https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=400&h=500&fit=crop&q=60",
+      "categorie": "iarna"
+    },
+    {
+      "id": "t0083",
+      "name": "Iarnă 3",
+      "url": "https://images.unsplash.com/photo-1457269449834-928af64c684d?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1457269449834-928af64c684d?w=400&h=500&fit=crop&q=60",
+      "categorie": "iarna"
+    },
+    {
+      "id": "t0084",
+      "name": "Iarnă 4",
+      "url": "https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=1080&h=1350&fit=crop&q=80",
+      "thumbnail": "https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=400&h=500&fit=crop&q=60",
+      "categorie": "iarna"
+    }
+  ]
+}

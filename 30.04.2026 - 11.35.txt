@@ -307,3 +307,20 @@ Prioritate 2: Instagram auto-post
 Prioritate 3: Analytics postări Facebook
 Prioritate 4: OpenAI descrieri unice
 Prioritate 5: Domeniu custom (.ro)
+
+
+
+✅ Auth System (JWT + roluri)
+✅ Admin Panel complet
+✅ Limitare generări (3/zi guest | 5/oră user | nelimitat admin)
+✅ Biblia Cornilescu (VDCC) - 31.102 versete, 66 cărți
+✅ Facebook Login (popup)
+✅ Plan citire Biblie complet
+✅ Reader capitol cu navigare
+✅ Calendar 30 zile + streak
+✅ Notificări citire (reminder, întârziere, milestone)
+✅ Bell icon în header cu badge
+✅ Setări notificări per user
+✅ Scheduler cron (08:00 + 21:00)
+
+

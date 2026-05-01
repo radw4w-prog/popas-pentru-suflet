@@ -5,9 +5,9 @@ require('dotenv').config();
 
 const app = express();
 
-
-app.use('/api/reading', require('./routes/reading'));
-// Middleware
+// ═══════════════════════════════════════
+// MIDDLEWARE (primul!)
+// ═══════════════════════════════════════
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -22,39 +22,99 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Database
+// ═══════════════════════════════════════
+// DATABASE
+// ═══════════════════════════════════════
 const connectDB = require('./config/database');
 connectDB();
 
-// Routes
+// ═══════════════════════════════════════
+// ROUTES - Existente
+// ═══════════════════════════════════════
 const postsRouter = require('./routes/posts');
 const versesRouter = require('./routes/verses');
 const generateRouter = require('./routes/generate');
 const socialRouter = require('./routes/social');
+const readingRouter = require('./routes/reading');
 
 app.use('/api/posts', postsRouter);
 app.use('/api/verses', versesRouter);
 app.use('/api/generate', generateRouter);
 app.use('/api/social', socialRouter);
+app.use('/api/reading', readingRouter);
 
-// Scheduler
+// ═══════════════════════════════════════
+// ROUTES - Noi (Auth + Admin + Notifications)
+// ═══════════════════════════════════════
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notifications');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+// ═══════════════════════════════════════
+// SCHEDULER
+// ═══════════════════════════════════════
 const schedulerService = require('./services/schedulerService');
 schedulerService.init();
 
-// Health check
+// ═══════════════════════════════════════
+// HEALTH CHECK
+// ═══════════════════════════════════════
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     uptime: Math.round(process.uptime()),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Keep-alive pentru Render free
+// ═══════════════════════════════════════
+// ERROR HANDLER GLOBAL
+// ═══════════════════════════════════════
+app.use((err, req, res, next) => {
+  console.error('❌ Eroare globală:', err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Eroare internă server.'
+  });
+});
+
+
+// ═══ TEMPORAR - TEST NOTIFICĂRI ═══
+app.get('/test-notif', async (req, res) => {
+  try {
+    const { runNotificationsJob } = require('./services/notificationService');
+    await runNotificationsJob();
+    res.json({ success: true, message: 'Job notificări rulat cu succes!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
+
+// ═══════════════════════════════════════
+// 404 HANDLER
+// ═══════════════════════════════════════
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Ruta ${req.method} ${req.url} nu există.`
+  });
+});
+
+// ═══════════════════════════════════════
+// KEEP-ALIVE pentru Render free tier
+// ═══════════════════════════════════════
 if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+  const axios = require('axios');
   setInterval(async () => {
     try {
-      await api.get(`${process.env.RENDER_EXTERNAL_URL}/health`);
+      await axios.get(`${process.env.RENDER_EXTERNAL_URL}/health`);
       console.log('💓 Keep-alive OK');
     } catch (e) {
       console.log('💓 Keep-alive failed:', e.message);
@@ -62,10 +122,25 @@ if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
   }, 14 * 60 * 1000);
 }
 
-// Start
+// Pre-încarcă modelul ReadingPlan
+require('./models/ReadingPlan');
+
+
+
+
+// ═══════════════════════════════════════
+// START SERVER
+// ═══════════════════════════════════════
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🕊️ Popas pentru Suflet API rulează pe portul ${PORT}`);
-  console.log(`📍 http://localhost:${PORT}`);
+  console.log('');
+  console.log('🕊️  ════════════════════════════════');
+  console.log('🕊️  Popas pentru Suflet API');
+  console.log(`🕊️  http://localhost:${PORT}`);
+  console.log(`🕊️  Mediu: ${process.env.NODE_ENV || 'development'}`);
+  console.log('🕊️  ════════════════════════════════');
+  console.log('');
 });
+
+
 

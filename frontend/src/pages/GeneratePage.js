@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const API = process.env.REACT_APP_API_URL || '';
 
@@ -19,15 +21,29 @@ const DEFAULT_TEMPLATES = [
 const CATEGORII = [
   { id: 'all', label: '📋 Toate' },
   { id: 'apus', label: '🌅 Apusuri' },
+  { id: 'rasarit', label: '🌄 Răsărituri' },
+  { id: 'cer', label: '☁️ Cer' },
+  { id: 'nori', label: '🌤️ Nori' },
+  { id: 'stele', label: '⭐ Stele' },
+  { id: 'luna', label: '🌙 Lună' },
   { id: 'munte', label: '🏔️ Munți' },
   { id: 'padure', label: '🌲 Păduri' },
-  { id: 'apa', label: '🌊 Ape' },
-  { id: 'cer', label: '⭐ Cer' },
+  { id: 'mare', label: '🌊 Mare' },
+  { id: 'lac', label: '💧 Lac' },
+  { id: 'cascada', label: '🏞️ Cascade' },
+  { id: 'rau', label: '🏞️ Râuri' },
   { id: 'flori', label: '🌸 Flori' },
-  { id: 'spiritual', label: '✝️ Spiritual' },
-  { id: 'minimalist', label: '🖤 Minimalist' },
-  { id: 'dimineata', label: '🌄 Dimineață' },
   { id: 'natura', label: '🌿 Natură' },
+  { id: 'dimineata', label: '🌅 Dimineață' },
+  { id: 'ceata', label: '🌫️ Ceață' },
+  { id: 'lumina', label: '☀️ Lumină' },
+  { id: 'spiritual', label: '✝️ Spiritual' },
+  { id: 'biserica', label: '⛪ Biserică' },
+  { id: 'minimalist', label: '🖤 Minimalist' },
+  { id: 'iarna', label: '❄️ Iarnă' },
+  { id: 'toamna', label: '🍂 Toamnă' },
+  { id: 'primavara', label: '🌱 Primăvară' },
+  { id: 'vara', label: '☀️ Vară' },
   { id: 'custom', label: '📁 Ale mele' },
 ];
 
@@ -39,6 +55,9 @@ const FONTURI = [
 ];
 
 const GeneratePage = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, isAdmin } = useAuth();
+
   const [step, setStep] = useState(1);
   const [templates, setTemplates] = useState({ builtIn: DEFAULT_TEMPLATES, uploadate: [] });
   const [templateSelectat, setTemplateSelectat] = useState(null);
@@ -46,6 +65,8 @@ const GeneratePage = () => {
   const [tema, setTema] = useState('dragoste');
   const [platform, setPlatform] = useState('facebook');
   const [versetSelectat, setVersetSelectat] = useState(null);
+  const [versetEditat, setVersetEditat] = useState('');
+  const [referintaEditata, setReferintaEditata] = useState('');
   const [versetSearch, setVersetSearch] = useState('');
   const [verseteGasite, setVerseteGasite] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -60,27 +81,312 @@ const GeneratePage = () => {
   const [scheduledAt, setScheduledAt] = useState('');
   const [scheduleResult, setScheduleResult] = useState(null);
   const [categorieFiltre, setCategorieFiltre] = useState('all');
+  const [paginaCurenta, setPaginaCurenta] = useState(1);
+const TEMPLATES_PER_PAGINA = 24;
   const [generatedImageBase64, setGeneratedImageBase64] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [stilText, setStilText] = useState({
     fontSize: 26, culoare: '#FFFFFF', pozitie: 'center',
     umbra: true, font: 'Playfair Display'
   });
+  const [limitStatus, setLimitStatus] = useState(null);
+  const [limitLoading, setLimitLoading] = useState(true);
+  const [renderKey, setRenderKey] = useState(0);
 
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
+  const loadedImgRef = useRef(null);
+  const loadedLogoRef = useRef(null);
+
+  // ═══ PRELOAD LOGO ═══
+  useEffect(() => {
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    logo.src = '/logo.png';
+    logo.onload = () => { loadedLogoRef.current = logo; };
+    logo.onerror = () => { loadedLogoRef.current = null; };
+  }, []);
 
   // ═══ EFFECTS ═══
   useEffect(() => {
     fetchTemplates();
     fetchTeme();
+    fetchLimitStatus();
   }, []);
 
-  useEffect(() => {
-    if (templateSelectat && versetSelectat) {
-      renderCanvas();
+  // ═══ CANVAS RENDER ═══
+  const renderCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !templateSelectat) return;
+
+    const textDePus = versetEditat || versetSelectat?.text;
+    const refDePus = referintaEditata || versetSelectat?.referintaCompleta || versetSelectat?.referinta;
+
+    if (!textDePus) return;
+
+    const drawOnCanvas = (img) => {
+      const ctx = canvas.getContext('2d');
+      const W = 1080;
+      const H = 1350;
+      canvas.width = W;
+      canvas.height = H;
+
+      // Cover crop
+      const imgR = img.width / img.height;
+      const canR = W / H;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
+      else { sh = img.width / canR; sy = (img.height - sh) / 2; }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+
+      // Gradient overlay
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, 'rgba(0,0,0,0.05)');
+      grad.addColorStop(0.25, 'rgba(0,0,0,0.2)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
+      grad.addColorStop(0.75, 'rgba(0,0,0,0.6)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      const sc = 1;
+      const fz = Math.round(stilText.fontSize * 2 * sc);
+
+      // ═══ WATERMARK REPETAT PE FUNDAL (greu de decupat) ═══
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.font = `700 ${Math.round(28 * sc)}px Inter, Arial, sans-serif`;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      for (let y = 60; y < H; y += 120) {
+        for (let x = 80; x < W; x += 380) {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(-0.35);
+          ctx.fillText('popaspentrusuflet.ro', 0, 0);
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+
+      // ═══ TEXT VERSET ═══
+      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = stilText.culoare;
+      ctx.textAlign = 'center';
+
+      if (stilText.umbra) {
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = 25 * sc;
+        ctx.shadowOffsetX = 2 * sc;
+        ctx.shadowOffsetY = 3 * sc;
+      }
+
+      // Word wrap
+      const maxW = W * 0.82;
+      const lh = fz * 1.5;
+      const raw = `\u201C${textDePus}\u201D`;
+      const words = raw.split(' ');
+      const lines = [];
+      let cur = '';
+      words.forEach(w => {
+        const t = cur + w + ' ';
+        if (ctx.measureText(t).width > maxW && cur) {
+          lines.push(cur.trim());
+          cur = w + ' ';
+        } else { cur = t; }
+      });
+      lines.push(cur.trim());
+
+      const maxLines = 8;
+      const dl = lines.slice(0, maxLines);
+      if (lines.length > maxLines) dl[maxLines - 1] += '...';
+      const th = dl.length * lh;
+
+      let startY;
+      if (stilText.pozitie === 'top') startY = H * 0.12;
+      else if (stilText.pozitie === 'bottom') startY = H - th - H * 0.28;
+      else startY = (H - th) / 2 - 40;
+
+      // Linie decorativă sus
+      ctx.strokeStyle = 'rgba(212,175,55,0.6)';
+      ctx.lineWidth = 2 * sc;
+      const lineW = 70 * sc;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - lineW, startY - 35 * sc);
+      ctx.lineTo(W / 2 + lineW, startY - 35 * sc);
+      ctx.stroke();
+
+      // Desenează liniile de text
+      dl.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lh));
+
+      // Linie decorativă jos
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - lineW, startY + th + 15 * sc);
+      ctx.lineTo(W / 2 + lineW, startY + th + 15 * sc);
+      ctx.stroke();
+
+      // Referința
+      ctx.shadowBlur = 12 * sc;
+      ctx.font = `bold ${Math.round(fz * 0.48)}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = '#D4AF37';
+      ctx.fillText(`\u2014 ${refDePus}`, W / 2, startY + th + 55 * sc);
+
+      // ═══ WATERMARK LOGO + TEXT - INTEGRAT ═══
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      const logo = loadedLogoRef.current;
+      const wmY = H - 140 * sc;
+
+      if (logo) {
+        const logoH = 75 * sc;
+        const logoW = logoH;
+        const logoX = W / 2 - logoW / 2;
+        const logoY = wmY;
+
+        // Glow subtil în spatele logo-ului
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 30, 0, Math.PI * 2);
+        const glowGrad = ctx.createRadialGradient(
+          W / 2, logoY + logoH / 2, logoH / 2,
+          W / 2, logoY + logoH / 2, logoH / 2 + 30
+        );
+        glowGrad.addColorStop(0, 'rgba(212,175,55,0.4)');
+        glowGrad.addColorStop(1, 'rgba(212,175,55,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fill();
+        ctx.restore();
+
+        // Cerc exterior
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 5 * sc, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 5 * sc, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(212,175,55,0.5)';
+        ctx.lineWidth = 1.5 * sc;
+        ctx.stroke();
+
+        // Logo circular
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+        ctx.restore();
+
+        // Text sub logo - semi-transparent, integrat
+        ctx.globalAlpha = 0.75;
+        const wmFz = Math.round(24 * sc);
+        ctx.font = `600 ${wmFz}px Inter, Arial, sans-serif`;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText('Popas pentru Suflet', W / 2, logoY + logoH + 30 * sc);
+
+        // Linie subțire decorativă sub text
+        ctx.globalAlpha = 0.3;
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(W / 2 - 90, logoY + logoH + 42 * sc);
+        ctx.lineTo(W / 2 + 90, logoY + logoH + 42 * sc);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0;
+      } else {
+        // Fallback fără logo
+        ctx.globalAlpha = 0.6;
+        const wmFz = Math.round(28 * sc);
+        ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.textAlign = 'center';
+        ctx.fillText('🕊️ Popas pentru Suflet', W / 2, H - 50 * sc);
+        ctx.globalAlpha = 1.0;
+      }
+
+      // ═══ WATERMARK COLȚURI (anti-decupare) ═══
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.font = `600 ${Math.round(16 * sc)}px Inter, Arial, sans-serif`;
+      ctx.fillStyle = '#FFFFFF';
+
+      // Colț stânga-sus
+      ctx.textAlign = 'left';
+      ctx.fillText('popaspentrusuflet.ro', 15, 25);
+
+      // Colț dreapta-sus
+      ctx.textAlign = 'right';
+      ctx.fillText('popaspentrusuflet.ro', W - 15, 25);
+
+      // Colț stânga-jos
+      ctx.textAlign = 'left';
+      ctx.fillText('popaspentrusuflet.ro', 15, H - 12);
+
+      // Colț dreapta-jos
+      ctx.textAlign = 'right';
+      ctx.fillText('popaspentrusuflet.ro', W - 15, H - 12);
+
+      ctx.restore();
+
+      // Salvare
+      saveCanvasImage();
+    };
+
+    // Dacă imaginea e deja încărcată
+    if (loadedImgRef.current && loadedImgRef.current._src === (templateSelectat.url || templateSelectat.thumbnail)) {
+      drawOnCanvas(loadedImgRef.current);
+      return;
     }
-  }, [templateSelectat, versetSelectat, stilText, platform, step]);
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const src = templateSelectat.url || templateSelectat.thumbnail;
+    img._src = src;
+    img.src = src;
+
+    img.onload = () => {
+      loadedImgRef.current = img;
+      drawOnCanvas(img);
+    };
+
+    img.onerror = () => console.error('Eroare încărcare imagine template');
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText]);
+
+  // Trigger renderCanvas când se schimbă parametrii
+  useEffect(() => {
+    const textExists = versetEditat || versetSelectat?.text;
+    if (templateSelectat && textExists && (step === 2 || step === 3)) {
+      const timeout = setTimeout(() => renderCanvas(), 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, step, renderKey, renderCanvas]);
+
+  // Când se selectează un verset, populează editarea
+  useEffect(() => {
+    if (versetSelectat) {
+      setVersetEditat(versetSelectat.text);
+      setReferintaEditata(versetSelectat.referintaCompleta || versetSelectat.referinta || '');
+    }
+  }, [versetSelectat]);
+
+  // ═══ FETCH LIMIT STATUS ═══
+  const fetchLimitStatus = async () => {
+    try {
+      setLimitLoading(true);
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const r = await axios.get(`${API}/api/generate/limit-status`, { headers });
+      setLimitStatus(r.data);
+    } catch (e) {
+      console.error('Eroare la limit-status:', e);
+    } finally {
+      setLimitLoading(false);
+    }
+  };
 
   // ═══ FETCH ═══
   const fetchTemplates = async () => {
@@ -129,8 +435,11 @@ const GeneratePage = () => {
         setTemplateSelectat(r.data.file);
         setStep(2);
       }
-    } catch (e) { alert('Eroare upload!'); }
-    finally { setUploading(false); }
+    } catch (e) {
+      alert('Eroare upload!');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDeleteTemplate = async (filename) => {
@@ -144,57 +453,140 @@ const GeneratePage = () => {
 
   // ═══ GENERATE ═══
   const handleGenerate = async () => {
+    if (!isAdmin && limitStatus && limitStatus.remaining <= 0) {
+      if (limitStatus.type === 'guest') {
+        const ok = window.confirm(
+          'Ai atins limita de 3 generări/zi pentru vizitatori.\n\nCreează un cont gratuit pentru 5 generări/oră!'
+        );
+        if (ok) navigate('/register');
+      } else {
+        alert('Ai atins limita de 5 generări/oră. Încearcă din nou mai târziu.');
+      }
+      return;
+    }
+
     setGenerating(true);
     setGenerated(null);
     setVariantaActiva(0);
     setPublishResult(null);
     setScheduleResult(null);
+
     try {
-      const r = await axios.post(`${API}/api/generate`, {
-        tema, platform,
-        versetCustom: versetSelectat || null
-      });
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const r = await axios.post(
+        `${API}/api/generate`,
+        {
+          tema,
+          platform,
+          versetCustom: versetSelectat || null
+        },
+        { headers }
+      );
+
       if (r.data.success) {
         setGenerated(r.data);
-        if (!versetSelectat) setVersetSelectat(r.data.verset);
+        setVariantaActiva(0);
+
+        // Dacă nu era verset selectat, setează cel generat
+        if (!versetSelectat && r.data.verset) {
+          setVersetSelectat(r.data.verset);
+          setVersetEditat(r.data.verset.text);
+          setReferintaEditata(r.data.verset.referintaCompleta || r.data.verset.referinta || '');
+        }
+
+        if (r.data.limitInfo) {
+          setLimitStatus(prev => ({
+            ...prev,
+            used: r.data.limitInfo.used,
+            remaining: r.data.limitInfo.remaining
+          }));
+        } else {
+          await fetchLimitStatus();
+        }
+
+        // Force re-render canvas
+        setRenderKey(k => k + 1);
         setStep(3);
       }
-    } catch (e) {
-      alert('Eroare: ' + (e.response?.data?.error || e.message));
-    } finally { setGenerating(false); }
+    } catch (error) {
+      if (error.response?.status === 429) {
+        const msg = error.response?.data?.message || 'Limită atinsă.';
+        const needAccount = error.response?.data?.needAccount;
+        if (needAccount) {
+          const ok = window.confirm(msg + '\n\nVrei să creezi un cont gratuit?');
+          if (ok) navigate('/register');
+        } else {
+          alert(msg);
+        }
+        await fetchLimitStatus();
+      } else {
+        alert('Eroare la generare: ' + (error.response?.data?.error || error.message));
+      }
+    } finally {
+      setGenerating(false);
+    }
   };
 
   // ═══ SAVE ═══
   const handleSave = async () => {
     if (!generated) return;
     try {
-      await axios.post(`${API}/api/posts`, {
-        content: generated.variante?.[variantaActiva] || generated.descriere,
-        hashtags: generated.hashtags,
-        platform, tema,
-        verset: generated.verset,
-        status: 'draft'
-      });
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      await axios.post(
+        `${API}/api/posts`,
+        {
+          content: generated.variante?.[variantaActiva] || generated.descriere,
+          hashtags: generated.hashtags,
+          platform, tema,
+          verset: {
+            text: versetEditat || generated.verset?.text,
+            referinta: referintaEditata || generated.verset?.referinta,
+            referintaCompleta: referintaEditata || generated.verset?.referintaCompleta
+          },
+          status: 'draft'
+        },
+        { headers }
+      );
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (e) { alert('Eroare salvare!'); }
+    } catch (e) {
+      alert('Eroare salvare!');
+    }
   };
 
-  // ═══ PUBLISH ═══
+  // ═══ PUBLISH (admin only) ═══
   const handlePublish = async () => {
+    if (!isAdmin) {
+      alert('Publicarea pe Facebook este disponibilă doar pentru administratori.');
+      return;
+    }
     if (!generated) return;
     if (!window.confirm('Publici pe Facebook?')) return;
+
     setPublishing(true);
     setPublishResult(null);
+
     try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-      const r = await axios.post(`${API}/api/social/publish-direct`, {
-        content: descriere,
-        hashtags: generated.hashtags,
-        imageBase64: generatedImageBase64 || null,
-        imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
-        platform: 'facebook'
-      });
+
+      const r = await axios.post(
+        `${API}/api/social/publish-direct`,
+        {
+          content: descriere,
+          hashtags: generated.hashtags,
+          imageBase64: generatedImageBase64 || null,
+          imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
+          platform: 'facebook'
+        },
+        { headers }
+      );
+
       if (r.data.success) {
         setPublishResult({ success: true, message: '✅ Publicat pe Facebook!' });
       }
@@ -203,196 +595,58 @@ const GeneratePage = () => {
         success: false,
         message: '❌ ' + (e.response?.data?.error || e.message)
       });
-    } finally { setPublishing(false); }
+    } finally {
+      setPublishing(false);
+    }
   };
 
-  // ═══ SCHEDULE ═══
-  {/* În handleSchedule, înainte de axios.post */}
-const handleSchedule = async () => {
-  if (!generated) { alert('Generează mai întâi!'); return; }
-  if (!scheduledAt) { alert('Alege data și ora!'); return; }
-
-  setScheduling(true);
-  setScheduleResult(null);
-
-  try {
-    const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-
-    // ✅ Trimitem direct datetime-ul local - browserul îl convertește automat la UTC
-    const r = await axios.post(`${API}/api/social/schedule`, {
-      content: descriere,
-      hashtags: generated.hashtags,
-      imageBase64: generatedImageBase64 || null,
-      imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
-      platform: 'facebook',
-      scheduledDate: new Date(scheduledAt).toISOString(), // ✅ Convertit corect la UTC
-      tema,
-      verset: generated.verset
-    });
-
-    if (r.data.success) {
-      setScheduleResult({ success: true, message: r.data.message });
+  // ═══ SCHEDULE (admin only) ═══
+  const handleSchedule = async () => {
+    if (!isAdmin) {
+      alert('Programarea pe Facebook este disponibilă doar pentru administratori.');
+      return;
     }
-  } catch (e) {
-    setScheduleResult({
-      success: false,
-      message: '❌ ' + (e.response?.data?.error || e.message)
-    });
-  } finally { setScheduling(false); }
-};
-  
-  
+    if (!generated) { alert('Generează mai întâi!'); return; }
+    if (!scheduledAt) { alert('Alege data și ora!'); return; }
 
-  // ═══ CANVAS ═══
-  const renderCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !templateSelectat || !versetSelectat) return;
+    setScheduling(true);
+    setScheduleResult(null);
 
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = templateSelectat.url || templateSelectat.thumbnail;
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const descriere = generated.variante?.[variantaActiva] || generated.descriere;
 
-    img.onload = () => {
-      const W = 1080;
-      const H = 1350;
-      canvas.width = W;
-      canvas.height = H;
+      const r = await axios.post(
+        `${API}/api/social/schedule`,
+        {
+          content: descriere,
+          hashtags: generated.hashtags,
+          imageBase64: generatedImageBase64 || null,
+          imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
+          platform: 'facebook',
+          scheduledDate: new Date(scheduledAt).toISOString(),
+          tema,
+          verset: {
+            text: versetEditat || generated.verset?.text,
+            referinta: referintaEditata || generated.verset?.referinta,
+            referintaCompleta: referintaEditata || generated.verset?.referintaCompleta
+          }
+        },
+        { headers }
+      );
 
-      // Cover crop
-      const imgR = img.width / img.height;
-      const canR = W / H;
-      let sx = 0, sy = 0, sw = img.width, sh = img.height;
-      if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
-      else { sh = img.width / canR; sy = (img.height - sh) / 2; }
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-
-      // Overlay
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(0,0,0,0.05)');
-      grad.addColorStop(0.25, 'rgba(0,0,0,0.2)');
-      grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
-      grad.addColorStop(0.75, 'rgba(0,0,0,0.6)');
-      grad.addColorStop(1, 'rgba(0,0,0,0.8)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      const sc = W / 1080;
-      const fz = Math.round(stilText.fontSize * 2 * sc);
-
-      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-      ctx.fillStyle = stilText.culoare;
-      ctx.textAlign = 'center';
-
-      if (stilText.umbra) {
-        ctx.shadowColor = 'rgba(0,0,0,0.9)';
-        ctx.shadowBlur = 25 * sc;
-        ctx.shadowOffsetX = 2 * sc;
-        ctx.shadowOffsetY = 3 * sc;
+      if (r.data.success) {
+        setScheduleResult({ success: true, message: r.data.message });
       }
-
-      // Word wrap
-      const maxW = W * 0.82;
-      const lh = fz * 1.5;
-      const ref = versetSelectat.referintaCompleta || versetSelectat.referinta;
-      const raw = `\u201C${versetSelectat.text}\u201D`;
-      const words = raw.split(' ');
-      const lines = [];
-      let cur = '';
-      words.forEach(w => {
-        const t = cur + w + ' ';
-        if (ctx.measureText(t).width > maxW && cur) {
-          lines.push(cur.trim());
-          cur = w + ' ';
-        } else { cur = t; }
+    } catch (e) {
+      setScheduleResult({
+        success: false,
+        message: '❌ ' + (e.response?.data?.error || e.message)
       });
-      lines.push(cur.trim());
-
-      const maxLines = 8;
-      const dl = lines.slice(0, maxLines);
-      if (lines.length > maxLines) dl[maxLines - 1] += '...';
-      const th = dl.length * lh;
-
-      let startY;
-      if (stilText.pozitie === 'top') startY = H * 0.12;
-      else if (stilText.pozitie === 'bottom') startY = H - th - H * 0.25;
-      else startY = (H - th) / 2 - 30;
-
-      // Linie decorativă
-      ctx.strokeStyle = 'rgba(212,175,55,0.6)';
-      ctx.lineWidth = 2 * sc;
-      const lineW = 70 * sc;
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - lineW, startY - 35 * sc);
-      ctx.lineTo(W / 2 + lineW, startY - 35 * sc);
-      ctx.stroke();
-
-      dl.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lh));
-
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - lineW, startY + th + 15 * sc);
-      ctx.lineTo(W / 2 + lineW, startY + th + 15 * sc);
-      ctx.stroke();
-
-      // Referinta
-      ctx.shadowBlur = 12 * sc;
-      ctx.font = `bold ${Math.round(fz * 0.48)}px '${stilText.font}', Georgia, serif`;
-      ctx.fillStyle = '#D4AF37';
-      ctx.fillText(`\u2014 ${ref}`, W / 2, startY + th + 55 * sc);
-
-      // Logo
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-
-      const logo = new Image();
-      logo.crossOrigin = 'anonymous';
-      logo.src = '/logo.png';
-
-      logo.onload = () => {
-        const logoH = 95 * sc;
-        const logoW = logoH;
-        const logoX = W / 2 - logoW / 2;
-        const logoY = H - logoH - 85 * sc;
-
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 7 * sc, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 7 * sc, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(212,175,55,0.7)';
-        ctx.lineWidth = 2.5 * sc;
-        ctx.stroke();
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-        ctx.restore();
-
-        const wmFz = Math.round(fz * 0.38);
-        ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.88)';
-        ctx.textAlign = 'center';
-        ctx.fillText('Popas pentru Suflet', W / 2, logoY + logoH + 36 * sc);
-
-        saveCanvasImage();
-      };
-
-      logo.onerror = () => {
-        const wmFz = Math.round(fz * 0.42);
-        ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.textAlign = 'center';
-        ctx.fillText('Popas pentru Suflet', W / 2, H - 45 * sc);
-
-        saveCanvasImage();
-      };
-    };
-
-    img.onerror = () => console.error('Eroare încărcare imagine');
+    } finally {
+      setScheduling(false);
+    }
   };
 
   const saveCanvasImage = () => {
@@ -420,6 +674,11 @@ const handleSchedule = async () => {
     }
   };
 
+  // Forțează re-render canvas
+  const forceRender = () => {
+    setRenderKey(k => k + 1);
+  };
+
   // ═══ COMPUTED ═══
   const allTemplates = [
     ...(templates.builtIn || []),
@@ -429,19 +688,67 @@ const handleSchedule = async () => {
     if (categorieFiltre === 'custom') return t.custom;
     return t.categorie === categorieFiltre;
   });
+  
+  
+  const totalTemplates = allTemplates.length;
+const totalPagini = Math.max(1, Math.ceil(totalTemplates / TEMPLATES_PER_PAGINA));
+const startIdx = (paginaCurenta - 1) * TEMPLATES_PER_PAGINA;
+const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PAGINA);
+
+  // ═══ BANNER LIMITĂ ═══
+  const LimitBanner = () => {
+    if (limitLoading || !limitStatus) return null;
+    const isBlocked = !isAdmin && limitStatus.remaining <= 0;
+
+    return (
+      <div style={{
+        marginBottom: '1rem', padding: '0.85rem 1rem', borderRadius: '12px',
+        border: `1px solid ${limitStatus.type === 'admin' ? 'rgba(34,197,94,0.3)' : isBlocked ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.2)'}`,
+        background: limitStatus.type === 'admin' ? 'rgba(34,197,94,0.07)' : isBlocked ? 'rgba(239,68,68,0.07)' : 'rgba(99,102,241,0.07)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'
+      }}>
+        {limitStatus.type === 'admin' ? (
+          <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>
+            ♾️ <strong>Administrator:</strong> generări nelimitate
+          </span>
+        ) : (
+          <>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+              {limitStatus.type === 'guest' ? '👤 Vizitator' : '🔑 Cont'}{' '}
+              — folosite: <strong>{limitStatus.used}</strong> / {limitStatus.limit}
+              {' '}• rămase:{' '}
+              <strong style={{ color: isBlocked ? '#ef4444' : 'var(--text-primary)' }}>
+                {limitStatus.remaining}
+              </strong>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                {limitStatus.type === 'guest' ? ' (reset la miezul nopții)' : ' (reset la fiecare oră)'}
+              </span>
+            </div>
+            {!isAuthenticated && (
+              <button onClick={() => navigate('/register')} style={{
+                padding: '0.45rem 0.9rem', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff',
+                fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap'
+              }}>✅ Creează cont gratuit</button>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   // ═══════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════
   return (
     <div className="animate-in">
+      <LimitBanner />
 
       {/* ═══ STEPS BAR ═══ */}
       <div style={{
         display: 'flex', alignItems: 'center', marginBottom: '1.5rem',
         background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)',
-        padding: '0.5rem', border: '1px solid var(--border-subtle)',
-        overflowX: 'auto'
+        padding: '0.5rem', border: '1px solid var(--border-subtle)', overflowX: 'auto'
       }}>
         {[
           { nr: 1, label: 'Imaginea', icon: '🖼️' },
@@ -454,15 +761,13 @@ const handleSchedule = async () => {
               padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-lg)',
               background: step === s.nr ? 'linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05))' : 'transparent',
               border: step === s.nr ? '1px solid var(--border-color)' : '1px solid transparent',
-              cursor: step > s.nr ? 'pointer' : 'default', transition: 'var(--transition)',
-              minWidth: 'fit-content'
+              cursor: step > s.nr ? 'pointer' : 'default', transition: 'var(--transition)', minWidth: 'fit-content'
             }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                 background: step > s.nr ? 'var(--accent-green)' : step === s.nr ? 'var(--gold-primary)' : 'var(--bg-input)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.8rem', fontWeight: 700,
-                color: step >= s.nr ? '#000' : 'var(--text-muted)'
+                fontSize: '0.8rem', fontWeight: 700, color: step >= s.nr ? '#000' : 'var(--text-muted)'
               }}>
                 {step > s.nr ? '✓' : s.nr}
               </div>
@@ -480,96 +785,292 @@ const handleSchedule = async () => {
         ))}
       </div>
 
-      {/* Canvas ascuns - mereu prezent */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {/* ═══ STEP 1 ═══ */}
-      {step === 1 && (
-        <div className="card card-gold animate-in">
-          <div className="card-header">
-            <div className="card-title"><span className="icon">🖼️</span> Alege Imaginea</div>
-            <div>
-              <input type="file" ref={fileInputRef} style={{ display: 'none' }}
-                accept="image/*" onChange={e => handleUpload(e.target.files[0])} />
-              <button className="btn btn-gold btn-sm"
-                onClick={() => fileInputRef.current.click()} disabled={uploading}>
-                {uploading ? '⏳...' : '⬆️ Upload'}
-              </button>
-            </div>
-          </div>
+{step === 1 && (
+  <div className="card card-gold animate-in">
+    <div className="card-header">
+      <div className="card-title">
+        <span className="icon">🖼️</span> Alege Imaginea
+      </div>
+      <div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept="image/*"
+          onChange={e => handleUpload(e.target.files[0])}
+        />
+        <button
+          className="btn btn-gold btn-sm"
+          onClick={() => fileInputRef.current.click()}
+          disabled={uploading}
+        >
+          {uploading ? '⏳...' : '⬆️ Upload'}
+        </button>
+      </div>
+    </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1.25rem' }}>
-            {CATEGORII.map(c => (
-              <button key={c.id} onClick={() => setCategorieFiltre(c.id)} style={{
-                padding: '0.3rem 0.7rem', borderRadius: 20,
-                border: `1px solid ${categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`,
-                background: categorieFiltre === c.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)',
-                color: categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--text-muted)',
-                cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500
-              }}>{c.label}</button>
-            ))}
-          </div>
+    {/* Categorii */}
+    <div style={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '0.35rem',
+      marginBottom: '1.25rem'
+    }}>
+      {CATEGORII.map(c => (
+        <button
+          key={c.id}
+          onClick={() => {
+            setCategorieFiltre(c.id);
+            setPaginaCurenta(1);
+          }}
+          style={{
+            padding: '0.3rem 0.7rem',
+            borderRadius: 20,
+            border: `1px solid ${categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`,
+            background: categorieFiltre === c.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)',
+            color: categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            fontWeight: 500
+          }}
+        >
+          {c.label}
+        </button>
+      ))}
+    </div>
 
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-            📐 Imagine verticală <strong>1080×1350</strong> — ideal pentru Facebook, Instagram, TikTok
-          </div>
+    <div style={{
+      fontSize: '0.78rem',
+      color: 'var(--text-muted)',
+      marginBottom: '1rem'
+    }}>
+      📐 Imagine verticală <strong>1080×1350</strong> — ideal pentru Facebook, Instagram, TikTok
+    </div>
+
+    {/* Info paginare */}
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '0.75rem',
+      flexWrap: 'wrap',
+      gap: '0.5rem'
+    }}>
+      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+        {totalTemplates} template-uri • Pagina {paginaCurenta}/{totalPagini}
+      </span>
+
+      <div style={{ display: 'flex', gap: '0.35rem' }}>
+        <button
+          onClick={() => setPaginaCurenta(p => Math.max(1, p - 1))}
+          disabled={paginaCurenta <= 1}
+          style={{
+            padding: '0.35rem 0.75rem',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            background: 'var(--bg-input)',
+            color: 'var(--text-secondary)',
+            cursor: paginaCurenta <= 1 ? 'default' : 'pointer',
+            opacity: paginaCurenta <= 1 ? 0.4 : 1,
+            fontSize: '0.8rem'
+          }}
+        >
+          ← Anterior
+        </button>
+
+        <button
+          onClick={() => setPaginaCurenta(p => Math.min(totalPagini, p + 1))}
+          disabled={paginaCurenta >= totalPagini}
+          style={{
+            padding: '0.35rem 0.75rem',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            background: 'var(--bg-input)',
+            color: 'var(--text-secondary)',
+            cursor: paginaCurenta >= totalPagini ? 'default' : 'pointer',
+            opacity: paginaCurenta >= totalPagini ? 0.4 : 1,
+            fontSize: '0.8rem'
+          }}
+        >
+          Următor →
+        </button>
+      </div>
+    </div>
+
+    {/* Grid */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+      gap: '0.75rem'
+    }}>
+      {/* Upload card */}
+      <div
+        onClick={() => fileInputRef.current.click()}
+        style={{
+          aspectRatio: '4/5',
+          borderRadius: 'var(--radius-lg)',
+          border: '2px dashed var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          background: 'var(--bg-input)',
+          color: 'var(--text-muted)'
+        }}
+      >
+        <div style={{ fontSize: '2rem' }}>⬆️</div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 600 }}>Upload</div>
+      </div>
+
+      {/* Template-uri pagină curentă */}
+      {templatesPagina.map(t => (
+        <div
+          key={t.id}
+          onClick={() => {
+            setTemplateSelectat(t);
+            setPreviewUrl(null);
+            loadedImgRef.current = null;
+            setStep(2);
+          }}
+          style={{
+            position: 'relative',
+            aspectRatio: '4/5',
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            border: templateSelectat?.id === t.id
+              ? '3px solid var(--gold-primary)'
+              : '2px solid var(--border-subtle)',
+            boxShadow: templateSelectat?.id === t.id
+              ? 'var(--shadow-gold)'
+              : 'none'
+          }}
+        >
+          <img
+            src={t.thumbnail}
+            alt={t.name}
+            loading="lazy"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block'
+            }}
+            onError={e => {
+              e.target.style.display = 'none';
+            }}
+          />
 
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: '0.75rem'
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent 50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            padding: '0.5rem'
           }}>
-            <div onClick={() => fileInputRef.current.click()} style={{
-              aspectRatio: '4/5', borderRadius: 'var(--radius-lg)',
-              border: '2px dashed var(--border-color)',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', background: 'var(--bg-input)',
-              color: 'var(--text-muted)'
+            <div style={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color: 'white'
             }}>
-              <div style={{ fontSize: '2rem' }}>⬆️</div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 600 }}>Upload</div>
+              {t.name}
             </div>
-
-            {allTemplates.map(t => (
-              <div key={t.id} onClick={() => { setTemplateSelectat(t); setPreviewUrl(null); setStep(2); }} style={{
-                position: 'relative', aspectRatio: '4/5',
-                borderRadius: 'var(--radius-lg)', overflow: 'hidden', cursor: 'pointer',
-                border: templateSelectat?.id === t.id ? '3px solid var(--gold-primary)' : '2px solid var(--border-subtle)',
-                boxShadow: templateSelectat?.id === t.id ? 'var(--shadow-gold)' : 'none'
-              }}>
-                <img src={t.thumbnail} alt={t.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  onError={e => { e.target.style.display = 'none'; }} />
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent 50%)',
-                  display: 'flex', flexDirection: 'column',
-                  justifyContent: 'flex-end', padding: '0.5rem'
-                }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'white' }}>{t.name}</div>
-                </div>
-                {templateSelectat?.id === t.id && (
-                  <div style={{
-                    position: 'absolute', top: 6, right: 6, width: 24, height: 24,
-                    background: 'var(--gold-primary)', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.75rem', fontWeight: 700, color: '#000'
-                  }}>✓</div>
-                )}
-                {t.custom && (
-                  <button onClick={e => { e.stopPropagation(); handleDeleteTemplate(t.id); }} style={{
-                    position: 'absolute', top: 6, left: 6, width: 22, height: 22,
-                    background: 'rgba(239,68,68,0.9)', border: 'none', borderRadius: '50%',
-                    color: 'white', cursor: 'pointer', fontSize: '0.65rem',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>✕</button>
-                )}
-              </div>
-            ))}
           </div>
+
+          {templateSelectat?.id === t.id && (
+            <div style={{
+              position: 'absolute',
+              top: 6,
+              right: 6,
+              width: 24,
+              height: 24,
+              background: 'var(--gold-primary)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#000'
+            }}>
+              ✓
+            </div>
+          )}
+
+          {t.custom && (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                handleDeleteTemplate(t.id);
+              }}
+              style={{
+                position: 'absolute',
+                top: 6,
+                left: 6,
+                width: 22,
+                height: 22,
+                background: 'rgba(239,68,68,0.9)',
+                border: 'none',
+                borderRadius: '50%',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
-      )}
+      ))}
+    </div>
+
+    {/* Paginare jos */}
+    {totalPagini > 1 && (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '0.3rem',
+        marginTop: '1rem',
+        flexWrap: 'wrap'
+      }}>
+        {Array.from({ length: totalPagini }, (_, i) => i + 1).map(pg => (
+          <button
+            key={pg}
+            onClick={() => setPaginaCurenta(pg)}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '8px',
+              border: pg === paginaCurenta
+                ? '1px solid var(--gold-primary)'
+                : '1px solid var(--border-color)',
+              background: pg === paginaCurenta
+                ? 'rgba(212,175,55,0.15)'
+                : 'var(--bg-input)',
+              color: pg === paginaCurenta
+                ? 'var(--gold-primary)'
+                : 'var(--text-muted)',
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              fontWeight: pg === paginaCurenta ? 700 : 400
+            }}
+          >
+            {pg}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
       {/* ═══ STEP 2 ═══ */}
       {step === 2 && (
@@ -613,15 +1114,16 @@ const handleSchedule = async () => {
                 <div style={{ maxHeight: 250, overflowY: 'auto', marginTop: '0.5rem' }}>
                   {verseteGasite.map((v, i) => (
                     <div key={i} onClick={() => {
-                      setVersetSelectat({
+                      const vs = {
                         text: v.text, referinta: v.referinta,
                         referintaCompleta: `${v.carte} ${v.capitol}:${v.verset}`
-                      });
-                      setVerseteGasite([]); setVersetSearch('');
+                      };
+                      setVersetSelectat(vs);
+                      setVerseteGasite([]);
+                      setVersetSearch('');
                     }} style={{
                       padding: '0.65rem', marginBottom: '0.35rem', background: 'var(--bg-input)',
-                      borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)',
-                      cursor: 'pointer'
+                      borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', cursor: 'pointer'
                     }}>
                       <div style={{ fontSize: '0.82rem', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: 3, lineHeight: 1.5 }}>
                         "{v.text.substring(0, 85)}{v.text.length > 85 ? '...' : ''}"
@@ -638,18 +1140,53 @@ const handleSchedule = async () => {
                 <div style={{ marginTop: '0.75rem', padding: '0.85rem', background: 'rgba(212,175,55,0.06)',
                   borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', textTransform: 'uppercase',
-                    letterSpacing: 2, fontWeight: 700, marginBottom: '0.4rem' }}>✅ Selectat</div>
-                  <div style={{ fontFamily: "'Playfair Display',serif", fontSize: '0.88rem', fontStyle: 'italic',
-                    color: 'var(--text-primary)', lineHeight: 1.6 }}>
-                    "{versetSelectat.text.substring(0, 120)}{versetSelectat.text.length > 120 ? '...' : ''}"
+                    letterSpacing: 2, fontWeight: 700, marginBottom: '0.4rem' }}>✅ Selectat — editează mai jos</div>
+
+                  {/* EDITARE TEXT VERSET */}
+                  <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                    <label className="form-label" style={{ fontSize: '0.7rem' }}>✏️ Text verset:</label>
+                    <textarea
+                      className="form-input"
+                      value={versetEditat}
+                      onChange={e => setVersetEditat(e.target.value)}
+                      rows={3}
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        fontStyle: 'italic',
+                        fontSize: '0.88rem',
+                        lineHeight: 1.6,
+                        resize: 'vertical'
+                      }}
+                    />
                   </div>
-                  <div style={{ color: 'var(--gold-primary)', fontWeight: 700, fontSize: '0.8rem', marginTop: '0.35rem' }}>
-                    — {versetSelectat.referintaCompleta || versetSelectat.referinta}
+
+                  {/* EDITARE REFERINȚĂ */}
+                  <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                    <label className="form-label" style={{ fontSize: '0.7rem' }}>📌 Referință:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={referintaEditata}
+                      onChange={e => setReferintaEditata(e.target.value)}
+                      style={{ fontWeight: 700, color: 'var(--gold-primary)' }}
+                    />
                   </div>
-                  <button className="btn btn-secondary btn-sm" style={{ marginTop: '0.5rem' }}
-                    onClick={() => { setVersetSelectat(null); setPreviewUrl(null); setGeneratedImageBase64(null); }}>
-                    ✕ Schimbă
-                  </button>
+
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        setVersetSelectat(null);
+                        setVersetEditat('');
+                        setReferintaEditata('');
+                        setPreviewUrl(null);
+                        setGeneratedImageBase64(null);
+                      }}>
+                      ✕ Schimbă
+                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={forceRender}>
+                      🔄 Reîncarcă preview
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ padding: '0.6rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)',
@@ -664,14 +1201,48 @@ const handleSchedule = async () => {
                 <div className="card-title"><span className="icon">📱</span> Platformă</div>
               </div>
               <div className="tabs" style={{ marginBottom: '1rem' }}>
-                {[{ id: 'facebook', l: '📘 Facebook' }, { id: 'instagram', l: '📸 Instagram' }, { id: 'tiktok', l: '🎵 TikTok' }].map(p => (
+                {[
+                  { id: 'facebook', l: '📘 Facebook' },
+                  { id: 'instagram', l: '📸 Instagram' },
+                  { id: 'tiktok', l: '🎵 TikTok' }
+                ].map(p => (
                   <button key={p.id} className={`tab ${platform === p.id ? 'active' : ''}`}
                     onClick={() => setPlatform(p.id)}>{p.l}</button>
                 ))}
               </div>
-              <button className="btn btn-gold btn-lg btn-block" onClick={handleGenerate} disabled={generating}>
-                {generating ? <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</> : '✨ Generează Descriere & Hashtags'}
+              <button
+                className="btn btn-gold btn-lg btn-block"
+                onClick={handleGenerate}
+                disabled={generating || (!isAdmin && limitStatus && limitStatus.remaining <= 0)}
+              >
+                {generating ? (
+                  <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</>
+                ) : (!isAdmin && limitStatus && limitStatus.remaining <= 0) ? (
+                  '🚫 Limită atinsă'
+                ) : (
+                  '✨ Generează Descriere & Hashtags'
+                )}
               </button>
+
+              {!isAdmin && limitStatus && limitStatus.remaining <= 0 && (
+                <div style={{
+                  marginTop: '0.75rem', padding: '0.75rem', borderRadius: '10px',
+                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                  fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center'
+                }}>
+                  {limitStatus.type === 'guest' ? (
+                    <>
+                      Ai folosit toate cele 3 generări de azi.{' '}
+                      <span onClick={() => navigate('/register')}
+                        style={{ color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>
+                        Creează un cont gratuit
+                      </span>{' '}pentru 5 generări/oră!
+                    </>
+                  ) : (
+                    'Ai folosit toate cele 5 generări din această oră. Încearcă din nou mai târziu.'
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -685,16 +1256,13 @@ const handleSchedule = async () => {
             <div style={{ width: '100%', aspectRatio: '4/5', borderRadius: 'var(--radius-md)',
               overflow: 'hidden', background: 'var(--bg-input)', marginBottom: '1rem' }}>
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               ) : templateSelectat ? (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                  <img src={templateSelectat.thumbnail} alt="Template"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {!versetSelectat && (
+                  <img src={templateSelectat.thumbnail} alt="Template" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {!versetEditat && (
                     <div style={{
-                      position: 'absolute', inset: 0,
-                      background: 'rgba(0,0,0,0.5)',
+                      position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: 'white', fontSize: '0.88rem', textAlign: 'center', padding: '1rem'
                     }}>
@@ -703,9 +1271,8 @@ const handleSchedule = async () => {
                   )}
                 </div>
               ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex',
-                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--text-muted)' }}>
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
                   <div style={{ fontSize: '3rem', opacity: 0.3 }}>🖼️</div>
                   <div>Nicio imagine</div>
                 </div>
@@ -760,7 +1327,7 @@ const handleSchedule = async () => {
                   "Domnul este Păstorul meu"
                 </div>
 
-                {versetSelectat && (
+                {versetEditat && (
                   <button className="btn btn-outline btn-block" onClick={downloadImage}>
                     ⬇️ Descarcă 1080×1350
                   </button>
@@ -791,16 +1358,34 @@ const handleSchedule = async () => {
               ) : null}
             </div>
 
+            {/* Editare verset din Step 3 */}
             <div className="verse-card">
               <div style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', textTransform: 'uppercase',
-                letterSpacing: 2, fontWeight: 700, marginBottom: '0.4rem' }}>📖 Verset</div>
-              <div style={{ fontFamily: "'Playfair Display',serif", fontSize: '0.88rem', fontStyle: 'italic',
-                color: 'var(--text-primary)', lineHeight: 1.6 }}>
-                "{generated.verset?.text?.substring(0, 150)}{generated.verset?.text?.length > 150 ? '...' : ''}"
-              </div>
-              <div style={{ color: 'var(--gold-primary)', fontWeight: 700, fontSize: '0.8rem', marginTop: '0.35rem' }}>
-                — {generated.verset?.referintaCompleta || generated.verset?.referinta}
-              </div>
+                letterSpacing: 2, fontWeight: 700, marginBottom: '0.4rem' }}>📖 Verset (editabil)</div>
+              <textarea
+                value={versetEditat}
+                onChange={e => setVersetEditat(e.target.value)}
+                rows={3}
+                style={{
+                  width: '100%', fontFamily: "'Playfair Display', serif", fontSize: '0.88rem',
+                  fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.6,
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)', padding: '0.5rem', resize: 'vertical'
+                }}
+              />
+              <input
+                type="text"
+                value={referintaEditata}
+                onChange={e => setReferintaEditata(e.target.value)}
+                style={{
+                  width: '100%', marginTop: '0.4rem', fontWeight: 700, color: 'var(--gold-primary)',
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)', padding: '0.4rem 0.5rem', fontSize: '0.8rem'
+                }}
+              />
+              <button className="btn btn-outline btn-sm" style={{ marginTop: '0.5rem' }} onClick={forceRender}>
+                🔄 Actualizează imaginea
+              </button>
             </div>
           </div>
 
@@ -842,7 +1427,6 @@ const handleSchedule = async () => {
               </div>
             </div>
 
-            {/* Rezultate */}
             {publishResult && (
               <div style={{
                 padding: '0.75rem', borderRadius: 'var(--radius-md)',
@@ -852,6 +1436,7 @@ const handleSchedule = async () => {
                 fontSize: '0.85rem', fontWeight: 600
               }}>{publishResult.message}</div>
             )}
+
             {scheduleResult && (
               <div style={{
                 padding: '0.75rem', borderRadius: 'var(--radius-md)',
@@ -862,42 +1447,54 @@ const handleSchedule = async () => {
               }}>{scheduleResult.message}</div>
             )}
 
-            {/* Acțiuni */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
               <button className="btn btn-gold" onClick={handleSave} disabled={saved}>
                 {saved ? '✅ Salvat!' : '💾 Salvează'}
               </button>
               <button className="btn btn-outline" onClick={downloadImage}>⬇️ PNG</button>
-              <button onClick={handlePublish} disabled={publishing} style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '0.75rem', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
-                fontSize: '0.85rem', fontWeight: 600,
-                background: publishing ? 'rgba(24,119,242,0.5)' : 'linear-gradient(135deg,#1877F2,#0C5DC7)',
-                color: 'white', boxShadow: '0 4px 15px rgba(24,119,242,0.3)'
-              }}>
-                {publishing ? '⏳...' : '📘 Facebook Acum'}
-              </button>
+
+              {isAdmin ? (
+                <button onClick={handlePublish} disabled={publishing} style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '0.75rem', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                  fontSize: '0.85rem', fontWeight: 600,
+                  background: publishing ? 'rgba(24,119,242,0.5)' : 'linear-gradient(135deg,#1877F2,#0C5DC7)',
+                  color: 'white', boxShadow: '0 4px 15px rgba(24,119,242,0.3)'
+                }}>
+                  {publishing ? '⏳...' : '📘 Facebook Acum'}
+                </button>
+              ) : (
+                <div style={{
+                  padding: '0.75rem', borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  fontSize: '0.78rem', color: 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center'
+                }}>🔒 Publicare doar admin</div>
+              )}
+
               <button className="btn btn-secondary" onClick={() => {
                 setStep(1); setGenerated(null); setVersetSelectat(null);
+                setVersetEditat(''); setReferintaEditata('');
                 setPublishResult(null); setScheduleResult(null);
                 setGeneratedImageBase64(null); setPreviewUrl(null);
               }}>🔄 Nouă</button>
             </div>
 
-            {/* Programare */}
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title"><span className="icon">📅</span> Programare Automată</div>
+            {isAdmin && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title"><span className="icon">📅</span> Programare Automată</div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data și ora (ora României):</label>
+                  <input type="datetime-local" className="form-input"
+                    value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} />
+                </div>
+                <button className="btn btn-gold btn-block" onClick={handleSchedule} disabled={scheduling}>
+                  {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
+                </button>
               </div>
-              <div className="form-group">
-                <label className="form-label">Data și ora (ora României):</label>
-                <input type="datetime-local" className="form-input"
-                  value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} />
-              </div>
-              <button className="btn btn-gold btn-block" onClick={handleSchedule} disabled={scheduling}>
-                {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}

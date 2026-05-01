@@ -47,6 +47,11 @@ const PostSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   failedReason: {
     type: String,
     default: null
@@ -59,5 +64,6 @@ const PostSchema = new mongoose.Schema({
 PostSchema.index({ status: 1 });
 PostSchema.index({ scheduledDate: 1 });
 PostSchema.index({ createdAt: -1 });
+PostSchema.index({ userId: 1 });
 
 module.exports = mongoose.model('Post', PostSchema);
