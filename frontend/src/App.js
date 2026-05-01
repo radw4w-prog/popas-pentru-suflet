@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import FacebookCallbackPage from './pages/FacebookCallbackPage';
 import BottomNav from './components/BottomNav';
 import PWAInstallBanner from './components/PWAInstallBanner';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
@@ -129,6 +130,13 @@ function App() {
                 </AppLayout>
               </AdminRoute>
             } />
+			<Route path="/analytics" element={
+  <AdminRoute>
+    <AppLayout theme={theme} toggleTheme={toggleTheme}>
+      <AnalyticsPage />
+    </AppLayout>
+  </AdminRoute>
+} />
             <Route path="/settings" element={
               <AdminRoute>
                 <AppLayout theme={theme} toggleTheme={toggleTheme}>

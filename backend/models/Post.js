@@ -52,6 +52,14 @@ const PostSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+  analytics: {
+  likes: { type: Number, default: 0 },
+  comments: { type: Number, default: 0 },
+  shares: { type: Number, default: 0 },
+  reach: { type: Number, default: 0 },
+  impressions: { type: Number, default: 0 },
+  syncedAt: { type: Date, default: null }
+},
   failedReason: {
     type: String,
     default: null

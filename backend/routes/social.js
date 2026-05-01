@@ -248,4 +248,185 @@ router.delete('/scheduled/:id', async (req, res) => {
   }
 });
 
+
+// ═══════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════
+
+// GET /api/social/analytics/page?period=week
+router.get('/analytics/page', async (req, res) => {
+  try {
+    const { period = 'week' } = req.query;
+
+    if (!facebookService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Facebook neconectat!'
+      });
+    }
+
+    const analytics = await facebookService.getPageAnalytics(period);
+
+    res.json({
+      success: true,
+      analytics
+    });
+  } catch (error) {
+    // Dacă analytics eșuează, returnăm date parțiale
+    console.error('Analytics page error:', error.message);
+
+    // Încearcă cel puțin info pagină
+    try {
+      const fbStatus = await facebookService.verifyToken();
+      res.json({
+        success: true,
+        analytics: {
+          pageName: fbStatus.pageName || 'Pagina ta',
+          fans: fbStatus.followers || 0,
+          followers: fbStatus.followers || 0,
+          picture: fbStatus.picture || null,
+          period,
+          impressions: 0,
+          reach: 0,
+          engagedUsers: 0,
+          engagements: 0,
+          newFans: 0,
+          pageViews: 0,
+          insightsLimitate: true
+        }
+      });
+    } catch (e) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+});
+
+// GET /api/social/analytics/posts?limit=10
+router.get('/analytics/posts', async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+
+    if (!facebookService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Facebook neconectat!'
+      });
+    }
+
+    const posts = await facebookService.getRecentPostsWithStats(
+      parseInt(limit)
+    );
+
+    // Calculează totale
+    const totals = posts.reduce((acc, p) => ({
+      likes: acc.likes + p.likes,
+      comments: acc.comments + p.comments,
+      shares: acc.shares + p.shares,
+      reactions: acc.reactions + p.reactions
+    }), { likes: 0, comments: 0, shares: 0, reactions: 0 });
+
+    // Top post după engagement
+    const topPost = posts.length > 0
+      ? posts.reduce((top, p) =>
+          (p.likes + p.comments + p.shares) >
+          (top.likes + top.comments + top.shares) ? p : top
+        )
+      : null;
+
+    res.json({
+      success: true,
+      posts,
+      totals,
+      topPost,
+      total: posts.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// GET /api/social/analytics/post/:postId
+router.get('/analytics/post/:postId', async (req, res) => {
+  try {
+    if (!facebookService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Facebook neconectat!'
+      });
+    }
+
+    const analytics = await facebookService.getPostAnalytics(
+      req.params.postId
+    );
+
+    if (!analytics) {
+      return res.status(404).json({
+        success: false,
+        error: 'Postarea nu a fost găsită.'
+      });
+    }
+
+    res.json({ success: true, analytics });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// PUT /api/social/analytics/sync
+// Sincronizează stats din Facebook în DB
+router.put('/analytics/sync', async (req, res) => {
+  try {
+    if (!facebookService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Facebook neconectat!'
+      });
+    }
+
+    const posts = await Post.find({
+      status: 'published',
+      socialPostId: { $exists: true, $ne: null }
+    }).limit(20);
+
+    let actualizate = 0;
+
+    for (const post of posts) {
+      try {
+        const stats = await facebookService.getPostStats(post.socialPostId);
+
+        await Post.findByIdAndUpdate(post._id, {
+          'analytics.likes': stats.likes,
+          'analytics.comments': stats.comments,
+          'analytics.shares': stats.shares,
+          'analytics.syncedAt': new Date()
+        });
+
+        actualizate++;
+      } catch (e) {
+        console.error(`Eroare sync post ${post._id}:`, e.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `${actualizate} postări sincronizate.`,
+      actualizate
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -46,6 +46,7 @@ const BottomNav = () => {
       { path: '/schedule', icon: '📅', label: 'Programare' },
       { path: '/history', icon: '📜', label: 'Istoric' },
       { path: '/settings', icon: '⚙️', label: 'Setări' },
+	  { path: '/analytics', icon: '📊', label: 'Analytics' },
       { path: '/admin', icon: '🛡️', label: 'Admin' },
     );
   }

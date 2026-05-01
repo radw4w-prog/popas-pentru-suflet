@@ -18,10 +18,11 @@ const Sidebar = ({ theme }) => {
   ];
 
   const adminItems = [
-    { path: '/schedule', icon: '📅', label: 'Programare' },
-    { path: '/history', icon: '📜', label: 'Istoric' },
-    { path: '/settings', icon: '⚙️', label: 'Setări' },
-  ];
+  { path: '/schedule', icon: '📅', label: 'Programare' },
+  { path: '/history', icon: '📜', label: 'Istoric' },
+  { path: '/analytics', icon: '📊', label: 'Analytics' },
+  { path: '/settings', icon: '⚙️', label: 'Setări' },
+];
 
   const adminPanelItem = { path: '/admin', icon: '🛡️', label: 'Admin Panel' };
 

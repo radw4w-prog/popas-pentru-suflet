@@ -290,7 +290,7 @@ class FacebookService {
     }
   }
 
-  // ═══ STATS ═══
+    // ═══ STATS ═══
   async getPostStats(postId) {
     try {
       const r = await this.http.get(`${this.baseUrl}/${postId}`, {
@@ -308,6 +308,206 @@ class FacebookService {
       return { likes: 0, comments: 0, shares: 0 };
     }
   }
+
+  // ═══ ANALYTICS POSTARE ═══
+  async getPostAnalytics(postId) {
+    try {
+      const r = await this.http.get(`${this.baseUrl}/${postId}`, {
+        params: {
+          fields: [
+            'message',
+            'created_time',
+            'likes.summary(true)',
+            'comments.summary(true)',
+            'shares',
+            'reactions.summary(true)',
+            'insights.metric(post_impressions,post_reach,post_engaged_users,post_clicks)'
+          ].join(','),
+          access_token: this.accessToken
+        }
+      });
+
+      const data = r.data;
+      const insights = {};
+
+      if (data.insights?.data) {
+        data.insights.data.forEach(metric => {
+          insights[metric.name] = metric.values?.[0]?.value || 0;
+        });
+      }
+
+      return {
+        postId,
+        message: data.message?.substring(0, 100) || '',
+        createdTime: data.created_time,
+        likes: data.likes?.summary?.total_count || 0,
+        comments: data.comments?.summary?.total_count || 0,
+        shares: data.shares?.count || 0,
+        reactions: data.reactions?.summary?.total_count || 0,
+        impressions: insights.post_impressions || 0,
+        reach: insights.post_reach || 0,
+        engagedUsers: insights.post_engaged_users || 0,
+        clicks: insights.post_clicks || 0,
+        engagementRate: insights.post_reach > 0
+          ? ((insights.post_engaged_users / insights.post_reach) * 100).toFixed(2)
+          : 0
+      };
+    } catch (error) {
+      console.error('Eroare getPostAnalytics:', error.message);
+      return null;
+    }
+  }
+
+  // ═══ ANALYTICS PAGINĂ ═══
+   async getPageAnalytics(period = 'week') {
+  try {
+    // ─── Info pagină ───
+    const pageInfo = await this.http.get(
+      `${this.baseUrl}/${this.pageId}`,
+      {
+        params: {
+          fields: 'name,fan_count,followers_count,picture,talking_about_count',
+          access_token: this.accessToken
+        }
+      }
+    );
+
+    const baseData = {
+      pageName: pageInfo.data.name,
+      fans: pageInfo.data.fan_count || 0,
+      followers: pageInfo.data.followers_count || 0,
+      talkingAbout: pageInfo.data.talking_about_count || 0,
+      picture: pageInfo.data.picture?.data?.url || null,
+      period,
+      impressions: 0,
+      reach: 0,
+      engagedUsers: 0,
+      engagements: 0,
+      newFans: 0,
+      pageViews: 0,
+      insightsLimitate: false
+    };
+
+    const periodApi = period === 'day'
+  ? 'day'
+  : period === 'week'
+    ? 'week'
+    : 'days_28';
+
+    // Metrici care funcționează pentru pagina ta
+    const metrici = [
+  { api: 'page_views_total', local: 'pageViews', period: periodApi },
+  { api: 'page_impressions_unique', local: 'reach', period: periodApi },
+  { api: 'page_post_engagements', local: 'engagements', period: periodApi },
+  { api: 'page_fan_adds_by_paid_non_paid_unique', local: 'newFans', period: periodApi },
+  { api: 'page_daily_follows', local: 'newFans', period: 'day' }
+];
+    let anySuccess = false;
+
+    // helper: normalizează value (number sau object)
+    const normalizeMetricValue = (value) => {
+      if (typeof value === 'number') return value;
+
+      if (value && typeof value === 'object') {
+        return Object.values(value).reduce((sum, v) => {
+          if (typeof v === 'number') return sum + v;
+          return sum;
+        }, 0);
+      }
+
+      return 0;
+    };
+
+    for (const metric of metrici) {
+      try {
+        const r = await this.http.get(
+          `${this.baseUrl}/${this.pageId}/insights`,
+          {
+            params: {
+              metric: metric.api,
+              period: metric.period,
+              access_token: this.accessToken
+            }
+          }
+        );
+
+        if (r.data?.data?.length > 0) {
+          const values = r.data.data[0]?.values || [];
+
+          const total = values.reduce((sum, entry) => {
+            return sum + normalizeMetricValue(entry.value);
+          }, 0);
+
+          // dacă metricile pentru newFans vin din mai multe endpoint-uri,
+          // păstrăm valoarea maximă, nu adunăm dublu
+          if (metric.local === 'newFans') {
+            baseData.newFans = Math.max(baseData.newFans, total);
+          } else {
+            baseData[metric.local] = total;
+          }
+
+          anySuccess = true;
+          console.log(`✅ ${metric.api}: ${total}`);
+        }
+      } catch (e) {
+        console.log(`⚠️ ${metric.api}: ${e.response?.data?.error?.message || e.message}`);
+      }
+    }
+
+    if (!anySuccess) {
+      baseData.insightsLimitate = true;
+    }
+
+    return baseData;
+  } catch (error) {
+    console.error('Eroare getPageAnalytics:', error.message);
+    throw new Error(this.getFbErrorMessage(error));
+  }
 }
+
+  // ═══ POSTS RECENTE CU STATS ═══
+    async getRecentPostsWithStats(limit = 10) {
+    try {
+      const r = await this.http.get(
+        `${this.baseUrl}/${this.pageId}/posts`,
+        {
+          params: {
+            fields: [
+              'id',
+              'message',
+              'created_time',
+              'full_picture',
+              'likes.summary(true)',
+              'comments.summary(true)',
+              'shares',
+              'reactions.summary(true)'
+            ].join(','),
+            limit,
+            access_token: this.accessToken
+          }
+        }
+      );
+
+      const posts = r.data?.data || [];
+
+      return posts.map(post => ({
+        postId: post.id,
+        message: post.message?.substring(0, 150) || '',
+        createdTime: post.created_time,
+        picture: post.full_picture || null,
+        likes: post.likes?.summary?.total_count || 0,
+        comments: post.comments?.summary?.total_count || 0,
+        shares: post.shares?.count || 0,
+        reactions: post.reactions?.summary?.total_count || 0,
+        url: `https://facebook.com/${post.id}`
+      }));
+    } catch (error) {
+      console.error('Eroare getRecentPostsWithStats:', error.message);
+      // Returnăm array gol în loc de eroare
+      return [];
+    }
+  }
+
+} // ← ÎNCHIDE CLASA
 
 module.exports = new FacebookService();
