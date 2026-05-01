@@ -18,27 +18,26 @@ const DashboardPage = () => {
   const [readingSuggestion, setReadingSuggestion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
+  
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Bună dimineața');
-    else if (hour < 18) setGreeting('Bună ziua');
-    else setGreeting('Bună seara');
+  const hour = new Date().getHours();
+  if (hour < 12) setGreeting('Bună dimineața');
+  else if (hour < 18) setGreeting('Bună ziua');
+  else setGreeting('Bună seara');
 
-    fetchAllData();
-    fetchRandomVerset();
+  fetchAllData();
+  fetchRandomVerset();
 
-    const clockInterval = setInterval(() => setCurrentTime(new Date()), 1000);
-    const dataInterval = setInterval(fetchAllData, 60000);
-    const versetInterval = setInterval(fetchRandomVerset, 30 * 60 * 1000);
+  // Clock - doar în Header, nu mai e necesar în Dashboard
+  const dataInterval = setInterval(fetchAllData, 60000);
+  const versetInterval = setInterval(fetchRandomVerset, 30 * 60 * 1000);
 
-    return () => {
-      clearInterval(clockInterval);
-      clearInterval(dataInterval);
-      clearInterval(versetInterval);
-    };
-  }, []);
+  return () => {
+    clearInterval(dataInterval);
+    clearInterval(versetInterval);
+  };
+}, []);
 
   const fetchRandomVerset = async () => {
     try {
@@ -154,32 +153,30 @@ const DashboardPage = () => {
           background: 'linear-gradient(90deg, transparent 10%, var(--gold-primary) 50%, transparent 90%)'
         }} />
 
-        <div style={{ position: 'relative', zIndex: 1, padding: '2rem 2.5rem' }}>
+        <div className="dashboard-hero" style={{ position: 'relative', zIndex: 1, padding: '2rem 2.5rem' }}>
 
-          {/* Top bar */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: '1.5rem'
-          }}>
-            <div style={{
-              fontSize: '0.68rem', color: 'var(--text-muted)',
-              textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 600
-            }}>
-              {currentTime.toLocaleDateString('ro-RO', {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-              })}
-            </div>
-            <div style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '0.82rem', color: 'var(--gold-primary)',
-              background: 'var(--gold-subtle)',
-              padding: '0.35rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)'
-            }}>
-              {currentTime.toLocaleTimeString('ro-RO')}
-            </div>
-          </div>
+         {/* Top bar - data statică, fără ceas (ceasul e în Header) */}
+<div style={{
+  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  marginBottom: '1.5rem'
+}}>
+  <div style={{
+    fontSize: '0.68rem', color: 'var(--text-muted)',
+    textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 600
+  }}>
+    {greeting}
+  </div>
+  <div style={{
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: '0.75rem', color: 'var(--gold-primary)',
+    background: 'var(--gold-subtle)',
+    padding: '0.35rem 0.85rem',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border-color)'
+  }}>
+    🕊️ v1.0
+  </div>
+</div>
 
           {/* Greeting */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
@@ -420,7 +417,7 @@ const DashboardPage = () => {
           </div>
 
           <button className="btn btn-outline"
-            onClick={() => window.location.href = '/verses'}
+            onClick={() => window.location.href = '/reading'}
             style={{ flexShrink: 0 }}>
             📖 Citește acum
           </button>
@@ -428,13 +425,13 @@ const DashboardPage = () => {
       </div>
 
       {/* MAIN GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
 
         {/* COLOANA STANGA */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           {/* Stats cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
+          <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
             {[
               {
                 icon: '📖', label: 'Versete', value: stats.totalVerses.toLocaleString(),

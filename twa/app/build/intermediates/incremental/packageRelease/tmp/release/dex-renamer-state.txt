@@ -1,0 +1,4 @@
+#Fri May 01 18:56:50 EEST 2026
+base.0=E\:\\popas-pentru-suflet\\twa\\app\\build\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

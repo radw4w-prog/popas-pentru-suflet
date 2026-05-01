@@ -2,7 +2,7 @@
    🖤 POPAS PENTRU SUFLET - DARK PREMIUM VIP THEME
    ═══════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 
 
 
@@ -1808,4 +1808,1294 @@ body::before {
 .auth-btn-facebook:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+/* ═══════════════════════════════════════════════
+   RESPONSIVE COMPLET - MOBILE / TABLET / DESKTOP
+═══════════════════════════════════════════════ */
+
+/* ─── FONT SIZE SYSTEM ─── */
+[data-fontsize="small"] {
+  font-size: 13px;
+}
+[data-fontsize="small"] .page-content {
+  font-size: 0.82rem;
+}
+[data-fontsize="small"] .card-title {
+  font-size: 0.95rem;
+}
+[data-fontsize="small"] .header-title {
+  font-size: 1.1rem;
+}
+[data-fontsize="small"] .nav-item {
+  font-size: 0.8rem;
+}
+
+[data-fontsize="medium"] {
+  font-size: 15px;
+}
+
+[data-fontsize="large"] {
+  font-size: 17px;
+}
+[data-fontsize="large"] .page-content {
+  font-size: 1rem;
+}
+[data-fontsize="large"] .card-title {
+  font-size: 1.2rem;
+}
+[data-fontsize="large"] .header-title {
+  font-size: 1.6rem;
+}
+[data-fontsize="large"] .nav-item {
+  font-size: 1rem;
+}
+
+/* ─── SIDEBAR OVERLAY (mobile) ─── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+}
+
+/* ─── NAV SECTION TITLE ─── */
+.nav-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.75rem 1rem 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* ─── SIDEBAR AUTH PROMPT ─── */
+.sidebar-auth-prompt {
+  margin: 1rem 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.sidebar-auth-btn {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  transition: all 0.2s;
+}
+
+.sidebar-auth-btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  color: white;
+}
+
+.sidebar-auth-btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(99,102,241,0.3);
+  color: var(--text-secondary);
+}
+
+/* ─── SIDEBAR USER ─── */
+.sidebar-user {
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-role {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.sidebar-logout-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.sidebar-logout-btn:hover {
+  color: #ef4444;
+}
+
+/* ─── HEADER ─── */
+.menu-btn {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--gold-primary);
+  font-size: 1.2rem;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.menu-btn:hover {
+  background: var(--gold-subtle);
+  border-color: var(--gold-primary);
+}
+
+.header-subtitle {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.header-date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.logo-text {
+  display: inline;
+}
+
+/* ═══════════════════════════════════════
+   DESKTOP (>1024px) - Layout normal
+═══════════════════════════════════════ */
+@media (min-width: 1025px) {
+  .sidebar {
+    transform: translateX(0) !important;
+    width: var(--sidebar-width);
+  }
+
+  .main-content {
+    margin-left: var(--sidebar-width);
+  }
+
+  .menu-btn {
+    display: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   TABLET (769px - 1024px)
+═══════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+  }
+
+  .main-content {
+    margin-left: var(--sidebar-width);
+  }
+
+  .page-content {
+    padding: 1.25rem;
+  }
+
+  .header {
+    padding: 1rem 1.25rem;
+  }
+
+  .menu-btn {
+    display: none;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .generator-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-badge {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════
+   MOBILE (max 768px)
+═══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Sidebar - ascuns implicit, slide din stânga */
+  .sidebar {
+    width: 280px !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Overlay apare când sidebar e deschis */
+  .sidebar.open ~ .sidebar-overlay,
+  .app-layout:has(.sidebar.open) .sidebar-overlay {
+    display: block;
+  }
+
+  /* Main content - fără margin */
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  /* Hamburger vizibil */
+  .menu-btn {
+    display: flex !important;
+  }
+
+  /* Header compact */
+  .header {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .header-title {
+    font-size: 1rem !important;
+  }
+
+  .header-subtitle {
+    display: none;
+  }
+
+  .header-date {
+    display: none;
+  }
+
+  /* Ascunde ceas și text tema pe mobile */
+  .header-time {
+    display: none !important;
+  }
+
+  .theme-label {
+    display: none;
+  }
+
+  /* Ascunde badge admin și username pe mobile mic */
+  .admin-badge {
+    display: none;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  /* Page content */
+  .page-content {
+    padding: 0.875rem !important;
+  }
+
+  /* Stats - 2 coloane pe mobile */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.6rem !important;
+  }
+
+  .stat-value {
+    font-size: 1.4rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.7rem !important;
+  }
+
+  /* Grids - 1 coloană */
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Generator */
+  .generator-layout,
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards */
+  .card {
+    padding: 0.875rem !important;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Tabs scroll */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    white-space: nowrap;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  /* Template grid - 2 coloane pe mobile */
+  [style*="minmax(140px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Auth pages */
+  .auth-container {
+    padding: 1.5rem !important;
+    margin: 0.5rem;
+  }
+
+  /* Butoane mobile */
+  .btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Header actions - reduce gap */
+  .header-actions {
+    gap: 0.5rem !important;
+  }
+
+  /* Overlay sidebar */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+  }
+}
+
+/* ═══════════════════════════════════════
+   MOBILE MIC (max 480px)
+═══════════════════════════════════════ */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  .stat-card {
+    padding: 0.875rem !important;
+  }
+
+  .stat-value {
+    font-size: 1.25rem !important;
+  }
+
+  .page-content {
+    padding: 0.625rem !important;
+  }
+
+  .header {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .header-title {
+    font-size: 0.9rem !important;
+  }
+
+  /* Template grid - 2 coloane */
+  [style*="minmax(140px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Auth */
+  .auth-container {
+    padding: 1.25rem !important;
+  }
+
+  .auth-title {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   LANDSCAPE MOBILE
+═══════════════════════════════════════ */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    overflow-y: auto;
+  }
+
+  .page-content {
+    padding: 0.5rem 1rem !important;
+  }
+}
+
+/* ─── FIX pentru sidebar overlay ─── */
+.app-layout {
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .sidebar.open + * + .sidebar-overlay,
+  .sidebar-overlay.active {
+    display: block !important;
+  }
+}
+
+
+
+/* ═══════════════════════════════════════════════
+   📱 MOBILE PREMIUM EXPERIENCE
+   ═══════════════════════════════════════════════ */
+
+/* ─── BOTTOM NAV BAR (Mobile Only) ─── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 300;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.bottom-nav-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.4rem 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  min-width: 56px;
+  position: relative;
+}
+
+.bottom-nav-item.active {
+  color: var(--gold-primary);
+}
+
+.bottom-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: var(--gold-primary);
+  border-radius: 0 0 3px 3px;
+}
+
+.bottom-nav-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+  transform: scale(1.15);
+}
+
+.bottom-nav-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ─── MORE MENU (bottom nav) ─── */
+.bottom-more-menu {
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  right: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.5rem;
+  z-index: 350;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
+  min-width: 180px;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bottom-more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.bottom-more-item:hover,
+.bottom-more-item:active {
+  background: var(--gold-subtle);
+}
+
+.bottom-more-item .more-icon {
+  font-size: 1.2rem;
+  width: 28px;
+  text-align: center;
+}
+
+/* ─── MOBILE PREMIUM OVERRIDES ─── */
+@media (max-width: 768px) {
+
+  /* Bottom nav vizibil */
+  .bottom-nav {
+    display: block;
+  }
+
+  /* Spațiu pentru bottom nav */
+  .page-content {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Sidebar premium mobile */
+  .sidebar {
+    width: 300px !important;
+    border-radius: 0 24px 24px 0;
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .sidebar-header {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .sidebar-logo {
+    font-size: 1.35rem;
+  }
+
+  .nav-item {
+    padding: 0.95rem 1.25rem;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    margin: 0 0.5rem 2px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-item:active {
+    transform: scale(0.97);
+    background: var(--gold-subtle);
+  }
+
+  /* Header premium mobile */
+  .header {
+    padding: 0.75rem 1rem;
+    border-radius: 0 0 0 0;
+  }
+
+  .header-title {
+    font-size: 1.05rem !important;
+    letter-spacing: -0.01em;
+  }
+
+  /* Cards premium mobile */
+  .card {
+    border-radius: 18px !important;
+    padding: 1.15rem !important;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .card:active {
+    transform: scale(0.99);
+  }
+
+  .card-gold {
+    border: 1px solid var(--border-color) !important;
+  }
+
+  .card-header {
+    padding-bottom: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 1rem;
+  }
+
+  /* Stats premium mobile */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .stat-card {
+    border-radius: 16px !important;
+    padding: 1rem !important;
+    gap: 0.65rem;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.5px;
+  }
+
+  /* Buttons premium mobile */
+  .btn {
+    border-radius: 14px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.88rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-gold {
+    box-shadow: 0 3px 12px rgba(212, 175, 55, 0.25);
+  }
+
+  .btn-lg {
+    padding: 0.95rem 1.5rem;
+    font-size: 0.95rem;
+    border-radius: 16px;
+  }
+
+  /* Inputs premium mobile */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    border-radius: 14px;
+    padding: 0.9rem 1.15rem;
+    font-size: 16px !important; /* Previne zoom pe iOS */
+  }
+
+  /* Tabs premium mobile */
+  .tabs {
+    border-radius: 14px;
+    padding: 3px;
+    gap: 3px;
+    background: var(--bg-input);
+  }
+
+  .tab {
+    border-radius: 11px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .tab.active {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Badges premium mobile */
+  .badge {
+    border-radius: 20px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  /* Verse card premium */
+  .verse-card {
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .verse-text {
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  /* Auth pages premium mobile */
+  .auth-page {
+    padding: 0.5rem;
+  }
+
+  .auth-container {
+    border-radius: 24px !important;
+    padding: 2rem 1.5rem !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .auth-logo {
+    font-size: 3rem;
+  }
+
+  .auth-title {
+    font-size: 1.35rem !important;
+  }
+
+  .auth-btn-primary,
+  .auth-btn-facebook,
+  .auth-btn-guest {
+    border-radius: 14px;
+    padding: 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  /* Template grid premium mobile */
+  [style*="minmax(140px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Smooth scroll iOS */
+  .page-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Form groups */
+  .form-group label {
+    font-size: 0.8rem;
+    margin-bottom: 0.35rem;
+  }
+
+  /* Generator steps premium */
+  [style*="overflowX: 'auto'"] {
+    border-radius: 16px !important;
+    padding: 4px !important;
+  }
+
+  /* Post preview premium mobile */
+  .post-preview {
+    border-radius: 20px;
+  }
+
+  /* Notification dropdown mobile */
+  [style*="width: 340"] {
+    width: 300px !important;
+    right: -60px !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* ─── MOBILE MIC PREMIUM ─── */
+@media (max-width: 380px) {
+  .bottom-nav-item {
+    min-width: 48px;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .bottom-nav-label {
+    font-size: 0.55rem;
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.2rem;
+  }
+
+  .header-actions {
+    gap: 0.35rem !important;
+  }
+
+  .auth-container {
+    padding: 1.25rem 1rem !important;
+  }
+}
+
+/* ─── TOUCH FEEDBACK ─── */
+@media (hover: none) {
+  .nav-item:hover {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+
+  .nav-item:active {
+    background: var(--gold-subtle);
+    color: var(--gold-primary);
+    transform: scale(0.97);
+  }
+
+  .card:hover {
+    transform: none;
+    box-shadow: var(--shadow-card);
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .bottom-nav-item:active {
+    background: var(--gold-subtle);
+    transform: scale(0.9);
+  }
+}
+
+/* ─── SAFE AREA (iPhone notch) ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(0.4rem + env(safe-area-inset-bottom));
+  }
+
+  .header {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+}
+
+
+/* ═══════════════════════════════════════════════
+   📱 DASHBOARD PREMIUM MOBILE
+═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Dashboard main grid → 1 coloana */
+  [style*="gridTemplateColumns: '1.2fr 1fr'"],
+  [style*="grid-template-columns: 1.2fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hero section mobile */
+  .animate-in > div:first-child {
+    margin-bottom: 1rem !important;
+  }
+
+  .animate-in > div:first-child > div:last-child {
+    padding: 1.25rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   📱 DASHBOARD - TOATE STILURILE INLINE OVERRIDE
+═══════════════════════════════════════════════ */
+
+/* Forțează grid 1 coloana pe mobile */
+@media (max-width: 900px) {
+  .animate-in [style*="1.2fr"] {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   📱 FONT SIZE LARGE - MOBILE BOOST
+═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Font size large pe mobile = cu adevărat mare */
+  [data-fontsize="large"] .page-content {
+    font-size: 1.1rem !important;
+  }
+
+  [data-fontsize="large"] .page-content h1 {
+    font-size: 1.6rem !important;
+  }
+
+  [data-fontsize="large"] .page-content .card-title {
+    font-size: 1.15rem !important;
+  }
+
+  [data-fontsize="large"] .page-content .stat-value,
+  [data-fontsize="large"] .page-content [style*="fontSize: '1.65rem'"],
+  [data-fontsize="large"] .page-content [style*="fontSize: '1.5rem'"] {
+    font-size: 2rem !important;
+  }
+
+  [data-fontsize="large"] .page-content [style*="fontSize: '0.82rem'"],
+  [data-fontsize="large"] .page-content [style*="fontSize: '0.8rem'"],
+  [data-fontsize="large"] .page-content [style*="fontSize: '0.78rem'"] {
+    font-size: 0.95rem !important;
+  }
+
+  [data-fontsize="large"] .page-content [style*="fontSize: '0.68rem'"],
+  [data-fontsize="large"] .page-content [style*="fontSize: '0.7rem'"],
+  [data-fontsize="large"] .page-content [style*="fontSize: '0.65rem'"] {
+    font-size: 0.85rem !important;
+  }
+
+  [data-fontsize="large"] .page-content .btn {
+    font-size: 1rem !important;
+    padding: 0.9rem 1.4rem !important;
+  }
+
+  [data-fontsize="large"] .page-content .badge {
+    font-size: 0.82rem !important;
+    padding: 0.35rem 0.8rem !important;
+  }
+
+  /* Font size medium pe mobile */
+  [data-fontsize="medium"] .page-content {
+    font-size: 0.95rem !important;
+  }
+
+  [data-fontsize="medium"] .page-content [style*="fontSize: '0.68rem'"],
+  [data-fontsize="medium"] .page-content [style*="fontSize: '0.7rem'"] {
+    font-size: 0.8rem !important;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════
+   📱 DASHBOARD CLASS-BASED RESPONSIVE
+═══════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .dashboard-hero {
+    padding: 1.25rem 1rem !important;
+  }
+
+  /* Greeting mai mare */
+  .dashboard-hero h1 {
+    font-size: 1.3rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Quick numbers mai vizibile */
+  .dashboard-hero > div:nth-child(3) {
+    gap: 1.25rem !important;
+  }
+
+  .dashboard-hero > div:nth-child(3) > div > div:first-child {
+    font-size: 1.75rem !important;
+  }
+
+  .dashboard-hero > div:nth-child(3) > div > div:last-child {
+    font-size: 0.78rem !important;
+  }
+
+  /* CTA butoane mai mari */
+  .dashboard-hero .btn {
+    padding: 0.85rem 1.25rem !important;
+    font-size: 0.92rem !important;
+    border-radius: 14px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  /* Stats cards mai mari */
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .dashboard-stats > div {
+    padding: 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  /* Stat value mai mare */
+  .dashboard-stats > div > div:last-of-type:not(:first-child) {
+    font-size: 0.78rem !important;
+  }
+
+  /* Verset card mobile */
+  [style*="padding: '1.5rem 2rem'"] {
+    padding: 1rem 1.15rem !important;
+  }
+
+  /* Verset text mai mare */
+  [style*="fontFamily: \"'Playfair Display', serif\""][style*="fontStyle: 'italic'"] {
+    font-size: 1.05rem !important;
+    -webkit-line-clamp: 3 !important;
+  }
+
+  /* Citeste Biblia card */
+  [style*="gap: '1.5rem'"][style*="flexWrap: 'wrap'"] {
+    gap: 1rem !important;
+  }
+
+  /* Reading progress bar wider */
+  [style*="minWidth: '200px'"] {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Cards padding */
+  [style*="padding: '1.25rem'"] {
+    padding: 1rem !important;
+  }
+
+  [style*="padding: '1rem 1.25rem'"] {
+    padding: 0.85rem 1rem !important;
+  }
+
+  /* Section titles */
+  [style*="fontWeight: 700"][style*="fontSize: '0.9rem'"] {
+    font-size: 1rem !important;
+  }
+
+  /* Post text */
+  [style*="fontSize: '0.82rem'"] {
+    font-size: 0.88rem !important;
+  }
+
+  /* Muted text bigger */
+  [style*="fontSize: '0.7rem'"],
+  [style*="fontSize: '0.68rem'"],
+  [style*="fontSize: '0.65rem'"] {
+    font-size: 0.78rem !important;
+  }
+
+  /* Avatar mai mare pe mobile */
+  [style*="width: '56px'"] {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  /* Facebook status card */
+  [style*="width: '48px'"][style*="height: '48px'"] {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Butoane actiuni rapide */
+  [style*="justifyContent: 'flex-start'"] {
+    font-size: 0.92rem !important;
+    padding: 0.85rem 1.15rem !important;
+    border-radius: 14px !important;
+  }
+
+  /* Footer card */
+  .animate-in [style*="textAlign: 'center'"][style*="fontFamily: \"'JetBrains Mono'"] {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* ═══ FONT SIZE LARGE + MOBILE ═══ */
+@media (max-width: 768px) {
+  [data-fontsize="large"] .dashboard-hero h1 {
+    font-size: 1.5rem !important;
+  }
+
+  [data-fontsize="large"] .dashboard-stats > div > div:nth-child(2) {
+    font-size: 2rem !important;
+  }
+
+  [data-fontsize="large"] .dashboard-grid [style*="fontWeight: 700"] {
+    font-size: 1.05rem !important;
+  }
+
+  [data-fontsize="large"] .dashboard-grid .btn {
+    font-size: 1.05rem !important;
+    padding: 1rem 1.35rem !important;
+  }
+
+  [data-fontsize="large"] [style*="fontFamily: \"'Playfair Display'"] {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* ═══ TABLET ═══ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ⚡ PERFORMANCE OPTIMIZATIONS
+═══════════════════════════════════════════════ */
+
+/* Animații compuse (GPU accelerated) */
+.animate-in {
+  animation: fadeInGPU 0.4s ease forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes fadeInGPU {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Spinner GPU accelerated */
+.spinner {
+  will-change: transform;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Card hover GPU */
+.card {
+  will-change: auto;
+}
+
+.card:hover {
+  will-change: transform, box-shadow;
+}
+
+/* Dezactivează animații de hover pe touch */
+@media (hover: none) {
+  .card:hover {
+    transform: none !important;
+    box-shadow: var(--shadow-card) !important;
+    will-change: auto;
+  }
+
+  .btn:hover {
+    transform: none !important;
+  }
+
+  .nav-item:hover::before {
+    width: 0 !important;
+  }
+
+  /* Sidebar transitions */
+  .sidebar {
+    will-change: transform;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Theme transition - doar background și color, nu box-shadow */
+*, *::before, *::after {
+  transition: background-color 0.2s ease,
+              color 0.15s ease;
+}
+
+/* Lazy load images */
+img[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* Contain layout */
+.card {
+  contain: content;
+}
+
+.nav-item {
+  contain: layout style;
+}
+
+/* Font display swap */
+@font-face {
+  font-display: swap;
 }

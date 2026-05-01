@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import { FontSizeContext } from '../App';
 
 const Header = ({ theme, toggleTheme }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
-  
+  const { fontSize, setFontSize } = useContext(FontSizeContext);
+
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [fontMenuOpen, setFontMenuOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -25,18 +28,24 @@ const Header = ({ theme, toggleTheme }) => {
     }
   };
 
-  // Închide sidebar la click outside
   useEffect(() => {
     const handleClick = (e) => {
+      // Închide sidebar overlay
       const sidebar = document.querySelector('.sidebar');
       const btn = document.querySelector('.menu-btn');
-      if (sidebar && !sidebar.contains(e.target) && !btn?.contains(e.target)) {
-        sidebar.classList.remove('open');
-        setMenuOpen(false);
+      if (sidebar && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
+          sidebar.classList.remove('open');
+          setMenuOpen(false);
+        }
       }
       // Închide user menu
       if (!e.target.closest('.user-menu-wrapper')) {
         setUserMenuOpen(false);
+      }
+      // Închide font menu
+      if (!e.target.closest('.font-menu-wrapper')) {
+        setFontMenuOpen(false);
       }
     };
     document.addEventListener('click', handleClick);
@@ -62,47 +71,37 @@ const Header = ({ theme, toggleTheme }) => {
     navigate('/login');
   };
 
-  // Inițiale pentru avatar
   const getInitiale = (nume) => {
     if (!nume) return '?';
-    return nume.split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return nume.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
+
+  const fontSizeOptions = [
+    { key: 'small', label: 'Mic', size: '13px' },
+    { key: 'medium', label: 'Mediu', size: '15px' },
+    { key: 'large', label: 'Mare', size: '17px' },
+  ];
 
   return (
     <div className="header">
-      {/* Stânga - Menu btn + Titlu pagină */}
+      {/* Stânga */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+
+        {/* Hamburger - doar pe mobile */}
         <button
           className="menu-btn"
           onClick={toggleMenu}
-          style={{
-            display: 'none',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.5rem',
-            cursor: 'pointer',
-            color: 'var(--gold-primary)',
-            fontSize: '1.2rem',
-            width: 38, height: 38,
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          aria-label="Meniu"
+        >
           {menuOpen ? '✕' : '☰'}
         </button>
 
         <div>
           <h1 className="header-title">
             {current.title}
-            <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-              {' '}• {current.subtitle}
-            </span>
+            <span className="header-subtitle"> • {current.subtitle}</span>
           </h1>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+          <div className="header-date">
             {time.toLocaleDateString('ro-RO', {
               weekday: 'long', day: 'numeric', month: 'long'
             })}
@@ -110,12 +109,96 @@ const Header = ({ theme, toggleTheme }) => {
         </div>
       </div>
 
-      {/* Dreapta - Acțiuni */}
+      {/* Dreapta */}
       <div className="header-actions">
+
+        {/* Mărime text */}
+        <div className="font-menu-wrapper" style={{ position: 'relative' }}>
+          <button
+            onClick={() => setFontMenuOpen(!fontMenuOpen)}
+            className="header-icon-btn"
+            title="Mărime text"
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.45rem 0.75rem',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.85rem'
+            }}
+          >
+            <span>Aa</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▼</span>
+          </button>
+
+          {fontMenuOpen && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.5rem',
+              zIndex: 1000,
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+              minWidth: 140
+            }}>
+              <div style={{
+                fontSize: '0.7rem',
+                color: 'var(--text-muted)',
+                padding: '0.25rem 0.5rem',
+                marginBottom: '0.25rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Mărime text
+              </div>
+              {fontSizeOptions.map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => { setFontSize(opt.key); setFontMenuOpen(false); }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    background: fontSize === opt.key
+                      ? 'rgba(99,102,241,0.1)'
+                      : 'transparent',
+                    border: fontSize === opt.key
+                      ? '1px solid rgba(99,102,241,0.3)'
+                      : '1px solid transparent',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    color: fontSize === opt.key
+                      ? '#6366f1'
+                      : 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem',
+                    marginBottom: '2px'
+                  }}
+                >
+                  <span style={{ fontSize: opt.size, fontWeight: 600 }}>
+                    {opt.label}
+                  </span>
+                  <span style={{ fontSize: opt.size, opacity: 0.6 }}>
+                    Abc
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
+          className="header-icon-btn"
           style={{
             background: theme === 'dark'
               ? 'linear-gradient(135deg, rgba(244,208,63,0.15), rgba(244,208,63,0.05))'
@@ -130,27 +213,28 @@ const Header = ({ theme, toggleTheme }) => {
             alignItems: 'center',
             gap: '6px',
             transition: 'all 0.3s ease'
-          }}>
+          }}
+        >
           {theme === 'dark' ? '☀️' : '🌙'}
-          <span style={{ fontSize: '0.78rem', fontWeight: 500 }}>
+          <span className="theme-label" style={{ fontSize: '0.78rem', fontWeight: 500 }}>
             {theme === 'dark' ? 'Light' : 'Dark'}
           </span>
         </button>
 
-        {/* Ceas */}
+        {/* Ceas - ascuns pe mobile mic */}
         <div className="header-time">
           🕐 {time.toLocaleTimeString('ro-RO')}
         </div>
-		
-		{/* NOTIFICĂRI - NOU */}
-  {isAuthenticated && <NotificationBell />}
 
-        {/* USER MENU sau Login button */}
+        {/* Notificări */}
+        {isAuthenticated && <NotificationBell />}
+
+        {/* User Menu / Login */}
         {isAuthenticated ? (
           <div className="user-menu-wrapper" style={{ position: 'relative' }}>
-            {/* Avatar Button */}
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="user-menu-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -162,40 +246,37 @@ const Header = ({ theme, toggleTheme }) => {
                 cursor: 'pointer',
                 color: 'var(--text-primary)',
                 transition: 'all 0.2s'
-              }}>
-              {/* Avatar */}
+              }}
+            >
               <div style={{
-                width: 28, height: 28,
-                borderRadius: '50%',
+                width: 28, height: 28, borderRadius: '50%',
                 background: isAdmin
                   ? 'linear-gradient(135deg, #f4d03f, #e67e22)'
                   : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                color: 'white',
-                flexShrink: 0
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.7rem', fontWeight: 700, color: 'white', flexShrink: 0,
+                overflow: 'hidden'
               }}>
                 {user?.avatar
-                  ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : getInitiale(user?.nume)
                 }
               </div>
 
-              <span style={{ fontSize: '0.82rem', fontWeight: 500, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="user-name" style={{
+                fontSize: '0.82rem', fontWeight: 500,
+                maxWidth: 80, overflow: 'hidden',
+                textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+              }}>
                 {user?.nume}
               </span>
 
               {isAdmin && (
-                <span style={{
+                <span className="admin-badge" style={{
                   fontSize: '0.6rem',
                   background: 'linear-gradient(135deg, #f4d03f, #e67e22)',
-                  color: '#000',
-                  padding: '1px 5px',
-                  borderRadius: '10px',
-                  fontWeight: 700
+                  color: '#000', padding: '1px 5px',
+                  borderRadius: '10px', fontWeight: 700
                 }}>
                   ADMIN
                 </span>
@@ -206,7 +287,6 @@ const Header = ({ theme, toggleTheme }) => {
               </span>
             </button>
 
-            {/* Dropdown Menu */}
             {userMenuOpen && (
               <div style={{
                 position: 'absolute',
@@ -220,7 +300,6 @@ const Header = ({ theme, toggleTheme }) => {
                 zIndex: 1000,
                 boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
               }}>
-                {/* Info user */}
                 <div style={{
                   padding: '0.5rem 0.75rem',
                   borderBottom: '1px solid var(--border-color)',
@@ -234,28 +313,21 @@ const Header = ({ theme, toggleTheme }) => {
                   </div>
                 </div>
 
-                {/* Admin Panel link */}
                 {isAdmin && (
-                  <button
-                    onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
+                  <button onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
                     style={dropdownItemStyle}>
                     🛡️ Admin Panel
                   </button>
                 )}
 
-                {/* Settings */}
-                <button
-                  onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
+                <button onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
                   style={dropdownItemStyle}>
                   ⚙️ Setări cont
                 </button>
 
-                {/* Divider */}
                 <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
 
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
+                <button onClick={handleLogout}
                   style={{ ...dropdownItemStyle, color: '#ef4444' }}>
                   🚪 Deconectare
                 </button>
@@ -263,7 +335,6 @@ const Header = ({ theme, toggleTheme }) => {
             )}
           </div>
         ) : (
-          /* Buton Login pentru vizitatori */
           <button
             onClick={() => navigate('/login')}
             style={{
@@ -278,7 +349,8 @@ const Header = ({ theme, toggleTheme }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
-            }}>
+            }}
+          >
             🔑 Login
           </button>
         )}
@@ -287,7 +359,6 @@ const Header = ({ theme, toggleTheme }) => {
   );
 };
 
-// Style refolosibil pentru dropdown items
 const dropdownItemStyle = {
   width: '100%',
   padding: '0.6rem 0.75rem',

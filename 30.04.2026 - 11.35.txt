@@ -323,4 +323,147 @@ Prioritate 5: Domeniu custom (.ro)
 ✅ Setări notificări per user
 ✅ Scheduler cron (08:00 + 21:00)
 
+CE AM CONSTRUIT — Status Complet
+🔐 Sistem Autentificare
+text
 
+✅ Înregistrare email + parolă
+✅ Login email + parolă
+✅ Login cu Facebook (popup)
+✅ JWT tokens (24h)
+✅ Persistență sesiune
+✅ Logout
+✅ Roluri: guest / user / admin
+🛡️ Admin Panel
+text
+
+✅ Dashboard statistici (useri, postări)
+✅ Gestionare utilizatori
+   ✅ Schimbare rol (user ↔ admin)
+   ✅ Blocare/deblocare cont
+   ✅ Ștergere cont
+✅ Vizualizare postări
+✅ Setări site
+🔒 Limitare Generări
+text
+
+✅ Vizitator (guest): 3 generări/zi
+✅ User logat: 5 generări/oră
+✅ Admin: nelimitat
+✅ Banner informativ în UI
+✅ Blocare elegantă cu mesaj
+✅ Redirect spre register pentru guest
+📖 Biblia Cornilescu
+text
+
+✅ 31.102 versete complete
+✅ 66 cărți (VT + NT)
+✅ Căutare full-text
+✅ Filtrare pe carte/testament
+✅ Verset aleatoriu
+✅ Copiere verset
+📅 Plan Citire Biblie
+text
+
+✅ Setup plan cu dată start/end
+✅ Preseturi: 3 luni, 6 luni, 1 an, 2 ani
+✅ Calcul automat capitole/zi
+✅ Planul de azi (ce capitole să citești)
+✅ Buton "Am citit planul de azi"
+✅ Reader capitol complet cu versete
+✅ Marcare capitol citit/necitit
+✅ Navigare anterior/următor capitol
+✅ Progres general cu procente
+✅ Milestones vizuale (10/25/50/75/100%)
+✅ Calendar 30 zile cu streak
+✅ View pe toate 66 cărți cu progres
+✅ Modificare/ștergere plan
+🔔 Notificări
+text
+
+✅ Bell icon în header cu badge
+✅ Dropdown notificări
+✅ Reminder citire zilnică (08:00 + 21:00)
+✅ Avertisment întârziere plan
+✅ Milestone-uri progres
+✅ Marcare citit individual
+✅ Marcare toate citite
+✅ Ștergere notificare
+✅ Setări notificări per user
+✅ Toggle tipuri notificări
+✅ Anti-duplicare 24h
+✅ Cron job automat
+🖼️ Generator Imagini
+text
+
+✅ 112 template-uri valide
+✅ 24 categorii tematice
+✅ Paginare 24/pagină
+✅ Filtrare pe categorie
+✅ Upload template custom
+✅ Editor text pe imagine
+✅ Font, culoare, poziție, mărime
+✅ Preview în timp real
+✅ Watermark anti-decupare
+✅ Download PNG 1080×1350
+✅ Editare text verset direct
+✅ Editare referință biblică
+📘 Facebook Integration
+text
+
+✅ Publicare directă (admin only)
+✅ Programare automată (admin only)
+✅ Scheduler 24/7 în cloud
+✅ Token permanent
+✅ Status conectare în setări
+✅ Test publicare
+🎨 UI/UX
+text
+
+✅ Dark Theme Premium
+✅ Light Theme Premium
+✅ Toggle temă ☀️🌙
+✅ Mobile responsive
+✅ Sidebar diferențiat pe roluri
+✅ Header cu user menu
+✅ Dropdown logout/setări
+✅ Badge ADMIN în header
+✅ Avatar utilizator
+✅ Animații smooth
+🌐 Hosting & Infrastructure
+text
+
+✅ Frontend: Netlify (gratuit)
+✅ Backend: Render (gratuit)
+✅ Database: MongoDB Atlas (gratuit)
+✅ Cod: GitHub
+✅ Keep-alive: UptimeRobot
+✅ Cost total: 0 lei/lună
+📊 Statistici Bază de Date
+text
+
+versets:          31.102 versete Cornilescu
+descriptions:      4.850 descrieri generate
+users:                 3 useri (admin + 2 test)
+reading_plans:         2 planuri active
+generation_logs:      ~10 intrări
+notifications:        ~6 notificări
+posts:                ~5 postări test
+⏳ Rămase din lista originală
+text
+
+⏳ Instagram auto-post
+⏳ Analytics postări Facebook
+⏳ OpenAI descrieri unice
+⏳ Domeniu custom (.ro)
+⏳ TikTok auto-post
+🎯 Ce urmează?
+Alege tu prioritatea:
+
+text
+
+A) Instagram auto-post
+B) Analytics Facebook (likes/comments/shares)
+C) OpenAI descrieri unice
+D) Domeniu custom (.ro)
+E) Altceva

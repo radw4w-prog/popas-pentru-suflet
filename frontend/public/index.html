@@ -1,21 +1,135 @@
 <!DOCTYPE html>
 <html lang="ro" data-theme="dark">
 <head>
+  <!-- OBLIGATORIU PRIMELE -->
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0a0a0f" />
-  <title>🕊️ Popas pentru Suflet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Great+Vibes&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- SEO PRIMARY -->
+  <title>Popas pentru Suflet - Aplicație creștină | Biblia online, versete și rugăciuni zilnice</title>
+  <meta name="description" content="Popas pentru Suflet este o aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional. Descoperă versete biblice, planuri de citire și apropie-te de Dumnezeu." />
+  <meta name="keywords" content="aplicatie crestina, Biblia online, citire Biblie, versete biblice, Biblia Cornilescu, rugaciune zilnica, inspiratie crestina, Dumnezeu, continut crestin, versetul zilei, plan citire Biblie" />
+  <meta name="author" content="Popas pentru Suflet" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://serene-khapse-8c6464.netlify.app/" />
+
+  <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Popas pentru Suflet" />
+  <meta property="og:title" content="Popas pentru Suflet - Aplicație creștină gratuită" />
+  <meta property="og:description" content="Citește Biblia Cornilescu, roagă-te zilnic și creează conținut creștin inspirațional. Gratuit, online și pe telefon." />
+  <meta property="og:url" content="https://serene-khapse-8c6464.netlify.app/" />
+  <meta property="og:image" content="https://serene-khapse-8c6464.netlify.app/icons/icon-512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:locale" content="ro_RO" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Popas pentru Suflet - Aplicație creștină" />
+  <meta name="twitter:description" content="Biblia online, versete zilnice și rugăciuni. Gratuit." />
+  <meta name="twitter:image" content="https://serene-khapse-8c6464.netlify.app/icons/icon-512.png" />
+
+  <!-- Structured Data - Schema.org -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Popas pentru Suflet","url":"https://serene-khapse-8c6464.netlify.app","description":"Aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional.","applicationCategory":"LifestyleApplication","operatingSystem":"Android, iOS, Web","inLanguage":"ro-RO","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RON"},"author":{"@type":"Organization","name":"Popas pentru Suflet"}}</script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <meta name="theme-color" content="#d4af37" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Popas" />
+
+  <!-- Icons -->
+  <link rel="icon" href="%PUBLIC_URL%/logo.png" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="%PUBLIC_URL%/icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="%PUBLIC_URL%/icons/icon-192.png" />
+
+  <!-- Microsoft -->
+  <meta name="msapplication-TileColor" content="#0a0a0f" />
+  <meta name="msapplication-TileImage" content="%PUBLIC_URL%/icons/icon-144.png" />
+
+  <!-- Google Fonts - Fonturi principale ASYNC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
+    />
+  </noscript>
+
+  <!-- Fonturi extra generator - ASYNC -->
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+
+  <!-- Critical CSS inline -->
   <style>
-    body { margin: 0; }
-    [data-theme="dark"] body { background: #0a0a0f; }
-    [data-theme="light"] body { background: #f8f5ee; }
+    body { margin: 0; font-family: -apple-system, 'Inter', sans-serif; }
+
+    [data-theme="dark"] body {
+      background: #0a0a0f;
+      color: #f0f0f0;
+    }
+    [data-theme="light"] body {
+      background: #f8f5ee;
+      color: #1a1a2e;
+    }
+
+    /* Loading screen elegant */
+    #root:empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    #root:empty::before {
+      content: '🕊️';
+      font-size: 3.5rem;
+      animation: rootPulse 2s ease-in-out infinite;
+    }
+
+    #root:empty::after {
+      content: 'Popas pentru Suflet';
+      font-size: 0.9rem;
+      opacity: 0.4;
+      letter-spacing: 0.05em;
+    }
+
+    @keyframes rootPulse {
+      0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
+      50% { transform: scale(1.08) translateY(-4px); opacity: 0.75; }
+    }
   </style>
+
+  <!-- Tema + fontSize instant (fără flash) -->
   <script>
-    // Aplică tema salvată IMEDIAT pentru a evita flash
     (function() {
       var theme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
+      var fontSize = localStorage.getItem('fontSize') || 'medium';
+      document.documentElement.setAttribute('data-fontsize', fontSize);
     })();
   </script>
 </head>
