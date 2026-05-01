@@ -9,12 +9,27 @@ const app = express();
 // MIDDLEWARE (primul!)
 // ═══════════════════════════════════════
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://serene-khapse-8c6464.netlify.app',
-    /\.netlify\.app$/
-  ],
-  credentials: true
+  origin: function(origin, callback) {
+    const allowed = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://serene-khapse-8c6464.netlify.app',
+      'https://sweet-axolotl-c510b8.netlify.app',
+    ];
+
+    // Permite requesturi fără origin (Postman, mobile apps)
+    if (!origin) return callback(null, true);
+
+    // Permite orice subdomain netlify
+    if (origin.endsWith('.netlify.app')) return callback(null, true);
+
+    if (allowed.includes(origin)) return callback(null, true);
+
+    callback(new Error('CORS: origin neautorizat: ' + origin));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));

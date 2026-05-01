@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /dashboard
+Allow: /verses
+Allow: /generate
+
+Disallow: /admin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://serene-khapse-8c6464.netlify.app/sitemap.xml
