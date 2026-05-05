@@ -1,14 +1,9 @@
-/* ═══════════════════════════════════════
-   SERVICE WORKER - Popas pentru Suflet
-   ═══════════════════════════════════════ */
-
-const CACHE_NAME = 'popas-suflet-v1';
+// frontend/public/service-worker.js
+const CACHE_NAME = 'popas-suflet-v3';
 const OFFLINE_URL = '/offline.html';
 
-// Resurse de cache la install
 const STATIC_CACHE = [
   '/',
-  '/dashboard',
   '/offline.html',
   '/manifest.json',
   '/logo.png',
@@ -18,7 +13,8 @@ const STATIC_CACHE = [
 
 // ─── INSTALL ───
 self.addEventListener('install', (event) => {
-  console.log('[SW] Install');
+  console.log('[SW] Install v3');
+  self.skipWaiting(); // ← IMPORTANT: activează imediat
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_CACHE).catch((err) => {
@@ -26,22 +22,23 @@ self.addEventListener('install', (event) => {
       });
     })
   );
-  self.skipWaiting();
 });
 
 // ─── ACTIVATE ───
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate');
+  console.log('[SW] Activate v3 - șterg cache vechi');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys
           .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+          .map((key) => {
+            console.log('[SW] Șterg cache vechi:', key);
+            return caches.delete(key);
+          })
       );
-    })
+    }).then(() => self.clients.claim()) // ← preia controlul imediat
   );
-  self.clients.claim();
 });
 
 // ─── FETCH ───
@@ -49,15 +46,20 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip API requests - nu le cache-uim
-  if (url.pathname.startsWith('/api/') ||
-      url.hostname.includes('onrender.com') ||
-      url.hostname.includes('unsplash.com') ||
-      url.hostname.includes('facebook.com')) {
+  // Skip API requests
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.hostname.includes('onrender.com') ||
+    url.hostname.includes('facebook.com') ||
+    url.hostname.includes('googleapis.com')
+  ) {
     return;
   }
 
-  // Network first pentru navigare
+  // Skip non-http
+  if (!url.protocol.startsWith('http')) return;
+
+  // ✅ NAVIGARE - Network first (mereu versiunea nouă din server)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(() => {
@@ -71,33 +73,62 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache first pentru static assets
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+  // ✅ JS și CSS - Network first (critice pentru update-uri UI!)
+  if (
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.includes('/static/js/') ||
+    url.pathname.includes('/static/css/')
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
           return response;
-        }
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseClone);
+  // ✅ IMAGINI - Cache first
+  if (
+    url.pathname.match(/\.(png|jpg|jpeg|webp|svg|ico|gif)$/)
+  ) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        return cached || fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
         });
+      }).catch(() => caches.match(OFFLINE_URL))
+    );
+    return;
+  }
 
+  // ✅ REST - Network first cu fallback cache
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+        }
         return response;
-      }).catch(() => {
-        return caches.match(OFFLINE_URL);
-      });
-    })
+      })
+      .catch(() => caches.match(request) || caches.match(OFFLINE_URL))
   );
 });
 
 // ─── PUSH NOTIFICATIONS ───
 self.addEventListener('push', (event) => {
   console.log('[SW] Push received');
-
   let data = {
     title: 'Popas pentru Suflet',
     body: 'Ai o notificare nouă!',
@@ -108,44 +139,30 @@ self.addEventListener('push', (event) => {
   };
 
   if (event.data) {
-    try {
-      data = { ...data, ...event.data.json() };
-    } catch (e) {
-      data.body = event.data.text();
-    }
+    try { data = { ...data, ...event.data.json() }; }
+    catch (e) { data.body = event.data.text(); }
   }
 
-  const options = {
-    body: data.body,
-    icon: data.icon || '/icons/icon-192.png',
-    badge: data.badge || '/icons/icon-72.png',
-    tag: data.tag || 'popas-notif',
-    data: data.data || { url: '/dashboard' },
-    vibrate: [200, 100, 200],
-    requireInteraction: false,
-    silent: false,
-    actions: [
-      {
-        action: 'open',
-        title: 'Deschide'
-      },
-      {
-        action: 'close',
-        title: 'Închide'
-      }
-    ]
-  };
-
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon || '/icons/icon-192.png',
+      badge: data.badge || '/icons/icon-72.png',
+      tag: data.tag || 'popas-notif',
+      data: data.data || { url: '/dashboard' },
+      vibrate: [200, 100, 200],
+      requireInteraction: false,
+      actions: [
+        { action: 'open', title: 'Deschide' },
+        { action: 'close', title: 'Închide' }
+      ]
+    })
   );
 });
 
 // ─── NOTIFICATION CLICK ───
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification click:', event.action);
   event.notification.close();
-
   if (event.action === 'close') return;
 
   const urlToOpen = event.notification.data?.url || '/dashboard';
@@ -153,17 +170,13 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Dacă aplicația e deschisă, focus pe ea
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.navigate(urlToOpen);
             return client.focus();
           }
         }
-        // Altfel, deschide o fereastră nouă
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
+        if (clients.openWindow) return clients.openWindow(urlToOpen);
       })
   );
 });
@@ -171,4 +184,11 @@ self.addEventListener('notificationclick', (event) => {
 // ─── BACKGROUND SYNC ───
 self.addEventListener('sync', (event) => {
   console.log('[SW] Background sync:', event.tag);
+});
+
+// ─── MESSAGE ───
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

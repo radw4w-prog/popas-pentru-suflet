@@ -1,0 +1,64 @@
+Ce mai putem adăuga?
+Acum proiectul tău e deja foarte puternic. Eu aș merge în ordinea asta:
+
+1. 🙏 Cereri de rugăciune
+Foarte bun pentru engagement și comunitate.
+
+Ce ar include:
+adăugare cerere de rugăciune
+anonim / cu nume
+categorii: sănătate, familie, muncă, credință
+buton „M-am rugat”
+admin moderare
+pagină publică cu cereri recente
+Impact:
+mare pentru retenție
+creează comunitate reală
+ușor de implementat
+2. 📔 Jurnal spiritual
+Foarte valoros personal.
+
+Ce ar include:
+notițe zilnice
+stări spirituale
+ce ți-a vorbit Dumnezeu azi
+verset asociat
+calendar view
+căutare în jurnal
+Impact:
+foarte mare pentru utilizatorii autentificați
+crește folosirea zilnică
+3. 🔊 Audio Biblie / TTS
+Foarte premium.
+
+Ce ar include:
+play pentru capitol / verset
+voce română din browser TTS
+play/pause/next
+mod hands-free pentru mobil
+Impact:
+foarte bun pe Android/iPhone
+crește timpul petrecut în app
+4. 🏆 Gamification
+Mai ales pentru planul de citire.
+
+Ce ar include:
+streak zilnic
+badge-uri
+milestones
+progres spiritual
+"ai citit 7 zile la rând"
+Impact:
+retenție foarte bună
+utilizatorii revin zilnic
+5. 📤 Share premium pentru devoțional
+Foarte util acum că ai devoționalul.
+
+Ce ar include:
+buton share devoțional
+imagine automată pentru devoționalul zilei
+postare directă pe Facebook
+copy text + rugăciune + verset
+Impact:
+imediat util
+leagă devoționalul de generatorul tău
