@@ -1,26 +1,48 @@
+// E:\popas-pentru-suflet\backend\services\geminiService.js
 const axios = require('axios');
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
+// ✅ MODELE ORDONATE: cele care funcționează PRIMELE
 const MODELS = [
-  'gemini-2.0-flash-lite',
-  'gemini-2.0-flash-001',
-  'gemma-3-12b-it',
-  'gemma-3-4b-it'
+  'gemma-3-12b-it',    // ✅ FUNCȚIONEAZĂ - primul!
+  'gemma-3-4b-it',     // ✅ FUNCȚIONEAZĂ - backup
+  'gemini-2.0-flash-lite',  // poate reveni după reset quota
+  'gemini-2.0-flash-001',   // poate reveni după reset quota
 ];
 
 class GeminiService {
   constructor() {
     this.http = axios.create({ timeout: 60000 });
     this.lastRequestTime = 0;
-    this.MIN_INTERVAL = 4000; // 4 secunde între request-uri
+    this.MIN_INTERVAL = 3000; // 3 secunde între request-uri
+    
+    // Cache modele care au quota epuizată (resetat la restart)
+    this.exhaustedModels = new Map(); // model -> timestamp când s-a epuizat
+    this.EXHAUSTED_COOLDOWN = 60 * 60 * 1000; // 1 oră cooldown
   }
 
   get apiKey() {
-    return process.env.GEMINI_API_KEY;
+    return process.env.GEMINI_API_KEY?.trim();
   }
 
   isConfigured() {
     return !!(this.apiKey && this.apiKey.length > 10);
+  }
+
+  // Verifică dacă modelul e în cooldown
+  isModelExhausted(model) {
+    if (!this.exhaustedModels.has(model)) return false;
+    const exhaustedAt = this.exhaustedModels.get(model);
+    const elapsed = Date.now() - exhaustedAt;
+    if (elapsed > this.EXHAUSTED_COOLDOWN) {
+      this.exhaustedModels.delete(model); // Reset după cooldown
+      return false;
+    }
+    return true;
+  }
+
+  markModelExhausted(model) {
+    this.exhaustedModels.set(model, Date.now());
+    console.log(`🚫 Model ${model} marcat ca epuizat pentru 1 oră`);
   }
 
   async waitForRateLimit() {
@@ -35,62 +57,96 @@ class GeminiService {
   }
 
   async generate(prompt, maxTokens = 2000) {
-  if (!this.isConfigured()) {
-    throw new Error('Gemini API key lipsă.');
-  }
+    if (!this.isConfigured()) {
+      throw new Error('Gemini API key lipsă. Adaugă GEMINI_API_KEY în .env');
+    }
 
-  await this.waitForRateLimit();
+    await this.waitForRateLimit();
 
-  const MODELS = [
-    'gemini-2.0-flash-lite',
-    'gemini-2.0-flash-001',
-    'gemma-3-12b-it',
-    'gemma-3-4b-it'
-  ];
+    // Filtrează modelele disponibile (exclude cele epuizate)
+    const availableModels = MODELS.filter(m => !this.isModelExhausted(m));
+    
+    if (availableModels.length === 0) {
+      throw new Error('Toate modelele AI sunt temporar indisponibile. Încearcă în 1 oră.');
+    }
 
-  for (const model of MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-    console.log(`🤖 Încerc modelul: ${model}`);
+    let lastError = null;
 
-    try {
-      const r = await this.http.post(
-        `${url}?key=${this.apiKey}`,
-        {
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: maxTokens,
-            topP: 0.92,
-            topK: 40
-          }
+    for (const model of availableModels) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+      console.log(`🤖 Încerc modelul: ${model}`);
+
+      try {
+        const r = await this.http.post(
+          `${url}?key=${this.apiKey}`,
+          {
+            contents: [{
+              parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+              temperature: 0.85,
+              maxOutputTokens: maxTokens,
+              topP: 0.92,
+              topK: 40
+            }
+          },
+          { timeout: 60000 }
+        );
+
+        const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          console.log(`⚠️ ${model}: răspuns gol, încerc următorul`);
+          continue;
         }
-      );
 
-      const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) continue;
+        console.log(`✅ Succes cu modelul: ${model}`);
+        return text.trim();
 
-      console.log(`✅ Succes cu modelul: ${model}`);
-      return text.trim();
+      } catch (error) {
+        const status = error.response?.status;
+        const msg = error.response?.data?.error?.message || error.message;
 
-    } catch (error) {
-      const status = error.response?.status;
-      const msg = error.response?.data?.error?.message || error.message;
+        if (status === 429) {
+          // Quota epuizată - marchează modelul și continuă
+          console.log(`🚫 Quota epuizată pe ${model}`);
+          this.markModelExhausted(model);
+          lastError = new Error(`Quota epuizată pe ${model}`);
+          continue;
+        }
 
-      if (status === 429) {
-        console.log(`⚠️ Rate limit pe ${model}, încerc următorul...`);
-        await new Promise(r => setTimeout(r, 2000));
+        if (status === 404) {
+          // Model inexistent - elimină permanent din sesiune
+          console.log(`❌ Model inexistent: ${model}`);
+          this.markModelExhausted(model);
+          lastError = new Error(`Model inexistent: ${model}`);
+          continue;
+        }
+
+        if (status === 400) {
+          // Bad request - log detalii pentru debug
+          console.log(`❌ Bad request pe ${model}: ${msg}`);
+          lastError = new Error(`Bad request: ${msg}`);
+          continue;
+        }
+
+        if (status === 401 || status === 403) {
+          throw new Error('API Key Gemini invalid sau expirat!');
+        }
+
+        console.log(`⚠️ Eroare pe ${model} [${status}]: ${msg}`);
+        lastError = error;
         continue;
       }
-
-      console.log(`⚠️ Eroare pe ${model}: ${msg}`);
-      continue;
     }
-  }
 
-  throw new Error('Toate modelele AI au atins limita. Încearcă din nou în câteva minute.');
-}
+    // Toate modelele au eșuat
+    const exhaustedCount = MODELS.length - availableModels.length;
+    if (exhaustedCount > 0) {
+      throw new Error(`Quota AI epuizată temporar (${exhaustedCount} modele indisponibile). Încearcă în câteva minute.`);
+    }
+    
+    throw lastError || new Error('Toate modelele AI au eșuat. Încearcă din nou.');
+  }
 
   async generatePostContent(verset, referinta, tema, platform) {
     const platformGuide = {
@@ -104,14 +160,14 @@ class GeminiService {
       instagram: {
         name: 'Instagram',
         maxLen: 350,
-        style: 'emoțional, scurt, vizual, inspirațional, cu emoji-uri, primele 2 rânduri trebuie să capteze atenția',
+        style: 'emoțional, scurt, vizual, inspirațional, cu emoji-uri, primele 2 rânduri captează atenția',
         hashtagCount: '20-25',
         cta: 'exemple: Salvează pentru momente grele, Trimite unui prieten care are nevoie'
       },
       tiktok: {
         name: 'TikTok',
         maxLen: 180,
-        style: 'hook puternic în prima propoziție, scurt, direct, trending, pentru audiență tânără',
+        style: 'hook puternic în prima propoziție, scurt, direct, pentru audiență tânără',
         hashtagCount: '5-8',
         cta: 'exemple: Follow pentru verset zilnic, Like dacă crezi în puterea rugăciunii'
       }
@@ -119,48 +175,36 @@ class GeminiService {
 
     const p = platformGuide[platform] || platformGuide.facebook;
 
-    const prompt = `Ești un creator de conținut creștin expert, specializat pe ${p.name} în România.
-Misiunea ta: să creezi conținut autentic, cald și inspirațional care să miște inimile oamenilor.
+    // ✅ Prompt optimizat pentru gemma (mai simplu = mai fiabil)
+    const prompt = `Ești un creator de conținut creștin expert pentru ${p.name} în România.
 
-VERSET BIBLIC: "${verset}"
+VERSET: "${verset}"
 REFERINȚĂ: ${referinta}
 TEMA: ${tema}
-PLATFORMĂ: ${p.name}
 
-CONTEXT IMPORTANT:
-- Audiența: creștini români de toate vârstele
-- Tonul: autentic, cald, nu predicator
-- Stilul ${p.name}: ${p.style}
-- Ora optimă: românii postează de 2 ori pe zi (dimineața și seara)
+Creează o postare creștină autentică și caldă pentru audiența română.
 
-Generează EXCLUSIV un JSON valid cu această structură exactă:
+Returnează DOAR un JSON valid cu această structură:
 {
-  "hook": "Prima propoziție care oprește scrolling-ul. Max 15 cuvinte. Poate fi o întrebare, o afirmație surprinzătoare sau un citat puternic.",
-  "descriere": "Textul complet al postării. Stilul: ${p.style}. Max ${p.maxLen} caractere. Include versetul cu ghilimele și referința. Finalul să aibă CTA.",
-  "cta": "Call to action specific ${p.name}. O propoziție. ${p.cta}",
-  "hashtags_principale": ["5 hashtag-uri mari în română, fără simbolul #, cu reach mare"],
-  "hashtags_nisa": ["8 hashtag-uri de nișă creștină în română, fără #"],
+  "hook": "Prima propoziție captivantă, max 15 cuvinte, cu emoji",
+  "descriere": "Textul postării, stil ${p.style}, max ${p.maxLen} caractere, include versetul natural",
+  "cta": "Call to action specific, o propoziție",
+  "hashtags_principale": ["credinta", "rugaciune", "dumnezeu", "isus", "biblie"],
+  "hashtags_nisa": ["versetulzilei", "crestin", "evanghelie", "hristos", "mantuire", "har", "iubire", "pace"],
   "hashtags_brand": ["PopasPentruSuflet", "VersetulZilei", "BibliaCornilescu"],
-  "story_text": "Text pentru Story/Reel overlay. Max 6 cuvinte. Impact maxim.",
-  "varianta_calda": "Versiune alternativă cu ton personal și intim. Max ${p.maxLen} caractere. Include versetul.",
-  "varianta_puternica": "Versiune alternativă cu ton inspirațional și puternic. Max ${p.maxLen} caractere. Include versetul.",
-  "ora_recomandata_dimineata": "Ora optimă dimineața pentru ${p.name} în România (format HH:MM, între 06:00-09:00)",
-  "ora_recomandata_seara": "Ora optimă seara pentru ${p.name} în România (format HH:MM, între 18:00-22:00)",
-  "motiv_ore": "De ce aceste ore sunt optime pentru audiența creștină din România (max 20 cuvinte)",
-  "emoji_tema": "6-8 emoji-uri relevante pentru tema '${tema}', separate prin spațiu",
-  "sfat_imagine": "Sugestie scurtă pentru imaginea care ar merge cu această postare (max 15 cuvinte)"
+  "story_text": "Max 6 cuvinte impactante pentru Story",
+  "varianta_calda": "Versiune intimă și personală, max ${p.maxLen} caractere",
+  "varianta_puternica": "Versiune inspirațională puternică, max ${p.maxLen} caractere",
+  "ora_recomandata_dimineata": "07:00",
+  "ora_recomandata_seara": "19:00",
+  "motiv_ore": "Ore cu engagement maxim pentru creștinii din România",
+  "emoji_tema": "🙏 ❤️ ✝️ 📖 🕊️",
+  "sfat_imagine": "Sugestie scurtă pentru imagine, max 15 cuvinte"
 }
 
-REGULI STRICTE:
-1. Scrie EXCLUSIV în română
-2. Returnează DOAR JSON valid, fără text înainte sau după
-3. Fără \\n în interiorul string-urilor JSON (folosește spațiu)
-4. Hashtag-urile FĂRĂ simbolul #
-5. Fii autentic, nu predicator sau artificial
-6. Hook-ul trebuie să fie irezistibil
-7. Include versetul natural în descriere, nu forțat`;
+REGULI: Doar română, doar JSON valid, fără text înainte/după, hashtag-urile fără simbolul #`;
 
-    const raw = await this.generate(prompt, 3000);
+    const raw = await this.generate(prompt, 2500);
 
     try {
       let jsonStr = raw;
@@ -170,7 +214,6 @@ REGULI STRICTE:
       if (jsonMatch) {
         jsonStr = jsonMatch[1].trim();
       } else {
-        // Găsește primul { și ultimul }
         const firstBrace = raw.indexOf('{');
         const lastBrace = raw.lastIndexOf('}');
         if (firstBrace !== -1 && lastBrace > firstBrace) {
@@ -178,12 +221,12 @@ REGULI STRICTE:
         }
       }
 
-      // Curăță newline-uri problematice din JSON
+      // Curăță newline-uri din interiorul JSON
       jsonStr = jsonStr.replace(/\n/g, ' ').replace(/\r/g, '');
 
       const parsed = JSON.parse(jsonStr);
 
-      // Construiește hashtags complet
+      // Construiește hashtags
       const allHashtags = [
         ...(parsed.hashtags_principale || []).map(h => '#' + h.replace(/^#/, '').trim()),
         ...(parsed.hashtags_nisa || []).map(h => '#' + h.replace(/^#/, '').trim()),
@@ -206,7 +249,7 @@ REGULI STRICTE:
         oraDimineata: parsed.ora_recomandata_dimineata || '07:00',
         oraSeara: parsed.ora_recomandata_seara || '19:00',
         motivOre: parsed.motiv_ore || '',
-        emojiTema: parsed.emoji_tema || '',
+        emojiTema: parsed.emoji_tema || '🙏 ❤️ ✝️ 📖 🕊️',
         sfatImagine: parsed.sfat_imagine || '',
         platform,
         aiGenerated: true,
@@ -215,16 +258,17 @@ REGULI STRICTE:
 
     } catch (parseError) {
       console.error('❌ Parse JSON error:', parseError.message);
-      console.error('Raw (first 300):', raw.substring(0, 300));
+      console.error('Raw (first 500):', raw.substring(0, 500));
 
+      // Fallback cu date parțiale
       return {
         hook: '',
         descriere: raw.substring(0, 500),
         cta: '',
         hashtags: '#PopasPentruSuflet #VersetulZilei #Biblia #Credinta #Dumnezeu #Isus #Rugaciune',
-        hashtagsPrincipale: [],
-        hashtagsNisa: [],
-        hashtagsBrand: ['PopasPentruSuflet'],
+        hashtagsPrincipale: ['credinta', 'rugaciune', 'dumnezeu'],
+        hashtagsNisa: ['versetulzilei', 'crestin', 'evanghelie'],
+        hashtagsBrand: ['PopasPentruSuflet', 'VersetulZilei'],
         storyText: '',
         variantaCalda: '',
         variantaPuternica: '',
@@ -240,12 +284,34 @@ REGULI STRICTE:
     }
   }
 
+  // Status modele - pentru debug/monitoring
+  getModelsStatus() {
+    return MODELS.map(model => ({
+      model,
+      status: this.isModelExhausted(model) ? 'exhausted' : 'available',
+      exhaustedAt: this.exhaustedModels.get(model) 
+        ? new Date(this.exhaustedModels.get(model)).toISOString() 
+        : null
+    }));
+  }
+
   async testConnection() {
     try {
-      const result = await this.generate('Spune "Salut!" în română. Răspunde doar cu salutul.', 50);
-      return { success: true, response: result };
+      const result = await this.generate(
+        'Spune "Salut! Gemini funcționează!" în română. Răspunde DOAR cu salutul.', 
+        50
+      );
+      return { 
+        success: true, 
+        response: result,
+        modelsStatus: this.getModelsStatus()
+      };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message,
+        modelsStatus: this.getModelsStatus()
+      };
     }
   }
 }
