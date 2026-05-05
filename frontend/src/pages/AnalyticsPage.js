@@ -66,7 +66,7 @@ const AnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="analytics-loading">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ fontSize: '3rem' }}>📊</div>
         <div className="spinner" />
         <p style={{ color: 'var(--text-muted)' }}>Se încarcă analytics...</p>
@@ -76,14 +76,14 @@ const AnalyticsPage = () => {
 
   if (error) {
     return (
-      <div className="analytics-page">
-        <div className="analytics-error-box">
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>❌</div>
-          <h3 style={{ color: '#ef4444', margin: '0 0 0.5rem' }}>Eroare Analytics</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', margin: '0 0 1rem' }}>{error}</p>
-          <div className="analytics-error-actions">
-            <button onClick={loadAnalytics} className="btn btn-gold">🔄 Reîncearcă</button>
-            <button onClick={() => window.location.href = '/settings'} className="btn btn-outline">⚙️ Setări</button>
+      <div className="ap-wrap">
+        <div className="ap-error">
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>❌</div>
+          <h3 style={{ color: '#ef4444', margin: '0 0 0.5rem', fontSize: '1.1rem' }}>Eroare Analytics</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: '0 0 1rem' }}>{error}</p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={loadAnalytics} className="btn btn-gold btn-sm">🔄 Reîncearcă</button>
+            <button onClick={() => window.location.href = '/settings'} className="btn btn-outline btn-sm">⚙️ Setări</button>
           </div>
         </div>
       </div>
@@ -91,21 +91,19 @@ const AnalyticsPage = () => {
   }
 
   return (
-    <div className="animate-in analytics-page">
+    <div className="animate-in ap-wrap">
 
       {/* HERO */}
-      <div className="analytics-hero">
-        <div className="analytics-hero-bg" />
-        <div className="analytics-hero-content">
-          <div>
-            <div className="analytics-kicker">✦ Facebook Insights ✦</div>
-            <h1 className="analytics-title">Statistici</h1>
-            <p className="analytics-subtitle">
-              Urmărește impactul postărilor și conținutul care atinge inimile.
-            </p>
+      <div className="ap-hero">
+        <div className="ap-hero-bg" />
+        <div className="ap-hero-content">
+          <div className="ap-hero-left">
+            <div className="ap-kicker">✦ Facebook Insights ✦</div>
+            <h1 className="ap-title">Statistici</h1>
+            <p className="ap-subtitle">Impactul postărilor și creșterea paginii tale.</p>
           </div>
-          <div className="analytics-hero-right">
-            <div className="analytics-period-switch">
+          <div className="ap-hero-right">
+            <div className="ap-period-bar">
               {[
                 { key: 'day', label: 'Azi' },
                 { key: 'week', label: '7 zile' },
@@ -114,59 +112,54 @@ const AnalyticsPage = () => {
                 <button
                   key={p.key}
                   onClick={() => setPeriod(p.key)}
-                  className={`analytics-period-btn ${period === p.key ? 'active' : ''}`}
+                  className={`ap-period-btn ${period === p.key ? 'active' : ''}`}
                 >
                   {p.label}
                 </button>
               ))}
             </div>
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="btn btn-outline btn-sm analytics-sync-btn"
-            >
-              {syncing ? '⏳...' : '🔄 Sync'}
+            <button onClick={handleSync} disabled={syncing} className="ap-sync-btn">
+              {syncing ? '⏳' : '🔄'} {syncing ? 'Sync...' : 'Sync'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* PAGE CARD */}
+      {/* PAGE INFO */}
       {pageAnalytics && (
-        <div className="analytics-page-card">
+        <div className="ap-page-card">
           {pageAnalytics.picture && (
-            <img src={pageAnalytics.picture} alt="Page" className="analytics-page-avatar" />
+            <img src={pageAnalytics.picture} alt="" className="ap-page-avatar" />
           )}
-          <div className="analytics-page-info">
-            <div className="analytics-page-name">{pageAnalytics.pageName}</div>
-            <div className="analytics-page-meta">
+          <div className="ap-page-info">
+            <div className="ap-page-name">{pageAnalytics.pageName}</div>
+            <div className="ap-page-meta">
               📘 {fmt(pageAnalytics.fans)} fani • 👥 {fmt(pageAnalytics.followers)} urmăritori
             </div>
           </div>
-          <div className="analytics-page-period">
+          <div className="ap-page-period">
             {period === 'day' ? '24h' : period === 'week' ? '7 zile' : '28 zile'}
           </div>
         </div>
       )}
 
-      {/* KPI GRID */}
+      {/* KPI */}
       {pageAnalytics && (
-        <div className="analytics-kpi-grid">
+        <div className="ap-kpi-grid">
           {[
-            { icon: '👥', label: 'Fani', value: fmt(pageAnalytics.fans), sub: 'total', c: 'blue' },
-            { icon: '👁️', label: 'Reach', value: fmt(pageAnalytics.reach), sub: 'persoane', c: 'sky' },
-            { icon: '💬', label: 'Discuții', value: fmt(pageAnalytics.talkingAbout), sub: 'perioadă', c: 'green' },
-            { icon: '🖱️', label: 'Engagement', value: fmt(pageAnalytics.engagements), sub: 'total', c: 'gold' },
-            { icon: '👀', label: 'Vizite', value: fmt(pageAnalytics.pageViews), sub: 'perioadă', c: 'red' },
-            { icon: '❤️', label: 'Fani noi', value: fmt(pageAnalytics.newFans), sub: 'perioadă', c: 'pink' }
+            { icon: '👥', label: 'Fani', value: fmt(pageAnalytics.fans), c: 'blue' },
+            { icon: '👁️', label: 'Reach', value: fmt(pageAnalytics.reach), c: 'sky' },
+            { icon: '💬', label: 'Discuții', value: fmt(pageAnalytics.talkingAbout), c: 'green' },
+            { icon: '🖱️', label: 'Engagement', value: fmt(pageAnalytics.engagements), c: 'gold' },
+            { icon: '👀', label: 'Vizite', value: fmt(pageAnalytics.pageViews), c: 'red' },
+            { icon: '❤️', label: 'Fani noi', value: fmt(pageAnalytics.newFans), c: 'pink' }
           ].map((s, i) => (
-            <div key={i} className={`analytics-kpi-card ${s.c}`}>
-              <div className="analytics-kpi-top">
-                <span className="analytics-kpi-icon">{s.icon}</span>
-                <span className="analytics-kpi-label">{s.label}</span>
+            <div key={i} className={`ap-kpi ${s.c}`}>
+              <div className="ap-kpi-head">
+                <span>{s.icon}</span>
+                <span className="ap-kpi-label">{s.label}</span>
               </div>
-              <div className="analytics-kpi-value">{s.value}</div>
-              <div className="analytics-kpi-sub">{s.sub}</div>
+              <div className="ap-kpi-value">{s.value}</div>
             </div>
           ))}
         </div>
@@ -174,21 +167,21 @@ const AnalyticsPage = () => {
 
       {/* TOTALS */}
       {totals && (
-        <div className="analytics-block">
-          <div className="analytics-block-header">
-            <div className="analytics-block-title">📈 Interacțiuni totale</div>
-            <div className="analytics-block-sub">ultimele 10 postări</div>
+        <div className="ap-card">
+          <div className="ap-card-head">
+            <span className="ap-card-title">📈 Interacțiuni totale</span>
+            <span className="ap-card-sub">ultimele 10 postări</span>
           </div>
-          <div className="analytics-mini-grid">
+          <div className="ap-totals-grid">
             {[
               { icon: '👍', label: 'Like', value: totals.likes, color: '#1877F2' },
               { icon: '💬', label: 'Comentarii', value: totals.comments, color: '#10b981' },
               { icon: '🔄', label: 'Share', value: totals.shares, color: '#7c3aed' },
               { icon: '❤️', label: 'Reacții', value: totals.reactions, color: '#ef4444' }
             ].map((t, i) => (
-              <div key={i} className="analytics-mini-card">
-                <div className="analytics-mini-value" style={{ color: t.color }}>{fmt(t.value)}</div>
-                <div className="analytics-mini-label">{t.icon} {t.label}</div>
+              <div key={i} className="ap-total-item">
+                <div className="ap-total-value" style={{ color: t.color }}>{fmt(t.value)}</div>
+                <div className="ap-total-label">{t.icon} {t.label}</div>
               </div>
             ))}
           </div>
@@ -197,38 +190,36 @@ const AnalyticsPage = () => {
 
       {/* TOP POST */}
       {topPost && (
-        <div className="analytics-top-post">
-          <div className="analytics-top-header">
-            <div className="analytics-top-title">🏆 Top postare</div>
-            <div className="analytics-top-badge">cel mai mult engagement</div>
+        <div className="ap-top">
+          <div className="ap-top-head">
+            <span className="ap-top-title">🏆 Top postare</span>
+            <span className="ap-top-badge">best engagement</span>
           </div>
-          <div className="analytics-top-body">
+          <div className="ap-top-body">
             {topPost.picture && (
-              <img src={topPost.picture} alt="" className="analytics-top-image" />
+              <img src={topPost.picture} alt="" className="ap-top-img" />
             )}
-            <div className="analytics-top-content">
-              <div className="analytics-top-text">
-                {topPost.message?.substring(0, 120)}...
+            <div className="ap-top-content">
+              <p className="ap-top-text">{topPost.message?.substring(0, 100)}...</p>
+              <div className="ap-top-stats">
+                <span>👍 <b>{topPost.likes}</b></span>
+                <span>💬 <b>{topPost.comments}</b></span>
+                <span>🔄 <b>{topPost.shares}</b></span>
               </div>
-              <div className="analytics-top-stats">
-                <span>👍 <strong>{topPost.likes}</strong></span>
-                <span>💬 <strong>{topPost.comments}</strong></span>
-                <span>🔄 <strong>{topPost.shares}</strong></span>
-              </div>
-              <div className="analytics-top-date">📅 {fmtDate(topPost.createdTime)}</div>
+              <div className="ap-top-date">📅 {fmtDate(topPost.createdTime)}</div>
             </div>
           </div>
-          <a href={topPost.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{ marginTop: '0.75rem' }}>
-            📘 Vezi pe Facebook
+          <a href={topPost.url} target="_blank" rel="noopener noreferrer" className="ap-top-link">
+            📘 Vezi pe Facebook ↗
           </a>
         </div>
       )}
 
-      {/* POSTS LIST */}
-      <div className="analytics-block">
-        <div className="analytics-block-header">
-          <div className="analytics-block-title">📋 Ultimele postări</div>
-          <button onClick={loadAnalytics} className="analytics-refresh-btn" title="Reîncarcă">🔄</button>
+      {/* POSTS */}
+      <div className="ap-card">
+        <div className="ap-card-head">
+          <span className="ap-card-title">📋 Ultimele postări</span>
+          <button onClick={loadAnalytics} className="ap-refresh">🔄</button>
         </div>
 
         {posts.length === 0 ? (
@@ -237,32 +228,20 @@ const AnalyticsPage = () => {
             <div className="empty-state-title">Nu există postări</div>
           </div>
         ) : (
-          <div className="analytics-posts-list">
+          <div className="ap-posts">
             {posts.map((post, idx) => (
-              <div key={post.postId || idx} className="analytics-post-row">
-                <div className="analytics-post-rank">
-                  {idx === 0 ? '🏆' : idx + 1}
+              <div key={post.postId || idx} className="ap-post-row">
+                <div className="ap-post-rank">{idx === 0 ? '🏆' : idx + 1}</div>
+                {post.picture && <img src={post.picture} alt="" className="ap-post-thumb" />}
+                <div className="ap-post-main">
+                  <div className="ap-post-text">{post.message || 'Postare fără text'}</div>
+                  <div className="ap-post-date">{fmtDate(post.createdTime)}</div>
                 </div>
-
-                {post.picture && (
-                  <img src={post.picture} alt="" className="analytics-post-thumb" />
-                )}
-
-                <div className="analytics-post-main">
-                  <div className="analytics-post-text">
-                    {post.message || 'Postare fără text'}
-                  </div>
-                  <div className="analytics-post-date">{fmtDate(post.createdTime)}</div>
-                </div>
-
-                <div className="analytics-post-stats">
-                  <StatBadge icon="👍" value={post.likes} color="#1877F2" />
-                  <StatBadge icon="💬" value={post.comments} color="#10b981" />
-                  <StatBadge icon="🔄" value={post.shares} color="#7c3aed" />
-                  <div className="analytics-post-total">
-                    {post.likes + post.comments + post.shares}
-                  </div>
-                  <a href={post.url} target="_blank" rel="noopener noreferrer" className="analytics-post-link">↗</a>
+                <div className="ap-post-metrics">
+                  <span className="ap-metric">👍 <b style={{ color: '#1877F2' }}>{post.likes}</b></span>
+                  <span className="ap-metric">💬 <b style={{ color: '#10b981' }}>{post.comments}</b></span>
+                  <span className="ap-metric">🔄 <b style={{ color: '#7c3aed' }}>{post.shares}</b></span>
+                  <a href={post.url} target="_blank" rel="noopener noreferrer" className="ap-post-link">↗</a>
                 </div>
               </div>
             ))}
@@ -272,12 +251,5 @@ const AnalyticsPage = () => {
     </div>
   );
 };
-
-const StatBadge = ({ icon, value, color }) => (
-  <div className="analytics-stat-badge">
-    <span>{icon}</span>
-    <span style={{ fontWeight: 700, color }}>{value}</span>
-  </div>
-);
 
 export default AnalyticsPage;
