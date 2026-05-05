@@ -6,6 +6,13 @@ let runningNotif = false;
 
 function init() {
   if (initialized) return;
+
+  // Scheduler doar dacă este activat explicit
+  if (process.env.ENABLE_SCHEDULER !== 'true') {
+    console.log('⏸️ Scheduler dezactivat pentru această instanță.');
+    return;
+  }
+
   initialized = true;
 
   console.log('🕐 Inițializare scheduler...');
@@ -42,26 +49,34 @@ async function checkAndPublish() {
   try {
     const Post = require('../models/Post');
     const facebookService = require('./facebookService');
-
     const now = new Date();
 
     const posts = await Post.find({
       status: 'scheduled',
-      scheduledDate: { $lte: now }
+      scheduledDate: { $lte: now },
+      socialPostId: null
     }).sort({ scheduledDate: 1 });
 
-    if (!posts.length) {
-      running = false;
-      return;
-    }
+    if (!posts.length) return;
 
     console.log(`\n📅 ${posts.length} postări de publicat`);
 
     for (const post of posts) {
       try {
+        // ← LOCK: marchează imediat ca 'publishing' înainte să publice
+        const locked = await Post.findOneAndUpdate(
+          { _id: post._id, status: 'scheduled', socialPostId: null },
+          { status: 'publishing' },
+          { new: true }
+        );
+
+        // Dacă nu am putut să o lock-uim → altcineva a luat-o deja
+        if (!locked) {
+          console.log(`⏭️  Skip ${post._id} - deja procesată`);
+          continue;
+        }
+
         console.log(`➡️  Publicare: ${post._id}`);
-        console.log(`   Data programată: ${post.scheduledDate}`);
-        console.log(`   Are imagine: ${post.imageUrl ? 'DA' : 'NU'}`);
 
         const result = await facebookService.publishPost(post);
 

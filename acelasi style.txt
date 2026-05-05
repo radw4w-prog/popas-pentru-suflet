@@ -1,0 +1,44 @@
+✅ Auth + Admin Panel + Roluri
+✅ Biblia Cornilescu 31.102 versete
+✅ Bible Navigator (eBiblia style)
+✅ Red Letter Edition (cuvintele lui Isus)
+✅ Bookmarks + Highlights + Notițe personale
+✅ Pagină "Semnele mele"
+✅ Plan citire Biblie personalizat
+✅ Notificări citire
+✅ Dashboard premium spiritual
+✅ Generator imagini 112 template-uri
+✅ Facebook Login + Publicare + Programare
+✅ Analytics Facebook complet
+✅ PWA + APK Android
+✅ Mobile responsive premium
+✅ SEO 100/100
+✅ Cost: 0 lei/lună
+
+
+
+✅ Border radius premium (18-20px)
+✅ Touch feedback (-webkit-tap, scale)
+✅ Reader verse hover effect
+✅ Preset buttons premium
+✅ Progress bars mai subțiri
+✅ Stats cards cu border
+✅ Calendar grid spacing
+✅ Mobile: reader nav stacked
+✅ Mobile: verse text mai mare
+✅ Mobile: chapters grid compact
+✅ Mobile: plan card compact
+✅ Font size large boost
+✅ Smooth transitions
+
+
+
+
+
+A) AI Descrieri + Hashtags (Gemini) — implementare rapidă
+B) Devoțional zilnic complet
+C) Cereri de rugăciune
+D) Jurnal spiritual
+E) Audio Biblie (Text-to-Speech gratuit)
+F) Gamification (badge-uri, streak-uri)
+G) Altceva

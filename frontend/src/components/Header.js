@@ -30,40 +30,76 @@ const Header = ({ theme, toggleTheme }) => {
 
   useEffect(() => {
     const handleClick = (e) => {
-      // Închide sidebar overlay
       const sidebar = document.querySelector('.sidebar');
       const btn = document.querySelector('.menu-btn');
+
       if (sidebar && sidebar.classList.contains('open')) {
         if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
           sidebar.classList.remove('open');
           setMenuOpen(false);
         }
       }
-      // Închide user menu
+
       if (!e.target.closest('.user-menu-wrapper')) {
         setUserMenuOpen(false);
       }
-      // Închide font menu
+
       if (!e.target.closest('.font-menu-wrapper')) {
         setFontMenuOpen(false);
       }
     };
+
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
   const pageTitles = {
-    '/dashboard': { title: 'Dashboard', subtitle: 'Privire de ansamblu' },
-    '/generate': { title: 'Generează', subtitle: 'Conținut nou' },
-    '/schedule': { title: 'Programare', subtitle: 'Calendar postări' },
-    '/history': { title: 'Istoric', subtitle: 'Postări anterioare' },
-    '/verses': { title: 'Versete', subtitle: 'Biblioteca biblică' },
-    '/reading': { title: 'Citire Biblie', subtitle: 'Planul meu' },
-    '/settings': { title: 'Setări', subtitle: 'Configurare' },
-    '/admin': { title: 'Admin Panel', subtitle: 'Administrare' },
+    '/dashboard': {
+      title: 'Popas pentru Suflet',
+      subtitle: 'verset de încurajare, rugăciune și pași zilnici cu Dumnezeu'
+    },
+    '/generate': {
+      title: 'Creator Creștin',
+      subtitle: 'imagini și texte inspiraționale pentru postări'
+    },
+	'/bookmarks': {
+  title: 'Semnele mele',
+  subtitle: 'versete salvate, evidențiate și cu notițe personale'
+},
+    '/schedule': {
+      title: 'Programări Facebook',
+      subtitle: 'publicare organizată și consecventă'
+    },
+    '/history': {
+      title: 'Istoric Publicări',
+      subtitle: 'urmărește postările create și distribuite'
+    },
+    '/verses': {
+      title: 'Biblia Cornilescu',
+      subtitle: '31.102 versete pentru citire, căutare și meditație'
+    },
+    '/reading': {
+      title: 'Plan de citire',
+      subtitle: 'drumul tău zilnic prin Cuvântul lui Dumnezeu'
+    },
+    '/settings': {
+      title: 'Setări și conexiuni',
+      subtitle: 'cont, notificări și integrări'
+    },
+    '/admin': {
+      title: 'Administrare',
+      subtitle: 'utilizatori, conținut și control complet'
+    },
+    '/analytics': {
+      title: 'Statistici Facebook',
+      subtitle: 'reach, engagement, creștere și top postări'
+    },
   };
 
-  const current = pageTitles[location.pathname] || { title: 'Popas', subtitle: '' };
+  const current = pageTitles[location.pathname] || {
+    title: 'Popas pentru Suflet',
+    subtitle: 'spațiu de liniște, credință și inspirație'
+  };
 
   const handleLogout = () => {
     logout();
@@ -73,7 +109,12 @@ const Header = ({ theme, toggleTheme }) => {
 
   const getInitiale = (nume) => {
     if (!nume) return '?';
-    return nume.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return nume
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const fontSizeOptions = [
@@ -84,10 +125,8 @@ const Header = ({ theme, toggleTheme }) => {
 
   return (
     <div className="header">
-      {/* Stânga */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-
-        {/* Hamburger - doar pe mobile */}
+      {/* STÂNGA */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
         <button
           className="menu-btn"
           onClick={toggleMenu}
@@ -96,27 +135,23 @@ const Header = ({ theme, toggleTheme }) => {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        <div>
+        <div style={{ minWidth: 0 }}>
           <h1 className="header-title">
             {current.title}
-            <span className="header-subtitle"> • {current.subtitle}</span>
           </h1>
-          <div className="header-date">
-            {time.toLocaleDateString('ro-RO', {
-              weekday: 'long', day: 'numeric', month: 'long'
-            })}
+          <div className="header-subtext">
+            {current.subtitle}
           </div>
         </div>
       </div>
 
-      {/* Dreapta */}
+      {/* DREAPTA */}
       <div className="header-actions">
 
-        {/* Mărime text */}
+        {/* FONT SIZE */}
         <div className="font-menu-wrapper" style={{ position: 'relative' }}>
           <button
             onClick={() => setFontMenuOpen(!fontMenuOpen)}
-            className="header-icon-btn"
             title="Mărime text"
             style={{
               background: 'var(--bg-card)',
@@ -158,10 +193,14 @@ const Header = ({ theme, toggleTheme }) => {
               }}>
                 Mărime text
               </div>
+
               {fontSizeOptions.map(opt => (
                 <button
                   key={opt.key}
-                  onClick={() => { setFontSize(opt.key); setFontMenuOpen(false); }}
+                  onClick={() => {
+                    setFontSize(opt.key);
+                    setFontMenuOpen(false);
+                  }}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
@@ -195,10 +234,9 @@ const Header = ({ theme, toggleTheme }) => {
           )}
         </div>
 
-        {/* Theme Toggle */}
+        {/* THEME */}
         <button
           onClick={toggleTheme}
-          className="header-icon-btn"
           style={{
             background: theme === 'dark'
               ? 'linear-gradient(135deg, rgba(244,208,63,0.15), rgba(244,208,63,0.05))'
@@ -221,20 +259,19 @@ const Header = ({ theme, toggleTheme }) => {
           </span>
         </button>
 
-        {/* Ceas - ascuns pe mobile mic */}
+        {/* CEAS */}
         <div className="header-time">
           🕐 {time.toLocaleTimeString('ro-RO')}
         </div>
 
-        {/* Notificări */}
+        {/* NOTIFICĂRI */}
         {isAuthenticated && <NotificationBell />}
 
-        {/* User Menu / Login */}
+        {/* USER MENU */}
         {isAuthenticated ? (
           <div className="user-menu-wrapper" style={{ position: 'relative' }}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="user-menu-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -249,24 +286,39 @@ const Header = ({ theme, toggleTheme }) => {
               }}
             >
               <div style={{
-                width: 28, height: 28, borderRadius: '50%',
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
                 background: isAdmin
                   ? 'linear-gradient(135deg, #f4d03f, #e67e22)'
                   : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.7rem', fontWeight: 700, color: 'white', flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                color: 'white',
+                flexShrink: 0,
                 overflow: 'hidden'
               }}>
-                {user?.avatar
-                  ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : getInitiale(user?.nume)
-                }
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  getInitiale(user?.nume)
+                )}
               </div>
 
               <span className="user-name" style={{
-                fontSize: '0.82rem', fontWeight: 500,
-                maxWidth: 80, overflow: 'hidden',
-                textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                maxWidth: 80,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}>
                 {user?.nume}
               </span>
@@ -275,8 +327,10 @@ const Header = ({ theme, toggleTheme }) => {
                 <span className="admin-badge" style={{
                   fontSize: '0.6rem',
                   background: 'linear-gradient(135deg, #f4d03f, #e67e22)',
-                  color: '#000', padding: '1px 5px',
-                  borderRadius: '10px', fontWeight: 700
+                  color: '#000',
+                  padding: '1px 5px',
+                  borderRadius: '10px',
+                  fontWeight: 700
                 }}>
                   ADMIN
                 </span>
@@ -296,7 +350,7 @@ const Header = ({ theme, toggleTheme }) => {
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-lg)',
                 padding: '0.5rem',
-                minWidth: 200,
+                minWidth: 210,
                 zIndex: 1000,
                 boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
               }}>
@@ -305,30 +359,52 @@ const Header = ({ theme, toggleTheme }) => {
                   borderBottom: '1px solid var(--border-color)',
                   marginBottom: '0.5rem'
                 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <div style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)'
+                  }}>
                     {user?.nume}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <div style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-muted)'
+                  }}>
                     {user?.email}
                   </div>
                 </div>
 
                 {isAdmin && (
-                  <button onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
-                    style={dropdownItemStyle}>
+                  <button
+                    onClick={() => {
+                      navigate('/admin');
+                      setUserMenuOpen(false);
+                    }}
+                    style={dropdownItemStyle}
+                  >
                     🛡️ Admin Panel
                   </button>
                 )}
 
-                <button onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
-                  style={dropdownItemStyle}>
+                <button
+                  onClick={() => {
+                    navigate('/settings');
+                    setUserMenuOpen(false);
+                  }}
+                  style={dropdownItemStyle}
+                >
                   ⚙️ Setări cont
                 </button>
 
-                <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
+                <div style={{
+                  borderTop: '1px solid var(--border-color)',
+                  margin: '0.5rem 0'
+                }} />
 
-                <button onClick={handleLogout}
-                  style={{ ...dropdownItemStyle, color: '#ef4444' }}>
+                <button
+                  onClick={handleLogout}
+                  style={{ ...dropdownItemStyle, color: '#ef4444' }}
+                >
                   🚪 Deconectare
                 </button>
               </div>

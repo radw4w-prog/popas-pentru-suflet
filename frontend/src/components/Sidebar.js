@@ -13,10 +13,11 @@ const Sidebar = ({ theme }) => {
     { path: '/verses', icon: '📖', label: 'Versete' },
   ];
 
-  const userItems = [
-    { path: '/reading', icon: '📗', label: 'Citire Biblie' },
-  ];
 
+const userItems = [
+  { path: '/reading', icon: '📗', label: 'Citire Biblie' },
+  { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
+];
   const adminItems = [
   { path: '/schedule', icon: '📅', label: 'Programare' },
   { path: '/history', icon: '📜', label: 'Istoric' },

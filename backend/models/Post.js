@@ -27,10 +27,14 @@ const PostSchema = new mongoose.Schema({
     default: null
   },
   status: {
-    type: String,
-    enum: ['draft', 'scheduled', 'published', 'failed'],
-    default: 'draft'
-  },
+  type: String,
+  enum: ['draft', 'scheduled', 'publishing', 'published', 'failed'],
+  default: 'draft'
+},
+imageBase64: {
+  type: String,
+  default: null
+},
   scheduledDate: {
     type: Date,
     default: null

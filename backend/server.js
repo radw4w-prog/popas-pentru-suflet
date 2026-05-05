@@ -51,6 +51,8 @@ const versesRouter = require('./routes/verses');
 const generateRouter = require('./routes/generate');
 const socialRouter = require('./routes/social');
 const readingRouter = require('./routes/reading');
+const bookmarkRoutes = require('./routes/bookmarks');
+app.use('/api/bookmarks', bookmarkRoutes);
 
 app.use('/api/posts', postsRouter);
 app.use('/api/verses', versesRouter);
@@ -111,6 +113,36 @@ app.get('/test-notif', async (req, res) => {
 });
 
 
+app.get('/test-gemini-models', async (req, res) => {
+  const axios = require('axios');
+  try {
+    const r = await axios.get(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
+    );
+    const models = r.data.models
+      .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+      .map(m => m.name);
+    res.json({ models });
+  } catch (e) {
+    res.json({ error: e.response?.data || e.message });
+  }
+});
+
+
+
+// TEST AI
+app.get('/test-ai', async (req, res) => {
+  const geminiService = require('./services/geminiService');
+  const result = await geminiService.testConnection();
+  res.json(result);
+});
+
+
+
+
+
+
+
 
 // ═══════════════════════════════════════
 // 404 HANDLER
@@ -139,6 +171,9 @@ if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
 
 // Pre-încarcă modelul ReadingPlan
 require('./models/ReadingPlan');
+
+
+
 
 
 

@@ -4,6 +4,7 @@ import FacebookCallbackPage from './pages/FacebookCallbackPage';
 import BottomNav from './components/BottomNav';
 import PWAInstallBanner from './components/PWAInstallBanner';
 import AnalyticsPage from './pages/AnalyticsPage';
+import BookmarksPage from './pages/BookmarksPage';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
@@ -26,6 +27,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
 import './styles/App.css';
+import './styles/Premium.css';
 
 export const FontSizeContext = React.createContext({
   fontSize: 'medium',
@@ -116,6 +118,15 @@ function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+			
+			<Route path="/bookmarks" element={
+  <ProtectedRoute>
+    <AppLayout theme={theme} toggleTheme={toggleTheme}>
+      <BookmarksPage />
+    </AppLayout>
+  </ProtectedRoute>
+} />
+			
             <Route path="/schedule" element={
               <AdminRoute>
                 <AppLayout theme={theme} toggleTheme={toggleTheme}>

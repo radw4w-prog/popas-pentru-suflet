@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { checkGenerateLimit, getGenerateStatus, registerGeneration } = require('../middleware/rateLimit');
+const geminiService = require('../services/geminiService');
 
 let Description = null;
 try {
@@ -373,5 +374,89 @@ router.post('/', optionalAuth, checkGenerateLimit, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+
+// POST /api/generate/ai
+router.post('/ai', optionalAuth, checkGenerateLimit, async (req, res) => {
+  try {
+    const { tema = 'default', platform = 'facebook', versetCustom = null } = req.body;
+
+    // Verifică dacă AI e configurat
+    if (!geminiService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        message: 'AI nu este configurat. Adaugă GEMINI_API_KEY în .env'
+      });
+    }
+
+    // Obține verset
+    let verseData = null;
+    if (versetCustom) {
+      verseData = {
+        ...versetCustom,
+        referintaCompleta: versetCustom.referintaCompleta || versetCustom.referinta
+      };
+    } else {
+      verseData = await getRelevantVerse(tema);
+    }
+
+    const ref = verseData.referintaCompleta || verseData.referinta;
+
+    // Generare AI
+    console.log(`🤖 AI Generate: ${ref} | ${tema} | ${platform}`);
+    const aiContent = await geminiService.generatePostContent(
+      verseData.text,
+      ref,
+      tema,
+      platform
+    );
+
+    // Log generare
+    await registerGeneration(req, { tema, platform });
+
+    const remainingAfter = req.limitInfo?.type === 'admin'
+      ? null
+      : Math.max(0, (req.limitInfo?.limit || 0) - ((req.limitInfo?.used || 0) + 1));
+
+    res.json({
+      success: true,
+      verset: verseData,
+      ai: aiContent,
+      descriere: aiContent.descriere,
+      hashtags: aiContent.hashtags,
+      variante: [
+        aiContent.descriere,
+        aiContent.variantaCalda,
+        aiContent.variantaPuternica
+      ].filter(Boolean),
+      tema,
+      platform,
+      generatLa: new Date().toISOString(),
+      limitInfo: {
+        type: req.limitInfo?.type || 'guest',
+        limit: req.limitInfo?.limit || null,
+        used: req.limitInfo?.type === 'admin' ? null : (req.limitInfo.used + 1),
+        remaining: remainingAfter
+      }
+    });
+  } catch (error) {
+    console.error('AI Generate error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// GET /api/generate/ai-status
+router.get('/ai-status', (req, res) => {
+  res.json({
+    success: true,
+    configured: geminiService.isConfigured(),
+    provider: 'Google Gemini'
+  });
+});
+
+
 
 module.exports = router;

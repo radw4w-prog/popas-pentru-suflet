@@ -323,3 +323,17 @@ text
 → Likes/comments/shares tracking
 → Grafice activitate
 → Cel mai bun moment de postare
+
+
+
+
+EAAaaYxU6e2sBRVj4NMZCREgwDebdZBf2ZAV2vyhCE5bVf9LtDK78Ez9upFYi1ZCOEH3LZBHrXS1nMXjGLDz0iGA6kojBjAc5jNH7rYaLBV45ZCVnrZCepvCZCOxY7tJGcaIsLfj2ZCF3aJClN7Lax0v07ZB4mUZCYeEZCiL2Vu1mgqixZA1ItlV9AQet2fjj6lhDZBFVZCtNUJLVN1f5BipTVlQ2UPA
+
+⚠️ Data Access expiră: ~3 luni de azi
+📅 Aproximativ: August 2026
+
+Când expiră:
+→ Mergi la Graph API Explorer
+→ Generează token nou cu aceleași permisiuni
+→ Rulează din nou cei 3 pași
+→ Actualizează în .env și Render

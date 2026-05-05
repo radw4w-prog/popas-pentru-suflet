@@ -3,7 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+
 const API = process.env.REACT_APP_API_URL || '';
+
 
 const DEFAULT_TEMPLATES = [
   { id: 'v_apus1', name: 'Apus dramatic', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
@@ -92,6 +94,10 @@ const TEMPLATES_PER_PAGINA = 24;
   const [limitStatus, setLimitStatus] = useState(null);
   const [limitLoading, setLimitLoading] = useState(true);
   const [renderKey, setRenderKey] = useState(0);
+  const [aiResult, setAiResult] = useState(null);
+const [generatingAI, setGeneratingAI] = useState(false);
+const [aiTab, setAiTab] = useState('normal');
+const [aiVarianta, setAiVarianta] = useState(0);
 
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
@@ -529,6 +535,90 @@ const TEMPLATES_PER_PAGINA = 24;
     }
   };
 
+
+
+const handleGenerateAI = async () => {
+  if (!isAdmin && limitStatus && limitStatus.remaining <= 0) {
+    if (limitStatus.type === 'guest') {
+      const ok = window.confirm('Ai atins limita. Creează un cont gratuit!');
+      if (ok) navigate('/register');
+    } else {
+      alert('Ai atins limita de generări/oră.');
+    }
+    return;
+  }
+
+  setGeneratingAI(true);
+  setAiResult(null);
+  setPublishResult(null);
+  setScheduleResult(null);
+
+  try {
+    const token = localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const r = await axios.post(
+      `${API}/api/generate/ai`,
+      {
+        tema,
+        platform,
+        versetCustom: versetSelectat || null
+      },
+      { headers }
+    );
+
+    if (r.data.success) {
+  setAiResult(r.data.ai);
+  setAiVarianta(0);
+
+  // Setează versetul
+  if (!versetSelectat && r.data.verset) {
+    setVersetSelectat(r.data.verset);
+    setVersetEditat(r.data.verset.text);
+    setReferintaEditata(r.data.verset.referintaCompleta || r.data.verset.referinta || '');
+  }
+
+  // Construiește variante COMPLETE cu hook + descriere + cta
+  const ai = r.data.ai;
+  const hook = ai.hook ? `${ai.hook}\n\n` : '';
+  const cta = ai.cta ? `\n\n${ai.cta}` : '';
+
+  const varianteComplete = [
+    ai.descriere ? (hook + ai.descriere + cta) : null,
+    ai.variantaCalda ? (hook + ai.variantaCalda + cta) : null,
+    ai.variantaPuternica ? (hook + ai.variantaPuternica + cta) : null
+  ].filter(Boolean);
+
+  setGenerated({
+    ...r.data,
+    descriere: varianteComplete[0] || ai.descriere || '',
+    variante: varianteComplete,
+    hashtags: ai.hashtags || r.data.hashtags || ''
+  });
+
+  if (r.data.limitInfo) {
+    setLimitStatus(prev => ({
+      ...prev,
+      used: r.data.limitInfo.used,
+      remaining: r.data.limitInfo.remaining
+    }));
+  }
+
+  setRenderKey(k => k + 1);
+  setStep(3);
+  setAiTab('ai');
+}
+  } catch (error) {
+    const msg = error.response?.data?.error || error.message;
+    alert('Eroare AI: ' + msg);
+  } finally {
+    setGeneratingAI(false);
+  }
+};
+
+
+
+
   // ═══ SAVE ═══
   const handleSave = async () => {
     if (!generated) return;
@@ -581,7 +671,7 @@ const TEMPLATES_PER_PAGINA = 24;
           content: descriere,
           hashtags: generated.hashtags,
           imageBase64: generatedImageBase64 || null,
-          imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
+          imageUrl: generatedImageBase64 ? null : (templateSelectat?.url || null),
           platform: 'facebook'
         },
         { headers }
@@ -1197,53 +1287,88 @@ const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PA
             </div>
 
             <div className="card">
-              <div className="card-header">
-                <div className="card-title"><span className="icon">📱</span> Platformă</div>
-              </div>
-              <div className="tabs" style={{ marginBottom: '1rem' }}>
-                {[
-                  { id: 'facebook', l: '📘 Facebook' },
-                  { id: 'instagram', l: '📸 Instagram' },
-                  { id: 'tiktok', l: '🎵 TikTok' }
-                ].map(p => (
-                  <button key={p.id} className={`tab ${platform === p.id ? 'active' : ''}`}
-                    onClick={() => setPlatform(p.id)}>{p.l}</button>
-                ))}
-              </div>
-              <button
-                className="btn btn-gold btn-lg btn-block"
-                onClick={handleGenerate}
-                disabled={generating || (!isAdmin && limitStatus && limitStatus.remaining <= 0)}
-              >
-                {generating ? (
-                  <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</>
-                ) : (!isAdmin && limitStatus && limitStatus.remaining <= 0) ? (
-                  '🚫 Limită atinsă'
-                ) : (
-                  '✨ Generează Descriere & Hashtags'
-                )}
-              </button>
+  <div className="card-header">
+    <div className="card-title"><span className="icon">📱</span> Platformă</div>
+  </div>
+  <div className="tabs" style={{ marginBottom: '1rem' }}>
+    {[
+      { id: 'facebook', l: '📘 Facebook' },
+      { id: 'instagram', l: '📸 Instagram' },
+      { id: 'tiktok', l: '🎵 TikTok' }
+    ].map(p => (
+      <button key={p.id} className={`tab ${platform === p.id ? 'active' : ''}`}
+        onClick={() => setPlatform(p.id)}>{p.l}</button>
+    ))}
+  </div>
 
-              {!isAdmin && limitStatus && limitStatus.remaining <= 0 && (
-                <div style={{
-                  marginTop: '0.75rem', padding: '0.75rem', borderRadius: '10px',
-                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                  fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center'
-                }}>
-                  {limitStatus.type === 'guest' ? (
-                    <>
-                      Ai folosit toate cele 3 generări de azi.{' '}
-                      <span onClick={() => navigate('/register')}
-                        style={{ color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>
-                        Creează un cont gratuit
-                      </span>{' '}pentru 5 generări/oră!
-                    </>
-                  ) : (
-                    'Ai folosit toate cele 5 generări din această oră. Încearcă din nou mai târziu.'
-                  )}
-                </div>
-              )}
-            </div>
+  {/* Buton AI */}
+  <button
+    className="btn btn-lg btn-block"
+    onClick={handleGenerateAI}
+    disabled={generatingAI || generating || (!isAdmin && limitStatus && limitStatus.remaining <= 0)}
+    style={{
+      background: generatingAI
+        ? 'rgba(99,102,241,0.5)'
+        : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+      border: 'none', borderRadius: '14px',
+      color: 'white', fontWeight: 700,
+      marginBottom: '0.65rem',
+      display: 'flex', alignItems: 'center',
+      justifyContent: 'center', gap: '0.5rem'
+    }}
+  >
+    {generatingAI ? (
+      <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Gemini AI generează...</>
+    ) : (
+      <>🤖 Generează cu AI <span style={{ fontSize: '0.72rem', opacity: 0.8 }}>(Gemini)</span></>
+    )}
+  </button>
+
+  {/* Separator */}
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: '0.75rem',
+    marginBottom: '0.65rem'
+  }}>
+    <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
+    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>sau</span>
+    <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
+  </div>
+
+  {/* Buton normal */}
+  <button
+    className="btn btn-gold btn-lg btn-block"
+    onClick={handleGenerate}
+    disabled={generating || generatingAI || (!isAdmin && limitStatus && limitStatus.remaining <= 0)}
+  >
+    {generating ? (
+      <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</>
+    ) : (!isAdmin && limitStatus && limitStatus.remaining <= 0) ? (
+      '🚫 Limită atinsă'
+    ) : (
+      '✨ Generează Standard'
+    )}
+  </button>
+
+  {!isAdmin && limitStatus && limitStatus.remaining <= 0 && (
+    <div style={{
+      marginTop: '0.75rem', padding: '0.75rem', borderRadius: '10px',
+      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+      fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center'
+    }}>
+      {limitStatus.type === 'guest' ? (
+        <>
+          Ai folosit toate cele 3 generări de azi.{' '}
+          <span onClick={() => navigate('/register')}
+            style={{ color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>
+            Creează un cont gratuit
+          </span>{' '}pentru 5 generări/oră!
+        </>
+      ) : (
+        'Ai folosit toate cele 5 generări din această oră. Încearcă din nou mai târziu.'
+      )}
+    </div>
+  )}
+</div>
           </div>
 
           {/* Preview */}
@@ -1400,6 +1525,156 @@ const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PA
                 ))}
               </div>
             )}
+			
+			
+			{/* AI Results Panel */}
+{aiResult && (
+  <div style={{
+    background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04))',
+    border: '1px solid rgba(99,102,241,0.2)',
+    borderRadius: '16px',
+    padding: '1rem',
+    marginBottom: '0.75rem'
+  }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.5rem',
+      marginBottom: '0.75rem'
+    }}>
+      <span style={{ fontSize: '1.1rem' }}>🤖</span>
+      <span style={{ fontWeight: 700, color: '#6366f1', fontSize: '0.9rem' }}>
+        Gemini AI
+      </span>
+      <span style={{
+        fontSize: '0.68rem', background: 'rgba(99,102,241,0.1)',
+        color: '#6366f1', padding: '1px 6px', borderRadius: '10px'
+      }}>
+        {aiResult.platform}
+      </span>
+    </div>
+
+    {/* Hook */}
+    {aiResult.hook && (
+      <div style={{ marginBottom: '0.5rem' }}>
+        <div style={{
+          fontSize: '0.68rem', color: 'var(--text-muted)',
+          textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.2rem'
+        }}>
+          🎣 Hook
+        </div>
+        <div style={{
+          fontWeight: 700, color: 'var(--text-primary)',
+          fontSize: '0.9rem', fontStyle: 'italic'
+        }}>
+          "{aiResult.hook}"
+        </div>
+      </div>
+    )}
+
+    {/* Ore recomandate */}
+    <div style={{
+      display: 'flex', gap: '0.5rem', flexWrap: 'wrap',
+      marginBottom: '0.5rem'
+    }}>
+      <div style={{
+        background: 'rgba(16,185,129,0.1)',
+        border: '1px solid rgba(16,185,129,0.2)',
+        borderRadius: '10px', padding: '0.4rem 0.75rem',
+        fontSize: '0.8rem', color: '#10b981', fontWeight: 600
+      }}>
+        🌅 Dimineață: {aiResult.oraDimineata}
+      </div>
+      <div style={{
+        background: 'rgba(99,102,241,0.1)',
+        border: '1px solid rgba(99,102,241,0.2)',
+        borderRadius: '10px', padding: '0.4rem 0.75rem',
+        fontSize: '0.8rem', color: '#6366f1', fontWeight: 600
+      }}>
+        🌙 Seară: {aiResult.oraSeara}
+      </div>
+    </div>
+
+    {/* Motiv ore */}
+    {aiResult.motivOre && (
+      <div style={{
+        fontSize: '0.75rem', color: 'var(--text-muted)',
+        marginBottom: '0.5rem'
+      }}>
+        ℹ️ {aiResult.motivOre}
+      </div>
+    )}
+
+    {/* Story text */}
+    {aiResult.storyText && (
+      <div style={{ marginBottom: '0.5rem' }}>
+        <div style={{
+          fontSize: '0.68rem', color: 'var(--text-muted)',
+          textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.2rem'
+        }}>
+          📱 Story/Reel text
+        </div>
+        <div style={{
+          background: 'var(--bg-input)', borderRadius: '8px',
+          padding: '0.4rem 0.75rem', fontSize: '0.85rem',
+          color: 'var(--text-primary)', fontWeight: 600,
+          display: 'inline-block'
+        }}>
+          {aiResult.storyText}
+        </div>
+      </div>
+    )}
+
+    {/* Emoji */}
+    {aiResult.emojiTema && (
+      <div style={{ fontSize: '1.1rem' }}>{aiResult.emojiTema}</div>
+    )}
+
+    {/* Sfat imagine */}
+    {aiResult.sfatImagine && (
+      <div style={{
+        marginTop: '0.5rem', fontSize: '0.75rem',
+        color: 'var(--text-muted)', fontStyle: 'italic'
+      }}>
+        🖼️ {aiResult.sfatImagine}
+      </div>
+    )}
+  </div>
+)}
+
+{/* Variante tabs - AI */}
+{aiResult && (
+  <div className="tabs" style={{ marginBottom: '0.75rem' }}>
+    <button
+      className={`tab ${aiVarianta === 0 ? 'active' : ''}`}
+      onClick={() => {
+        setAiVarianta(0);
+        setVariantaActiva(0);
+      }}
+    >
+      ✨ Standard
+    </button>
+    <button
+      className={`tab ${aiVarianta === 1 ? 'active' : ''}`}
+      onClick={() => {
+        setAiVarianta(1);
+        setVariantaActiva(1);
+      }}
+    >
+      ❤️ Caldă
+    </button>
+    <button
+      className={`tab ${aiVarianta === 2 ? 'active' : ''}`}
+      onClick={() => {
+        setAiVarianta(2);
+        setVariantaActiva(2);
+      }}
+    >
+      🔥 Puternică
+    </button>
+  </div>
+)}
+			
+			
+			
 
             <div className="card card-gold">
               <div className="card-header">
@@ -1490,9 +1765,13 @@ const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PA
                   <input type="datetime-local" className="form-input"
                     value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} />
                 </div>
-                <button className="btn btn-gold btn-block" onClick={handleSchedule} disabled={scheduling}>
-                  {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
-                </button>
+                <button
+  className="btn btn-gold btn-block"
+  onClick={handleSchedule}
+  disabled={scheduling}
+>
+  {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
+</button>
               </div>
             )}
           </div>

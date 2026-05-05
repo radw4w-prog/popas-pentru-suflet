@@ -51,13 +51,14 @@ router.post('/', async (req, res) => {
 // PUT /api/posts/:id
 router.put('/:id', async (req, res) => {
   try {
+    const { content, hashtags, scheduledDate } = req.body;
     const post = await Post.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { content, hashtags, scheduledDate },
       { new: true }
     );
-    if (!post) return res.status(404).json({ error: 'Postare negăsită' });
-    res.json(post);
+    if (!post) return res.status(404).json({ error: 'Postarea nu există' });
+    res.json({ success: true, post });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

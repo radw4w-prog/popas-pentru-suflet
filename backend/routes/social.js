@@ -132,18 +132,16 @@ router.post('/schedule', async (req, res) => {
       return res.status(400).json({ error: 'Data trebuie să fie în viitor!' });
     }
 
-    // ✅ Salvează imaginea permanent pentru programare
-    let savedImagePath = null;
-
-    if (imageBase64 && imageBase64.startsWith('data:image')) {
-      savedImagePath = saveBase64Image(imageBase64, 'scheduled');
-      console.log('📅 Imagine programare salvată:', savedImagePath);
-    }
-
+    // NU mai salvăm local imaginea pentru programări
+    // Salvăm base64 direct în DB, ca să o poată publica și Render
     const post = await Post.create({
-      content, hashtags,
-      imageUrl: savedImagePath || imageUrl || null,
-      platform, tema, verset,
+      content,
+      hashtags,
+      imageUrl: imageBase64 ? null : (imageUrl || null),
+      imageBase64: imageBase64 || null,
+      platform,
+      tema,
+      verset,
       status: 'scheduled',
       scheduledDate: dateObj
     });

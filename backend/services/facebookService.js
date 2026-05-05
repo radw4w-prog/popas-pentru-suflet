@@ -226,39 +226,67 @@ class FacebookService {
 
   // ═══ PUBLISH POST - METODA PRINCIPALĂ ═══
   async publishPost(post) {
-    const message = [post.content, post.hashtags]
-      .filter(Boolean)
-      .join('\n\n');
+  const message = [post.content, post.hashtags]
+    .filter(Boolean)
+    .join('\n\n');
 
-    console.log('\n════════════════════════════════════');
-    console.log('📘 FACEBOOK PUBLISH');
-    console.log('   Text:', message.substring(0, 100) + '...');
-    console.log('   Imagine:', post.imageUrl ? 'DA' : 'NU');
-    console.log('   Token OK:', this.isConfigured() ? 'DA' : 'NU');
-    console.log('════════════════════════════════════\n');
+  console.log('\n════════════════════════════════════');
+  console.log('📘 FACEBOOK PUBLISH');
+  console.log('   Text:', message.substring(0, 100) + '...');
+  console.log('   Are imagine base64:', post.imageBase64 ? 'DA' : 'NU');
+  console.log('   Imagine path/url:', post.imageUrl ? 'DA' : 'NU');
+  console.log('   Token OK:', this.isConfigured() ? 'DA' : 'NU');
+  console.log('════════════════════════════════════\n');
 
-    // Verifică token înainte de a încerca
-    if (!this.isConfigured()) {
-      throw new Error('Facebook nu este configurat! Adaugă token în .env');
+  if (!this.isConfigured()) {
+    throw new Error('Facebook nu este configurat! Adaugă token în .env');
+  }
+
+  try {
+    // 1. Prioritate: imageBase64 (perfect pentru programări cross-server)
+    if (post.imageBase64 && post.imageBase64.startsWith('data:image')) {
+      const tempDir = path.join(__dirname, '../uploads/temp');
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+      const matches = post.imageBase64.match(/^data:image\/(\w+);base64,(.+)$/);
+      if (matches) {
+        const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+        const data = matches[2];
+        const tempFile = path.join(tempDir, `fb_temp_${Date.now()}.${ext}`);
+
+        fs.writeFileSync(tempFile, Buffer.from(data, 'base64'));
+
+        try {
+          const result = await this.postWithLocalImage(message, tempFile);
+          try { fs.unlinkSync(tempFile); } catch (e) {}
+          return result;
+        } catch (e) {
+          try { fs.unlinkSync(tempFile); } catch (e2) {}
+          throw e;
+        }
+      }
     }
 
-    try {
-      if (post.imageUrl) {
-        if (post.imageUrl.startsWith('http')) {
-          return await this.postWithImageUrl(message, post.imageUrl);
-        }
-        const localPath = path.isAbsolute(post.imageUrl)
-          ? post.imageUrl
-          : path.join(__dirname, '..', post.imageUrl);
-        return await this.postWithLocalImage(message, localPath);
+    // 2. Imagine URL
+    if (post.imageUrl) {
+      if (post.imageUrl.startsWith('http')) {
+        return await this.postWithImageUrl(message, post.imageUrl);
       }
 
-      return await this.postText(message);
-    } catch (error) {
-      console.error('❌ publishPost:', error.message);
-      throw error;
+      const localPath = path.isAbsolute(post.imageUrl)
+        ? post.imageUrl
+        : path.join(__dirname, '..', post.imageUrl);
+
+      return await this.postWithLocalImage(message, localPath);
     }
+
+    // 3. Doar text
+    return await this.postText(message);
+  } catch (error) {
+    console.error('❌ publishPost:', error.message);
+    throw error;
   }
+}
 
   // ═══ GET PAGES ═══
   async getMyPages(userToken) {
