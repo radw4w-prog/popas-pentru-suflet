@@ -28,6 +28,7 @@ import RegisterPage from './pages/RegisterPage';
 
 import './styles/App.css';
 import './styles/Premium.css';
+import DevotionalPage from './pages/DevotionalPage';
 
 export const FontSizeContext = React.createContext({
   fontSize: 'medium',
@@ -101,6 +102,7 @@ function App() {
                 <DashboardPage />
               </AppLayout>
             } />
+			<Route path="/devotional" element={<DevotionalPage />} />
             <Route path="/verses" element={
               <AppLayout theme={theme} toggleTheme={toggleTheme}>
                 <VersesPage />

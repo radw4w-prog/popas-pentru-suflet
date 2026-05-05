@@ -17,6 +17,11 @@ const Sidebar = ({ theme }) => {
 const userItems = [
   { path: '/reading', icon: '📗', label: 'Citire Biblie' },
   { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
+  {
+  label: 'Devoțional zilnic',
+  path: '/devotional',
+  icon: '🙏'
+}
 ];
   const adminItems = [
   { path: '/schedule', icon: '📅', label: 'Programare' },

@@ -5948,3 +5948,79 @@ a {
     opacity: 0.7;
   }
 }
+.devotional-card {
+  max-width: 900px;
+  margin: 0 auto;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 24px;
+}
+
+.devotional-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.15);
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.badge.secondary {
+  background: rgba(16, 185, 129, 0.12);
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.verse-box {
+  margin: 22px 0;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.verse-text {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+
+.verse-ref {
+  opacity: 0.75;
+  font-weight: 600;
+}
+
+.devotional-section {
+  margin-top: 24px;
+}
+
+.devotional-section h3 {
+  margin-bottom: 10px;
+}
+
+.devotional-section p {
+  line-height: 1.85;
+  opacity: 0.95;
+}
+
+.devotional-section.highlight {
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+.devotional-footer {
+  margin-top: 24px;
+  opacity: 0.7;
+}

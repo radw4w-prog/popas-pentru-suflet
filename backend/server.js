@@ -62,6 +62,7 @@ app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/devotionals', require('./routes/devotionals'));
 
 // ═══════════════════════════════════════
 // SCHEDULER
