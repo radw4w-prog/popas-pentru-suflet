@@ -8,6 +8,37 @@ const { protect, optionalAuth } = require('../middleware/auth');
 const { checkGenerateLimit, getGenerateStatus, registerGeneration } = require('../middleware/rateLimit');
 const geminiService = require('../services/geminiService');
 
+
+
+
+const express = require('express');
+const router = express.Router();
+const geminiService = require('../services/geminiService');
+
+// ✅ TEST ROUTE
+router.get('/ai/test', async (req, res) => {
+  try {
+    console.log('🧪 Test Gemini - Key exists:', !!process.env.GEMINI_API_KEY);
+    console.log('🧪 Key preview:', process.env.GEMINI_API_KEY?.substring(0, 15));
+    
+    if (!geminiService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        message: 'AI nu este configurat. Adaugă GEMINI_API_KEY în .env'
+      });
+    }
+    
+    const result = await geminiService.testConnection();
+    res.json(result);
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 let Description = null;
 try {
   Description = require('../models/Description');

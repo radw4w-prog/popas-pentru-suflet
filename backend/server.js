@@ -140,32 +140,7 @@ app.get('/test-ai', async (req, res) => {
 
 
 // backend/routes/generate.js
-// Adaugă această rută:
 
-router.get('/ai/test', async (req, res) => {
-  try {
-    const geminiService = require('../services/geminiService');
-    
-    console.log('🧪 Test Gemini - API Key exists:', !!process.env.GEMINI_API_KEY);
-    console.log('🧪 Key preview:', process.env.GEMINI_API_KEY?.substring(0, 15));
-    
-    if (!geminiService.isConfigured()) {
-      return res.status(400).json({
-        success: false,
-        message: 'AI nu este configurat. Adaugă GEMINI_API_KEY în .env'
-      });
-    }
-    
-    const result = await geminiService.testConnection();
-    res.json(result);
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 
 
