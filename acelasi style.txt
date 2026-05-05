@@ -35,10 +35,19 @@
 
 
 
-A) AI Descrieri + Hashtags (Gemini) — implementare rapidă
+A) AI Descrieri + Hashtags (Gemini) — implementare rapidă - implementat
 B) Devoțional zilnic complet
 C) Cereri de rugăciune
 D) Jurnal spiritual
 E) Audio Biblie (Text-to-Speech gratuit)
 F) Gamification (badge-uri, streak-uri)
 G) Altceva
+
+
+cd E:\popas-pentru-suflet
+
+git add .
+git commit -m "🚀 Initial deploy - Popas pentru Suflet"
+git branch -M main
+git remote add origin https://github.com/radw4w-prog/popas-pentru-suflet
+git push -u origin main
