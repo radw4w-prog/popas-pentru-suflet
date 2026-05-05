@@ -77,6 +77,72 @@ app.use('/api/notifications', notificationRoutes);
 const schedulerService = require('./services/schedulerService');
 schedulerService.init();
 
+// backend/server.js
+// ȘTERGE sau ÎNLOCUIEȘTE secțiunea de după schedulerService cu asta:
+
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
+
+// ═══════════════════════════════════════
+// MIDDLEWARE
+// ═══════════════════════════════════════
+app.use(cors({
+  origin: function(origin, callback) {
+    const allowed = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://serene-khapse-8c6464.netlify.app',
+      'https://sweet-axolotl-c510b8.netlify.app',
+    ];
+
+    if (!origin) return callback(null, true);
+    if (origin.endsWith('.netlify.app')) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true); // ✅ Adaugă Vercel
+    if (allowed.includes(origin)) return callback(null, true);
+
+    callback(new Error('CORS: origin neautorizat: ' + origin));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ═══════════════════════════════════════
+// DATABASE
+// ═══════════════════════════════════════
+const connectDB = require('./config/database');
+connectDB();
+
+// ═══════════════════════════════════════
+// ROUTES
+// ═══════════════════════════════════════
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/verses', require('./routes/verses'));
+app.use('/api/generate', require('./routes/generate'));
+app.use('/api/social', require('./routes/social'));
+app.use('/api/reading', require('./routes/reading'));
+app.use('/api/bookmarks', require('./routes/bookmarks'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/notifications', require('./routes/notifications'));
+
+// ═══════════════════════════════════════
+// SCHEDULER
+// ═══════════════════════════════════════
+const schedulerService = require('./services/schedulerService');
+schedulerService.init();
+
+// Pre-încarcă modelul ReadingPlan
+require('./models/ReadingPlan');
+
 // ═══════════════════════════════════════
 // HEALTH CHECK
 // ═══════════════════════════════════════
@@ -85,33 +151,23 @@ app.get('/health', (req, res) => {
     status: 'ok',
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    gemini: !!process.env.GEMINI_API_KEY
   });
 });
 
 // ═══════════════════════════════════════
-// ERROR HANDLER GLOBAL
+// TEST ROUTES (doar development sau debug)
 // ═══════════════════════════════════════
-app.use((err, req, res, next) => {
-  console.error('❌ Eroare globală:', err.message);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Eroare internă server.'
-  });
-});
-
-
-// ═══ TEMPORAR - TEST NOTIFICĂRI ═══
-app.get('/test-notif', async (req, res) => {
+app.get('/test-ai', async (req, res) => {
   try {
-    const { runNotificationsJob } = require('./services/notificationService');
-    await runNotificationsJob();
-    res.json({ success: true, message: 'Job notificări rulat cu succes!' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    const geminiService = require('./services/geminiService');
+    const result = await geminiService.testConnection();
+    res.json(result);
+  } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
-
 
 app.get('/test-gemini-models', async (req, res) => {
   const axios = require('axios');
@@ -122,37 +178,20 @@ app.get('/test-gemini-models', async (req, res) => {
     const models = r.data.models
       .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
       .map(m => m.name);
-    res.json({ models });
+    res.json({ models, key_exists: !!process.env.GEMINI_API_KEY });
   } catch (e) {
     res.json({ error: e.response?.data || e.message });
   }
 });
 
-
-
-// TEST AI
-app.get('/test-ai', async (req, res) => {
-  const geminiService = require('./services/geminiService');
-  const result = await geminiService.testConnection();
-  res.json(result);
-});
-
-
-
-// backend/routes/generate.js
-
-
-
-
-
-// ═══════════════════════════════════════
-// 404 HANDLER
-// ═══════════════════════════════════════
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Ruta ${req.method} ${req.url} nu există.`
-  });
+app.get('/test-notif', async (req, res) => {
+  try {
+    const { runNotificationsJob } = require('./services/notificationService');
+    await runNotificationsJob();
+    res.json({ success: true, message: 'Job notificări rulat cu succes!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // ═══════════════════════════════════════
@@ -170,14 +209,26 @@ if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
   }, 14 * 60 * 1000);
 }
 
-// Pre-încarcă modelul ReadingPlan
-require('./models/ReadingPlan');
+// ═══════════════════════════════════════
+// ERROR HANDLER GLOBAL
+// ═══════════════════════════════════════
+app.use((err, req, res, next) => {
+  console.error('❌ Eroare globală:', err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Eroare internă server.'
+  });
+});
 
-
-
-
-
-
+// ═══════════════════════════════════════
+// 404 HANDLER
+// ═══════════════════════════════════════
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Ruta ${req.method} ${req.url} nu există.`
+  });
+});
 
 // ═══════════════════════════════════════
 // START SERVER
@@ -189,9 +240,7 @@ app.listen(PORT, () => {
   console.log('🕊️  Popas pentru Suflet API');
   console.log(`🕊️  http://localhost:${PORT}`);
   console.log(`🕊️  Mediu: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🕊️  Gemini: ${process.env.GEMINI_API_KEY ? '✅ Configurat' : '❌ Lipsă'}`);
   console.log('🕊️  ════════════════════════════════');
   console.log('');
 });
-
-
-
