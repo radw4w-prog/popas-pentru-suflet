@@ -11,19 +11,29 @@ const app = express();
 // ═══════════════════════════════════════
 app.use(cors({
   origin: function(origin, callback) {
+    // Permite fără origin (Postman, mobile)
+    if (!origin) return callback(null, true);
+    
+    // Permite orice Netlify
+    if (origin.endsWith('.netlify.app')) return callback(null, true);
+    
+    // Permite orice Vercel
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    
+    // Permite localhost
+    if (origin.startsWith('http://localhost')) return callback(null, true);
+
+    // Permite specific
     const allowed = [
-      'http://localhost:3000',
-      'http://localhost:3001',
+      'https://popas-pentru-suflet.vercel.app',
       'https://serene-khapse-8c6464.netlify.app',
       'https://sweet-axolotl-c510b8.netlify.app',
     ];
-
-    if (!origin) return callback(null, true);
-    if (origin.endsWith('.netlify.app')) return callback(null, true);
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
     if (allowed.includes(origin)) return callback(null, true);
 
-    callback(new Error('CORS: origin neautorizat: ' + origin));
+    // Log și permite oricum (temporar pentru debug)
+    console.log('⚠️ CORS origin necunoscut (permis temporar):', origin);
+    return callback(null, true); // ← temporar permite TOT
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

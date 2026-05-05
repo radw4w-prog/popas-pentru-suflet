@@ -1,56 +1,30 @@
+// backend/routes/generate.js
+'use strict';
+
+// ═══════════════════════════════════════
+// IMPORTS - O SINGURĂ DATĂ!
+// ═══════════════════════════════════════
 const express = require('express');
 const router = express.Router();
-const Verse = require('../models/Verse');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const Verse = require('../models/Verse');
+const multer = require('multer');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { checkGenerateLimit, getGenerateStatus, registerGeneration } = require('../middleware/rateLimit');
 const geminiService = require('../services/geminiService');
-
-
-
-
-const express = require('express');
-const router = express.Router();
-const geminiService = require('../services/geminiService');
-
-// ✅ TEST ROUTE
-router.get('/ai/test', async (req, res) => {
-  try {
-    console.log('🧪 Test Gemini - Key exists:', !!process.env.GEMINI_API_KEY);
-    console.log('🧪 Key preview:', process.env.GEMINI_API_KEY?.substring(0, 15));
-    
-    if (!geminiService.isConfigured()) {
-      return res.status(400).json({
-        success: false,
-        message: 'AI nu este configurat. Adaugă GEMINI_API_KEY în .env'
-      });
-    }
-    
-    const result = await geminiService.testConnection();
-    res.json(result);
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
 
 let Description = null;
 try {
   Description = require('../models/Description');
 } catch (e) {
-  console.log('ℹ️ Model Description nu exista încă - folosesc fallback local');
+  console.log('ℹ️ Model Description nu există încă - folosesc fallback local');
 }
 
 // ═══════════════════════════════════════
-// ÎNCĂRCARE TEMPLATE-URI DIN templates.json
+// ÎNCĂRCARE TEMPLATE-URI
 // ═══════════════════════════════════════
 let TEMPLATES_BUILTIN = [];
-
 try {
   const tplPath = path.join(__dirname, '../data/templates.json');
   if (fs.existsSync(tplPath)) {
@@ -66,7 +40,7 @@ try {
 }
 
 // ═══════════════════════════════════════
-// MULTER - UPLOAD TEMPLATE-URI CUSTOM
+// MULTER
 // ═══════════════════════════════════════
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -146,16 +120,9 @@ const DESCRIERI_FALLBACK = {
 };
 
 const HASHTAGS_GENERAL = [
-  '#PopasPentruSuflet',
-  '#CuvantulZilei',
-  '#Biblia',
-  '#Credinta',
-  '#Dumnezeu',
-  '#Isus',
-  '#Rugaciune',
-  '#VersetulZilei',
-  '#BisericaOnline',
-  '#Romania'
+  '#PopasPentruSuflet', '#CuvantulZilei', '#Biblia',
+  '#Credinta', '#Dumnezeu', '#Isus', '#Rugaciune',
+  '#VersetulZilei', '#BisericaOnline', '#Romania'
 ];
 
 const HASHTAGS_TEME = {
@@ -179,6 +146,9 @@ const HASHTAGS_PLATFORM = {
   tiktok: ['#FaithTok', '#BibleTok', '#CrestinTikTok', '#fyp']
 };
 
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
@@ -194,44 +164,30 @@ function generateHashtags(tema, platform) {
 
 async function getDescriptionsForTema(tema) {
   const temaKey = (tema || 'default').toLowerCase();
-
   if (Description) {
     try {
       let rows = await Description.find({ tema: temaKey, activ: true }).lean();
       if (!rows.length) {
         rows = await Description.find({ tema: 'default', activ: true }).lean();
       }
-      if (rows.length) {
-        return rows.map(r => r.text);
-      }
+      if (rows.length) return rows.map(r => r.text);
     } catch (e) {
       console.log('⚠️ Nu pot citi descrieri din DB, folosesc fallback');
     }
   }
-
   return DESCRIERI_FALLBACK[temaKey] || DESCRIERI_FALLBACK.default;
 }
 
 async function getRelevantVerse(tema) {
   const temaKey = (tema || '').toLowerCase();
-
   const cuvinte = {
-    dragoste: 'dragoste',
-    credinta: 'credin',
-    pace: 'pace',
-    bucurie: 'bucuri',
-    speranta: 'nadejd',
-    rugaciune: 'ruga',
-    iertare: 'ierta',
-    putere: 'putere',
-    recunostinta: 'multumi',
-    familie: 'famili',
-    vindecare: 'vindec',
-    intelepciune: 'intelep'
+    dragoste: 'dragoste', credinta: 'credin', pace: 'pace',
+    bucurie: 'bucuri', speranta: 'nadejd', rugaciune: 'ruga',
+    iertare: 'ierta', putere: 'putere', recunostinta: 'multumi',
+    familie: 'famili', vindecare: 'vindec', intelepciune: 'intelep'
   };
 
   const kw = cuvinte[temaKey] || temaKey;
-
   let verse = null;
 
   if (kw && kw.length >= 3) {
@@ -255,13 +211,46 @@ async function getRelevantVerse(tema) {
   };
 }
 
-
-// GET /api/generate/limit-status - verifică generări rămase
-router.get('/limit-status', optionalAuth, getGenerateStatus);
-
 // ═══════════════════════════════════════
 // ROUTES
 // ═══════════════════════════════════════
+
+// GET /api/generate/limit-status
+router.get('/limit-status', optionalAuth, getGenerateStatus);
+
+// GET /api/generate/ai-status
+router.get('/ai-status', (req, res) => {
+  res.json({
+    success: true,
+    configured: geminiService.isConfigured(),
+    provider: 'Google Gemini'
+  });
+});
+
+// GET /api/generate/ai/test
+router.get('/ai/test', async (req, res) => {
+  try {
+    console.log('🧪 Test Gemini');
+    console.log('   Key exists:', !!process.env.GEMINI_API_KEY);
+    console.log('   Key preview:', process.env.GEMINI_API_KEY?.substring(0, 15));
+    console.log('   isConfigured:', geminiService.isConfigured());
+
+    if (!geminiService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        message: 'AI nu este configurat',
+        key_exists: !!process.env.GEMINI_API_KEY,
+        key_length: process.env.GEMINI_API_KEY?.length || 0
+      });
+    }
+
+    const result = await geminiService.testConnection();
+    res.json(result);
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // GET /api/generate/templates
 router.get('/templates', (req, res) => {
@@ -293,13 +282,32 @@ router.get('/templates', (req, res) => {
   }
 });
 
+// GET /api/generate/teme
+router.get('/teme', (req, res) => {
+  res.json({
+    teme: [
+      { id: 'dragoste', label: 'Dragoste', icon: '❤️' },
+      { id: 'credinta', label: 'Credință', icon: '🙏' },
+      { id: 'pace', label: 'Pace', icon: '🕊️' },
+      { id: 'bucurie', label: 'Bucurie', icon: '😊' },
+      { id: 'speranta', label: 'Speranță', icon: '🌈' },
+      { id: 'rugaciune', label: 'Rugăciune', icon: '🙌' },
+      { id: 'iertare', label: 'Iertare', icon: '💖' },
+      { id: 'putere', label: 'Putere', icon: '💪' },
+      { id: 'recunostinta', label: 'Recunoștință', icon: '🌸' },
+      { id: 'familie', label: 'Familie', icon: '👨‍👩‍👧' },
+      { id: 'vindecare', label: 'Vindecare', icon: '🌿' },
+      { id: 'intelepciune', label: 'Înțelepciune', icon: '📖' }
+    ]
+  });
+});
+
 // POST /api/generate/upload
 router.post('/upload', upload.single('template'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Niciun fișier uploadat!' });
     }
-
     res.json({
       success: true,
       file: {
@@ -330,54 +338,25 @@ router.delete('/templates/:filename', (req, res) => {
   }
 });
 
-// GET /api/generate/teme
-router.get('/teme', (req, res) => {
-  res.json({
-    teme: [
-      { id: 'dragoste', label: 'Dragoste', icon: '❤️' },
-      { id: 'credinta', label: 'Credință', icon: '🙏' },
-      { id: 'pace', label: 'Pace', icon: '🕊️' },
-      { id: 'bucurie', label: 'Bucurie', icon: '😊' },
-      { id: 'speranta', label: 'Speranță', icon: '🌈' },
-      { id: 'rugaciune', label: 'Rugăciune', icon: '🙌' },
-      { id: 'iertare', label: 'Iertare', icon: '💖' },
-      { id: 'putere', label: 'Putere', icon: '💪' },
-      { id: 'recunostinta', label: 'Recunoștință', icon: '🌸' },
-      { id: 'familie', label: 'Familie', icon: '👨‍👩‍👧' },
-      { id: 'vindecare', label: 'Vindecare', icon: '🌿' },
-      { id: 'intelepciune', label: 'Înțelepciune', icon: '📖' }
-    ]
-  });
-});
-
-// POST /api/generate
 // POST /api/generate
 router.post('/', optionalAuth, checkGenerateLimit, async (req, res) => {
   try {
     const { tema = 'default', platform = 'facebook', versetCustom = null } = req.body;
 
-    let verseData = null;
-
-    if (versetCustom) {
-      verseData = {
-        ...versetCustom,
-        referintaCompleta: versetCustom.referintaCompleta || versetCustom.referinta
-      };
-    } else {
-      verseData = await getRelevantVerse(tema);
-    }
+    let verseData = versetCustom
+      ? { ...versetCustom, referintaCompleta: versetCustom.referintaCompleta || versetCustom.referinta }
+      : await getRelevantVerse(tema);
 
     const descrieri = await getDescriptionsForTema(tema);
     const ref = verseData.referintaCompleta || verseData.referinta;
 
     const variante = shuffle(descrieri).map(text =>
-      `“${verseData.text}”\n— ${ref}\n\n${text}`
+      `"${verseData.text}"\n— ${ref}\n\n${text}`
     );
 
-    const descriere = variante[0] || `“${verseData.text}”\n— ${ref}`;
+    const descriere = variante[0] || `"${verseData.text}"\n— ${ref}`;
     const hashtags = generateHashtags(tema, platform);
 
-    // Log generare reușită
     await registerGeneration(req, { tema, platform });
 
     const remainingAfter = req.limitInfo?.type === 'admin'
@@ -406,13 +385,11 @@ router.post('/', optionalAuth, checkGenerateLimit, async (req, res) => {
   }
 });
 
-
 // POST /api/generate/ai
 router.post('/ai', optionalAuth, checkGenerateLimit, async (req, res) => {
   try {
     const { tema = 'default', platform = 'facebook', versetCustom = null } = req.body;
 
-    // Verifică dacă AI e configurat
     if (!geminiService.isConfigured()) {
       return res.status(400).json({
         success: false,
@@ -420,21 +397,14 @@ router.post('/ai', optionalAuth, checkGenerateLimit, async (req, res) => {
       });
     }
 
-    // Obține verset
-    let verseData = null;
-    if (versetCustom) {
-      verseData = {
-        ...versetCustom,
-        referintaCompleta: versetCustom.referintaCompleta || versetCustom.referinta
-      };
-    } else {
-      verseData = await getRelevantVerse(tema);
-    }
+    let verseData = versetCustom
+      ? { ...versetCustom, referintaCompleta: versetCustom.referintaCompleta || versetCustom.referinta }
+      : await getRelevantVerse(tema);
 
     const ref = verseData.referintaCompleta || verseData.referinta;
 
-    // Generare AI
     console.log(`🤖 AI Generate: ${ref} | ${tema} | ${platform}`);
+
     const aiContent = await geminiService.generatePostContent(
       verseData.text,
       ref,
@@ -442,7 +412,6 @@ router.post('/ai', optionalAuth, checkGenerateLimit, async (req, res) => {
       platform
     );
 
-    // Log generare
     await registerGeneration(req, { tema, platform });
 
     const remainingAfter = req.limitInfo?.type === 'admin'
@@ -472,22 +441,16 @@ router.post('/ai', optionalAuth, checkGenerateLimit, async (req, res) => {
     });
   } catch (error) {
     console.error('AI Generate error:', error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+
+    if (error.message.includes('quota') || error.message.includes('epuizat')) {
+      return res.status(429).json({
+        success: false,
+        error: 'Limita AI atinsă. Încearcă în câteva minute.'
+      });
+    }
+
+    res.status(500).json({ success: false, error: error.message });
   }
 });
-
-// GET /api/generate/ai-status
-router.get('/ai-status', (req, res) => {
-  res.json({
-    success: true,
-    configured: geminiService.isConfigured(),
-    provider: 'Google Gemini'
-  });
-});
-
-
 
 module.exports = router;
