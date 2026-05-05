@@ -6024,3 +6024,214 @@ a {
   margin-top: 24px;
   opacity: 0.7;
 }
+/* ═══════════════════════════════════════════════
+   RESPONSIVE FINAL FIXES v2
+═══════════════════════════════════════════════ */
+
+/* Sidebar overlay fix */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 150;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+/* Desktop - sidebar mereu vizibil */
+@media (min-width: 1025px) {
+  .sidebar {
+    transform: translateX(0) !important;
+    width: var(--sidebar-width) !important;
+    border-radius: 0 !important;
+  }
+  .main-content {
+    margin-left: var(--sidebar-width) !important;
+  }
+  .menu-btn {
+    display: none !important;
+  }
+  .sidebar-overlay {
+    display: none !important;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root { --sidebar-width: 240px; }
+  .sidebar {
+    transform: translateX(0) !important;
+    border-radius: 0 !important;
+  }
+  .main-content {
+    margin-left: 240px !important;
+  }
+  .menu-btn {
+    display: none !important;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
+  .page-content {
+    padding: 1.25rem !important;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 300px !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    border-radius: 0 24px 24px 0 !important;
+    z-index: 200;
+  }
+  .sidebar.open {
+    transform: translateX(0) !important;
+    box-shadow: 8px 0 40px rgba(0,0,0,0.4);
+  }
+  .main-content {
+    margin-left: 0 !important;
+  }
+  .menu-btn {
+    display: flex !important;
+  }
+  .bottom-nav {
+    display: block !important;
+  }
+  .page-content {
+    padding: 0.875rem !important;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .header {
+    padding: 0.75rem 1rem !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-time {
+    display: none !important;
+  }
+  .theme-label {
+    display: none !important;
+  }
+  .user-name {
+    display: none !important;
+  }
+  .admin-badge {
+    display: none !important;
+  }
+  .header-subtext {
+    display: none !important;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .generator-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .card {
+    border-radius: 18px !important;
+    padding: 1rem !important;
+  }
+  .form-input,
+  .form-select,
+  .form-textarea {
+    font-size: 16px !important;
+  }
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+/* iPhone safe area */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(0.4rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .page-content {
+    padding: 0.5rem 1rem !important;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .bottom-nav {
+    padding: 0.2rem 0.5rem calc(0.2rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Touch devices - no hover effects */
+@media (hover: none) {
+  .card:hover {
+    transform: none !important;
+  }
+  .btn:hover {
+    transform: none !important;
+  }
+  .nav-item:hover::before {
+    width: 0 !important;
+  }
+  .card:active {
+    transform: scale(0.99);
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Devotional page responsive */
+.devotional-card {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .devotional-card {
+    padding: 1rem !important;
+    border-radius: 18px !important;
+  }
+  .verse-box {
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+  }
+  .devotional-section {
+    margin-top: 1.25rem !important;
+  }
+  .verse-text {
+    font-size: 1rem !important;
+  }
+}
+
+/* Nav label pe desktop */
+.nav-label {
+  font-size: 0.88rem;
+}

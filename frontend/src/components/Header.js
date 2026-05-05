@@ -1,3 +1,4 @@
+// frontend/src/components/Header.js
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -14,36 +15,48 @@ const Header = ({ theme, toggleTheme }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const toggleMenu = () => {
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
     if (sidebar) {
-      sidebar.classList.toggle('open');
-      setMenuOpen(!menuOpen);
+      const isOpen = sidebar.classList.toggle('open');
+      setMenuOpen(isOpen);
+      if (overlay) {
+        overlay.style.display = isOpen ? 'block' : 'none';
+      }
     }
   };
 
   useEffect(() => {
     const handleClick = (e) => {
       const sidebar = document.querySelector('.sidebar');
+      const overlay = document.querySelector('.sidebar-overlay');
       const btn = document.querySelector('.menu-btn');
 
       if (sidebar && sidebar.classList.contains('open')) {
         if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
           sidebar.classList.remove('open');
           setMenuOpen(false);
+          if (overlay) overlay.style.display = 'none';
         }
       }
 
       if (!e.target.closest('.user-menu-wrapper')) {
         setUserMenuOpen(false);
       }
-
       if (!e.target.closest('.font-menu-wrapper')) {
         setFontMenuOpen(false);
       }
@@ -53,47 +66,29 @@ const Header = ({ theme, toggleTheme }) => {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
+  // Închide sidebar la schimbare de rută pe mobile
+  useEffect(() => {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (sidebar && isMobile) {
+      sidebar.classList.remove('open');
+      setMenuOpen(false);
+      if (overlay) overlay.style.display = 'none';
+    }
+  }, [location.pathname, isMobile]);
+
   const pageTitles = {
-    '/dashboard': {
-      title: 'Popas pentru Suflet',
-      subtitle: 'verset de încurajare, rugăciune și pași zilnici cu Dumnezeu'
-    },
-    '/generate': {
-      title: 'Creator Creștin',
-      subtitle: 'imagini și texte inspiraționale pentru postări'
-    },
-	'/bookmarks': {
-  title: 'Semnele mele',
-  subtitle: 'versete salvate, evidențiate și cu notițe personale'
-},
-    '/schedule': {
-      title: 'Programări Facebook',
-      subtitle: 'publicare organizată și consecventă'
-    },
-    '/history': {
-      title: 'Istoric Publicări',
-      subtitle: 'urmărește postările create și distribuite'
-    },
-    '/verses': {
-      title: 'Biblia Cornilescu',
-      subtitle: '31.102 versete pentru citire, căutare și meditație'
-    },
-    '/reading': {
-      title: 'Plan de citire',
-      subtitle: 'drumul tău zilnic prin Cuvântul lui Dumnezeu'
-    },
-    '/settings': {
-      title: 'Setări și conexiuni',
-      subtitle: 'cont, notificări și integrări'
-    },
-    '/admin': {
-      title: 'Administrare',
-      subtitle: 'utilizatori, conținut și control complet'
-    },
-    '/analytics': {
-      title: 'Statistici Facebook',
-      subtitle: 'reach, engagement, creștere și top postări'
-    },
+    '/dashboard': { title: 'Popas pentru Suflet', subtitle: 'verset de încurajare, rugăciune și pași zilnici cu Dumnezeu' },
+    '/devotional': { title: 'Devoțional zilnic', subtitle: 'meditație, rugăciune și aplicație practică' },
+    '/generate': { title: 'Creator Creștin', subtitle: 'imagini și texte inspiraționale pentru postări' },
+    '/bookmarks': { title: 'Semnele mele', subtitle: 'versete salvate, evidențiate și cu notițe personale' },
+    '/schedule': { title: 'Programări Facebook', subtitle: 'publicare organizată și consecventă' },
+    '/history': { title: 'Istoric Publicări', subtitle: 'urmărește postările create și distribuite' },
+    '/verses': { title: 'Biblia Cornilescu', subtitle: '31.102 versete pentru citire, căutare și meditație' },
+    '/reading': { title: 'Plan de citire', subtitle: 'drumul tău zilnic prin Cuvântul lui Dumnezeu' },
+    '/settings': { title: 'Setări și conexiuni', subtitle: 'cont, notificări și integrări' },
+    '/admin': { title: 'Administrare', subtitle: 'utilizatori, conținut și control complet' },
+    '/analytics': { title: 'Statistici Facebook', subtitle: 'reach, engagement, creștere și top postări' },
   };
 
   const current = pageTitles[location.pathname] || {
@@ -109,12 +104,7 @@ const Header = ({ theme, toggleTheme }) => {
 
   const getInitiale = (nume) => {
     if (!nume) return '?';
-    return nume
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return nume.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const fontSizeOptions = [
@@ -126,7 +116,13 @@ const Header = ({ theme, toggleTheme }) => {
   return (
     <div className="header">
       {/* STÂNGA */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.65rem',
+        minWidth: 0,
+        flex: 1
+      }}>
         <button
           className="menu-btn"
           onClick={toggleMenu}
@@ -135,8 +131,12 @@ const Header = ({ theme, toggleTheme }) => {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        <div style={{ minWidth: 0 }}>
-          <h1 className="header-title">
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h1 className="header-title" style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
             {current.title}
           </h1>
           <div className="header-subtext">
@@ -148,109 +148,99 @@ const Header = ({ theme, toggleTheme }) => {
       {/* DREAPTA */}
       <div className="header-actions">
 
-        {/* FONT SIZE */}
-        <div className="font-menu-wrapper" style={{ position: 'relative' }}>
-          <button
-            onClick={() => setFontMenuOpen(!fontMenuOpen)}
-            title="Mărime text"
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              padding: '0.45rem 0.75rem',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '0.85rem'
-            }}
-          >
-            <span>Aa</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▼</span>
-          </button>
+        {/* FONT SIZE - ascuns pe mobile mic */}
+        {!isMobile && (
+          <div className="font-menu-wrapper" style={{ position: 'relative' }}>
+            <button
+              onClick={() => setFontMenuOpen(!fontMenuOpen)}
+              title="Mărime text"
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.45rem 0.75rem',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.85rem'
+              }}
+            >
+              <span>Aa</span>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▼</span>
+            </button>
 
-          {fontMenuOpen && (
-            <div style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              padding: '0.5rem',
-              zIndex: 1000,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-              minWidth: 140
-            }}>
+            {fontMenuOpen && (
               <div style={{
-                fontSize: '0.7rem',
-                color: 'var(--text-muted)',
-                padding: '0.25rem 0.5rem',
-                marginBottom: '0.25rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.5rem',
+                zIndex: 1000,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                minWidth: 140
               }}>
-                Mărime text
+                <div style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--text-muted)',
+                  padding: '0.25rem 0.5rem',
+                  marginBottom: '0.25rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Mărime text
+                </div>
+                {fontSizeOptions.map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => { setFontSize(opt.key); setFontMenuOpen(false); }}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      background: fontSize === opt.key ? 'rgba(99,102,241,0.1)' : 'transparent',
+                      border: fontSize === opt.key ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      color: fontSize === opt.key ? '#6366f1' : 'var(--text-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                      marginBottom: '2px'
+                    }}
+                  >
+                    <span style={{ fontSize: opt.size, fontWeight: 600 }}>{opt.label}</span>
+                    <span style={{ fontSize: opt.size, opacity: 0.6 }}>Abc</span>
+                  </button>
+                ))}
               </div>
-
-              {fontSizeOptions.map(opt => (
-                <button
-                  key={opt.key}
-                  onClick={() => {
-                    setFontSize(opt.key);
-                    setFontMenuOpen(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    background: fontSize === opt.key
-                      ? 'rgba(99,102,241,0.1)'
-                      : 'transparent',
-                    border: fontSize === opt.key
-                      ? '1px solid rgba(99,102,241,0.3)'
-                      : '1px solid transparent',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    color: fontSize === opt.key
-                      ? '#6366f1'
-                      : 'var(--text-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.5rem',
-                    marginBottom: '2px'
-                  }}
-                >
-                  <span style={{ fontSize: opt.size, fontWeight: 600 }}>
-                    {opt.label}
-                  </span>
-                  <span style={{ fontSize: opt.size, opacity: 0.6 }}>
-                    Abc
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* THEME */}
         <button
           onClick={toggleTheme}
+          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
           style={{
             background: theme === 'dark'
               ? 'linear-gradient(135deg, rgba(244,208,63,0.15), rgba(244,208,63,0.05))'
               : 'linear-gradient(135deg, rgba(30,30,60,0.15), rgba(30,30,60,0.05))',
             border: `1px solid ${theme === 'dark' ? 'rgba(244,208,63,0.3)' : 'rgba(30,30,60,0.2)'}`,
             borderRadius: 'var(--radius-md)',
-            padding: '0.45rem 0.85rem',
+            padding: '0.45rem 0.65rem',
             cursor: 'pointer',
-            fontSize: '0.85rem',
+            fontSize: '1rem',
             color: 'var(--text-secondary)',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.3s ease'
+            gap: '4px',
+            transition: 'all 0.3s ease',
+            flexShrink: 0
           }}
         >
           {theme === 'dark' ? '☀️' : '🌙'}
@@ -259,7 +249,7 @@ const Header = ({ theme, toggleTheme }) => {
           </span>
         </button>
 
-        {/* CEAS */}
+        {/* CEAS - doar desktop */}
         <div className="header-time">
           🕐 {time.toLocaleTimeString('ro-RO')}
         </div>
@@ -275,14 +265,15 @@ const Header = ({ theme, toggleTheme }) => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
+                gap: '0.4rem',
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
-                padding: '0.4rem 0.75rem',
+                padding: '0.4rem 0.65rem',
                 cursor: 'pointer',
                 color: 'var(--text-primary)',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                flexShrink: 0
               }}
             >
               <div style={{
@@ -302,11 +293,7 @@ const Header = ({ theme, toggleTheme }) => {
                 overflow: 'hidden'
               }}>
                 {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                  <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   getInitiale(user?.nume)
                 )}
@@ -359,52 +346,51 @@ const Header = ({ theme, toggleTheme }) => {
                   borderBottom: '1px solid var(--border-color)',
                   marginBottom: '0.5rem'
                 }}>
-                  <div style={{
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)'
-                  }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {user?.nume}
                   </div>
-                  <div style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--text-muted)'
-                  }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     {user?.email}
                   </div>
                 </div>
 
                 {isAdmin && (
-                  <button
-                    onClick={() => {
-                      navigate('/admin');
-                      setUserMenuOpen(false);
-                    }}
-                    style={dropdownItemStyle}
-                  >
+                  <button onClick={() => { navigate('/admin'); setUserMenuOpen(false); }} style={dropdownItemStyle}>
                     🛡️ Admin Panel
                   </button>
                 )}
 
-                <button
-                  onClick={() => {
-                    navigate('/settings');
-                    setUserMenuOpen(false);
-                  }}
-                  style={dropdownItemStyle}
-                >
+                <button onClick={() => { navigate('/settings'); setUserMenuOpen(false); }} style={dropdownItemStyle}>
                   ⚙️ Setări cont
                 </button>
 
-                <div style={{
-                  borderTop: '1px solid var(--border-color)',
-                  margin: '0.5rem 0'
-                }} />
+                {/* Font size în dropdown pe mobile */}
+                {isMobile && (
+                  <>
+                    <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
+                    <div style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Mărime text
+                    </div>
+                    {fontSizeOptions.map(opt => (
+                      <button
+                        key={opt.key}
+                        onClick={() => { setFontSize(opt.key); setUserMenuOpen(false); }}
+                        style={{
+                          ...dropdownItemStyle,
+                          color: fontSize === opt.key ? '#6366f1' : 'var(--text-primary)',
+                          background: fontSize === opt.key ? 'rgba(99,102,241,0.08)' : 'transparent'
+                        }}
+                      >
+                        <span style={{ fontSize: opt.size }}>Aa</span>
+                        {opt.label}
+                        {fontSize === opt.key && <span style={{ marginLeft: 'auto' }}>✓</span>}
+                      </button>
+                    ))}
+                  </>
+                )}
 
-                <button
-                  onClick={handleLogout}
-                  style={{ ...dropdownItemStyle, color: '#ef4444' }}
-                >
+                <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
+                <button onClick={handleLogout} style={{ ...dropdownItemStyle, color: '#ef4444' }}>
                   🚪 Deconectare
                 </button>
               </div>
@@ -424,10 +410,11 @@ const Header = ({ theme, toggleTheme }) => {
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              flexShrink: 0
             }}
           >
-            🔑 Login
+            🔑 <span className="theme-label">Login</span>
           </button>
         )}
       </div>
@@ -448,7 +435,8 @@ const dropdownItemStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: '0.5rem',
-  transition: 'background 0.15s'
+  transition: 'background 0.15s',
+  WebkitTapHighlightColor: 'transparent'
 };
 
 export default Header;

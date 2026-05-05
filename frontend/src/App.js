@@ -1,3 +1,4 @@
+// frontend/src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import FacebookCallbackPage from './pages/FacebookCallbackPage';
@@ -5,16 +6,14 @@ import BottomNav from './components/BottomNav';
 import PWAInstallBanner from './components/PWAInstallBanner';
 import AnalyticsPage from './pages/AnalyticsPage';
 import BookmarksPage from './pages/BookmarksPage';
+import DevotionalPage from './pages/DevotionalPage';
 
-// Context
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, AdminRoute, PublicRoute } from './components/ProtectedRoute';
 
-// Layout
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
-// Pages - NORMALE (fără lazy)
 import DashboardPage from './pages/DashboardPage';
 import VersesPage from './pages/VersesPage';
 import ReadingPage from './pages/ReadingPage';
@@ -28,7 +27,6 @@ import RegisterPage from './pages/RegisterPage';
 
 import './styles/App.css';
 import './styles/Premium.css';
-import DevotionalPage from './pages/DevotionalPage';
 
 export const FontSizeContext = React.createContext({
   fontSize: 'medium',
@@ -84,6 +82,7 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            {/* Public routes fără layout */}
             <Route path="/login" element={
               <PublicRoute>
                 <div data-theme={theme}><LoginPage /></div>
@@ -97,12 +96,18 @@ function App() {
             <Route path="/auth/facebook/callback" element={
               <div data-theme={theme}><FacebookCallbackPage /></div>
             } />
+
+            {/* Routes cu AppLayout */}
             <Route path="/dashboard" element={
               <AppLayout theme={theme} toggleTheme={toggleTheme}>
                 <DashboardPage />
               </AppLayout>
             } />
-			<Route path="/devotional" element={<DevotionalPage />} />
+            <Route path="/devotional" element={
+              <AppLayout theme={theme} toggleTheme={toggleTheme}>
+                <DevotionalPage />
+              </AppLayout>
+            } />
             <Route path="/verses" element={
               <AppLayout theme={theme} toggleTheme={toggleTheme}>
                 <VersesPage />
@@ -120,15 +125,13 @@ function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
-			
-			<Route path="/bookmarks" element={
-  <ProtectedRoute>
-    <AppLayout theme={theme} toggleTheme={toggleTheme}>
-      <BookmarksPage />
-    </AppLayout>
-  </ProtectedRoute>
-} />
-			
+            <Route path="/bookmarks" element={
+              <ProtectedRoute>
+                <AppLayout theme={theme} toggleTheme={toggleTheme}>
+                  <BookmarksPage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/schedule" element={
               <AdminRoute>
                 <AppLayout theme={theme} toggleTheme={toggleTheme}>
@@ -143,13 +146,13 @@ function App() {
                 </AppLayout>
               </AdminRoute>
             } />
-			<Route path="/analytics" element={
-  <AdminRoute>
-    <AppLayout theme={theme} toggleTheme={toggleTheme}>
-      <AnalyticsPage />
-    </AppLayout>
-  </AdminRoute>
-} />
+            <Route path="/analytics" element={
+              <AdminRoute>
+                <AppLayout theme={theme} toggleTheme={toggleTheme}>
+                  <AnalyticsPage />
+                </AppLayout>
+              </AdminRoute>
+            } />
             <Route path="/settings" element={
               <AdminRoute>
                 <AppLayout theme={theme} toggleTheme={toggleTheme}>
@@ -164,6 +167,7 @@ function App() {
                 </AppLayout>
               </AdminRoute>
             } />
+
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

@@ -1,3 +1,4 @@
+// frontend/src/components/Sidebar.js
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,41 +9,41 @@ const Sidebar = ({ theme }) => {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
 
   const publicItems = [
-    { path: '/dashboard', icon: '📊', label: 'Dashboard' },
+    { path: '/dashboard', icon: '🏠', label: 'Dashboard' },
     { path: '/generate', icon: '✨', label: 'Generează' },
-    { path: '/verses', icon: '📖', label: 'Versete' },
+    { path: '/verses', icon: '📖', label: 'Biblia' },
+    { path: '/devotional', icon: '🙏', label: 'Devoțional zilnic' },
   ];
 
+  const userItems = [
+    { path: '/reading', icon: '📗', label: 'Citire Biblie' },
+    { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
+  ];
 
-const userItems = [
-  { path: '/reading', icon: '📗', label: 'Citire Biblie' },
-  { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
-  {
-  label: 'Devoțional zilnic',
-  path: '/devotional',
-  icon: '🙏'
-}
-];
   const adminItems = [
-  { path: '/schedule', icon: '📅', label: 'Programare' },
-  { path: '/history', icon: '📜', label: 'Istoric' },
-  { path: '/analytics', icon: '📊', label: 'Analytics' },
-  { path: '/settings', icon: '⚙️', label: 'Setări' },
-];
+    { path: '/schedule', icon: '📅', label: 'Programare' },
+    { path: '/history', icon: '📜', label: 'Istoric' },
+    { path: '/analytics', icon: '📊', label: 'Analytics' },
+    { path: '/settings', icon: '⚙️', label: 'Setări' },
+  ];
 
   const adminPanelItem = { path: '/admin', icon: '🛡️', label: 'Admin Panel' };
 
   const handleNavigate = (path) => {
     navigate(path);
-    // Închide sidebar pe mobile
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
     if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.style.display = 'none';
   };
 
   const NavItem = ({ item }) => (
     <div
       className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
       onClick={() => handleNavigate(item.path)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && handleNavigate(item.path)}
     >
       <span className="nav-icon">{item.icon}</span>
       <span className="nav-label">{item.label}</span>
@@ -67,7 +68,7 @@ const userItems = [
         <div className="sidebar-subtitle">Content Manager</div>
       </div>
 
-      {/* Navigare */}
+      {/* Nav */}
       <nav className="sidebar-nav">
         <NavSection title="General" items={publicItems} />
 
@@ -89,16 +90,10 @@ const userItems = [
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
               Înregistrează-te pentru acces complet
             </p>
-            <button
-              onClick={() => handleNavigate('/login')}
-              className="sidebar-auth-btn sidebar-auth-btn-primary"
-            >
+            <button onClick={() => handleNavigate('/login')} className="sidebar-auth-btn sidebar-auth-btn-primary">
               🔑 Login
             </button>
-            <button
-              onClick={() => handleNavigate('/register')}
-              className="sidebar-auth-btn sidebar-auth-btn-secondary"
-            >
+            <button onClick={() => handleNavigate('/register')} className="sidebar-auth-btn sidebar-auth-btn-secondary">
               ✅ Înregistrare
             </button>
           </div>
@@ -134,9 +129,8 @@ const userItems = [
             </button>
           </div>
         )}
-
         <div className="sidebar-version">
-          {theme === 'dark' ? '🌙' : '☀️'} v1.0 • Premium
+          {theme === 'dark' ? '🌙' : '☀️'} v2.0 • Premium
         </div>
       </div>
     </div>
