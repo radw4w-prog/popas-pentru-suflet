@@ -1,7 +1,4 @@
-
 // backend/server.js
-// ȘTERGE sau ÎNLOCUIEȘTE secțiunea de după schedulerService cu asta:
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -23,7 +20,7 @@ app.use(cors({
 
     if (!origin) return callback(null, true);
     if (origin.endsWith('.netlify.app')) return callback(null, true);
-    if (origin.endsWith('.vercel.app')) return callback(null, true); // ✅ Adaugă Vercel
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
     if (allowed.includes(origin)) return callback(null, true);
 
     callback(new Error('CORS: origin neautorizat: ' + origin));
@@ -74,20 +71,34 @@ app.get('/health', (req, res) => {
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    gemini: !!process.env.GEMINI_API_KEY
+    gemini: !!process.env.GEMINI_API_KEY,
+    mongodb: require('mongoose').connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
 // ═══════════════════════════════════════
-// TEST ROUTES (doar development sau debug)
+// TEST ROUTES
 // ═══════════════════════════════════════
 app.get('/test-ai', async (req, res) => {
   try {
     const geminiService = require('./services/geminiService');
+    
+    if (!geminiService.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        message: 'GEMINI_API_KEY lipsă!',
+        key_exists: !!process.env.GEMINI_API_KEY,
+        key_length: process.env.GEMINI_API_KEY?.length || 0
+      });
+    }
+    
     const result = await geminiService.testConnection();
     res.json(result);
   } catch(e) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ 
+      success: false, 
+      error: e.message 
+    });
   }
 });
 
@@ -100,9 +111,16 @@ app.get('/test-gemini-models', async (req, res) => {
     const models = r.data.models
       .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
       .map(m => m.name);
-    res.json({ models, key_exists: !!process.env.GEMINI_API_KEY });
+    res.json({ 
+      models,
+      key_exists: !!process.env.GEMINI_API_KEY,
+      key_preview: process.env.GEMINI_API_KEY?.substring(0, 15) + '...'
+    });
   } catch (e) {
-    res.json({ error: e.response?.data || e.message });
+    res.json({ 
+      error: e.response?.data || e.message,
+      key_exists: !!process.env.GEMINI_API_KEY
+    });
   }
 });
 
@@ -162,7 +180,8 @@ app.listen(PORT, () => {
   console.log('🕊️  Popas pentru Suflet API');
   console.log(`🕊️  http://localhost:${PORT}`);
   console.log(`🕊️  Mediu: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🕊️  Gemini: ${process.env.GEMINI_API_KEY ? '✅ Configurat' : '❌ Lipsă'}`);
+  console.log(`🕊️  Gemini: ${process.env.GEMINI_API_KEY ? '✅ Configurat' : '❌ Lipsă KEY'}`);
+  console.log(`🕊️  MongoDB: ${process.env.MONGODB_URI ? '✅ URI setat' : '❌ Lipsă URI'}`);
   console.log('🕊️  ════════════════════════════════');
   console.log('');
 });
