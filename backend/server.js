@@ -1,86 +1,13 @@
+
+// backend/server.js
+// ȘTERGE sau ÎNLOCUIEȘTE secțiunea de după schedulerService cu asta:
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
-
-// ═══════════════════════════════════════
-// MIDDLEWARE (primul!)
-// ═══════════════════════════════════════
-app.use(cors({
-  origin: function(origin, callback) {
-    const allowed = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://serene-khapse-8c6464.netlify.app',
-      'https://sweet-axolotl-c510b8.netlify.app',
-    ];
-
-    // Permite requesturi fără origin (Postman, mobile apps)
-    if (!origin) return callback(null, true);
-
-    // Permite orice subdomain netlify
-    if (origin.endsWith('.netlify.app')) return callback(null, true);
-
-    if (allowed.includes(origin)) return callback(null, true);
-
-    callback(new Error('CORS: origin neautorizat: ' + origin));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// Static files (uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// ═══════════════════════════════════════
-// DATABASE
-// ═══════════════════════════════════════
-const connectDB = require('./config/database');
-connectDB();
-
-// ═══════════════════════════════════════
-// ROUTES - Existente
-// ═══════════════════════════════════════
-const postsRouter = require('./routes/posts');
-const versesRouter = require('./routes/verses');
-const generateRouter = require('./routes/generate');
-const socialRouter = require('./routes/social');
-const readingRouter = require('./routes/reading');
-const bookmarkRoutes = require('./routes/bookmarks');
-app.use('/api/bookmarks', bookmarkRoutes);
-
-app.use('/api/posts', postsRouter);
-app.use('/api/verses', versesRouter);
-app.use('/api/generate', generateRouter);
-app.use('/api/social', socialRouter);
-app.use('/api/reading', readingRouter);
-
-// ═══════════════════════════════════════
-// ROUTES - Noi (Auth + Admin + Notifications)
-// ═══════════════════════════════════════
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const notificationRoutes = require('./routes/notifications');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/notifications', notificationRoutes);
-
-// ═══════════════════════════════════════
-// SCHEDULER
-// ═══════════════════════════════════════
-const schedulerService = require('./services/schedulerService');
-schedulerService.init();
-
-// backend/server.js
-// ȘTERGE sau ÎNLOCUIEȘTE secțiunea de după schedulerService cu asta:
-
-
 
 // ═══════════════════════════════════════
 // MIDDLEWARE
