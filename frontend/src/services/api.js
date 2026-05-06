@@ -11,35 +11,35 @@ const api = axios.create({
   }
 });
 
-// ✅ INTERCEPTOR REQUEST - atașează token la FIECARE cerere
+// ✅ REQUEST interceptor - PRIMUL, înainte de orice altceva
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token && token !== 'null' && token !== 'undefined') {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Interceptor response - gestionează erori
+// RESPONSE interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('Eroare API:', error.response?.data || error.message);
-
     if (error.response?.status === 401) {
       const url = error.config?.url || '';
-      const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register');
-      if (!isAuthRoute) {
-        localStorage.removeItem('token');
+      if (!url.includes('/auth/')) {
+        // Nu șterge token-ul automat - lasă userul să decidă
       }
     }
-
     return Promise.reject(error);
   }
 );
+
+// Test că interceptorul funcționează
+console.log('✅ API configured with baseURL:', API_URL);
 
 export default api;
 export { API_URL };
@@ -55,7 +55,6 @@ export const versesAPI = {
   delete: (id) => api.delete(`/api/verses/${id}`)
 };
 
-// === API Generare ===
 export const generateAPI = {
   generatePost: (data) => api.post('/api/generate/post', data),
   generateText: (data) => api.post('/api/generate/text', data),
@@ -65,7 +64,6 @@ export const generateAPI = {
   getStyles: () => api.get('/api/generate/styles')
 };
 
-// === API Postări ===
 export const postsAPI = {
   getAll: (params) => api.get('/api/posts', { params }),
   getStats: () => api.get('/api/posts/stats'),
@@ -76,7 +74,6 @@ export const postsAPI = {
   publish: (id) => api.put(`/api/posts/${id}/publish`)
 };
 
-// === API Programări ===
 export const scheduleAPI = {
   getAll: () => api.get('/api/schedule'),
   getActive: () => api.get('/api/schedule/active'),
@@ -86,14 +83,12 @@ export const scheduleAPI = {
   delete: (id) => api.delete(`/api/schedule/${id}`)
 };
 
-// === API Social ===
 export const socialAPI = {
   getStatus: () => api.get('/api/social/status'),
   getFacebookInsights: () => api.get('/api/social/facebook/insights'),
   testPost: (platform, data) => api.post(`/api/social/test/${platform}`, data)
 };
 
-// === API Setări ===
 export const settingsAPI = {
   getAll: () => api.get('/api/settings'),
   get: (key) => api.get(`/api/settings/${key}`),
@@ -101,7 +96,6 @@ export const settingsAPI = {
   init: () => api.post('/api/settings/init')
 };
 
-// === API Health ===
 export const healthAPI = {
   check: () => api.get('/health')
 };

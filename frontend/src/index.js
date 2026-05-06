@@ -5,7 +5,7 @@ import './styles/App.css';
 import App from './App';
 
 // ✅ CACHE BUSTER - schimbă versiunea la fiecare deploy important
-const CACHE_VERSION = '2026-05-05-v3';
+const CACHE_VERSION = '2026-05-05-v4';
 
 async function clearOldCache() {
   try {

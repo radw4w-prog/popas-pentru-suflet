@@ -2,6 +2,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || '';
+
+// Helper cu token garantat
+const authCall = {
+  get: (url) => axios.get(`${API_URL}${url}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  }),
+  post: (url, data = {}) => axios.post(`${API_URL}${url}`, data, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  }),
+  patch: (url, data = {}) => axios.patch(`${API_URL}${url}`, data, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  }),
+  delete: (url) => axios.delete(`${API_URL}${url}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  })
+};
 
 const CATEGORII = [
   { id: 'toate', label: 'Toate', icon: '🙏' },
