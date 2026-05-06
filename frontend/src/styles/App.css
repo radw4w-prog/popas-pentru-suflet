@@ -8265,3 +8265,65 @@ img, video, iframe, embed, object {
     font-size: 1.1rem !important;
   }
 }
+/* ═══════════════════════════════════════
+   SIDEBAR TEXT TUNING
+═══════════════════════════════════════ */
+
+.sidebar .nav-item {
+  color: var(--text-secondary) !important;
+}
+
+.sidebar .nav-label {
+  color: var(--text-secondary) !important;
+  opacity: 0.95;
+}
+
+.sidebar .nav-icon {
+  opacity: 0.95;
+}
+
+.sidebar .nav-item:hover {
+  color: var(--text-primary) !important;
+}
+
+.sidebar .nav-item:hover .nav-label {
+  color: var(--text-primary) !important;
+}
+
+.sidebar .nav-item.active {
+  color: var(--gold-primary) !important;
+}
+
+.sidebar .nav-item.active .nav-label,
+.sidebar .nav-item.active .nav-icon {
+  color: var(--gold-primary) !important;
+  opacity: 1;
+}
+
+.sidebar .nav-section-title {
+  color: var(--text-muted) !important;
+  opacity: 0.9;
+}
+
+.sidebar-user-name {
+  color: var(--text-primary) !important;
+}
+
+.sidebar-user-role,
+.sidebar-version,
+.sidebar-subtitle {
+  color: var(--text-muted) !important;
+}
+
+/* Light theme sidebar text */
+[data-theme="light"] .sidebar .nav-label {
+  color: #4a4a5a !important;
+}
+
+[data-theme="light"] .sidebar .nav-item:hover .nav-label {
+  color: #1a1a2e !important;
+}
+
+[data-theme="light"] .sidebar .nav-item.active .nav-label {
+  color: var(--gold-primary) !important;
+}
