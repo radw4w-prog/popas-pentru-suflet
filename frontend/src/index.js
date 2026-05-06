@@ -4,40 +4,35 @@ import ReactDOM from 'react-dom/client';
 import './styles/App.css';
 import App from './App';
 
-// ✅ CACHE BUSTER - schimbă versiunea la fiecare deploy important
-const CACHE_VERSION = '2026-05-05-v4';
-
-async function clearOldCache() {
+// ✅ TEMPORAR: Dezactivează complet service worker-ul
+// ca să nu mai ai probleme cu cache-ul în timpul dezvoltării UI-ului
+async function disableServiceWorkers() {
   try {
-    const saved = localStorage.getItem('app_cache_version');
-    if (saved === CACHE_VERSION) return; // deja curățat
-
-    console.log('🧹 Cache vechi detectat, curăț...');
-
-    // Dezînregistrează toate service worker-ele
     if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-      if (regs.length) console.log(`🗑️ ${regs.length} SW dezînregistrat(e)`);
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+      }
+      if (registrations.length > 0) {
+        console.log('🗑️ Service Worker dezactivat');
+      }
     }
 
-    // Șterge toate cache-urile
     if ('caches' in window) {
       const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-      if (keys.length) console.log(`🗑️ ${keys.length} cache(s) șterse`);
+      await Promise.all(keys.map(key => caches.delete(key)));
+      if (keys.length > 0) {
+        console.log('🗑️ Cache Storage șters');
+      }
     }
-
-    localStorage.setItem('app_cache_version', CACHE_VERSION);
-    console.log('✅ Cache curățat, versiune nouă:', CACHE_VERSION);
-
   } catch (err) {
-    console.warn('⚠️ Cache clear error:', err);
+    console.warn('⚠️ Nu am putut dezactiva SW/cache:', err);
   }
 }
 
 async function boot() {
-  await clearOldCache();
+  // Dezactivează SW și cache la fiecare încărcare
+  await disableServiceWorkers();
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
   root.render(
@@ -45,30 +40,6 @@ async function boot() {
       <App />
     </React.StrictMode>
   );
-
-  // Service Worker
-  if ('serviceWorker' in navigator) {
-    if (process.env.NODE_ENV === 'production') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/service-worker.js')
-          .then(reg => {
-            console.log('✅ SW înregistrat');
-            // Verifică imediat update
-            reg.update();
-          })
-          .catch(err => console.log('❌ SW eroare:', err));
-      });
-    } else {
-      // Local: șterge orice SW existent
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => {
-          r.unregister();
-          console.log('🗑️ SW dezînregistrat (development)');
-        });
-      });
-    }
-  }
 }
 
 boot();
