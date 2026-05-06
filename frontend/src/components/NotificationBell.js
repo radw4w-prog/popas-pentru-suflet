@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import ReactDOM from 'react-dom';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -8,10 +9,10 @@ const NotificationBell = () => {
   const [totalNecitite, setTotalNecitite] = useState(0);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [dropdownStyle, setDropdownStyle] = useState({});
+  const [panelStyle, setPanelStyle] = useState({});
 
   const buttonRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const panelRef = useRef(null);
 
   const getHeaders = () => {
     const token = localStorage.getItem('token');
@@ -29,7 +30,7 @@ const NotificationBell = () => {
         setTotalNecitite(res.data.totalNecitite || 0);
       }
     } catch (err) {
-      // silent
+      // silent fail
     }
   }, []);
 
@@ -39,62 +40,69 @@ const NotificationBell = () => {
     return () => clearInterval(interval);
   }, [loadNotificari]);
 
-  const updateDropdownPosition = useCallback(() => {
-  if (!buttonRef.current) return;
+  const computePanelPosition = useCallback(() => {
+    if (!buttonRef.current) return;
 
-  const rect = buttonRef.current.getBoundingClientRect();
-  const isMobile = window.innerWidth <= 768;
-  const dropdownWidth = Math.min(
-    isMobile ? window.innerWidth - 24 : 340,
-    window.innerWidth - 24
-  );
+    const rect = buttonRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const mobile = vw <= 768;
 
-  let top = rect.bottom + 8;
+    const panelWidth = mobile ? Math.min(vw - 24, 360) : 340;
+    let top = rect.bottom + 10;
+    let left = mobile ? 12 : rect.right - panelWidth;
 
-  setDropdownStyle({
-    position: 'fixed',
-    top: `${Math.round(top)}px`,
-    right: isMobile ? '12px' : '16px',
-    left: isMobile ? '12px' : 'auto',
-    width: isMobile ? 'auto' : `${Math.round(dropdownWidth)}px`,
-    maxWidth: isMobile ? 'none' : '340px',
-    zIndex: 99999,
-    transform: 'none',
-    margin: 0
-  });
-}, []);
+    if (left < 12) left = 12;
+    if (left + panelWidth > vw - 12) {
+      left = vw - panelWidth - 12;
+    }
+
+    let maxHeight = vh - top - 12;
+    if (maxHeight < 220) {
+      top = Math.max(12, vh - 420);
+      maxHeight = vh - top - 12;
+    }
+
+    setPanelStyle({
+      position: 'fixed',
+      top: `${Math.round(top)}px`,
+      left: `${Math.round(left)}px`,
+      width: `${Math.round(panelWidth)}px`,
+      maxWidth: 'calc(100vw - 24px)',
+      maxHeight: `${Math.round(maxHeight)}px`,
+      zIndex: 100000,
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-color)',
+      borderRadius: '18px',
+      boxShadow: '0 18px 48px rgba(0,0,0,0.38)',
+      overflow: 'hidden'
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    computePanelPosition();
+  }, [open, computePanelPosition, totalNecitite, notificari.length]);
 
   useEffect(() => {
-  if (!open) return;
+    if (!open) return;
 
-  updateDropdownPosition();
-
-  const handleResize = () => updateDropdownPosition();
-  window.addEventListener('resize', handleResize);
-
-  return () => {
-    window.removeEventListener('resize', handleResize);
-  };
-}, [open, updateDropdownPosition]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      const insideButton = buttonRef.current?.contains(e.target);
-      const insideDropdown = dropdownRef.current?.contains(e.target);
-
-      if (!insideButton && !insideDropdown) {
-        setOpen(false);
-      }
+    const handleResize = () => computePanelPosition();
+    const handleScroll = () => computePanelPosition();
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, true);
+    document.addEventListener('keydown', handleKey);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll, true);
+      document.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  }, [open, computePanelPosition]);
 
   const handleOpen = async () => {
     const next = !open;
@@ -103,7 +111,7 @@ const NotificationBell = () => {
     if (next) {
       await loadNotificari();
       requestAnimationFrame(() => {
-        updateDropdownPosition();
+        computePanelPosition();
       });
     }
   };
@@ -183,102 +191,275 @@ const NotificationBell = () => {
     return colors[tip] || '#6366f1';
   };
 
+  const panel = open ? ReactDOM.createPortal(
+    <>
+      {/* Backdrop transparent pentru click outside */}
+      <div
+        onClick={() => setOpen(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 99998,
+          background: 'transparent'
+        }}
+      />
+
+      <div
+        ref={panelRef}
+        style={panelStyle}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '0.9rem 1rem',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '0.75rem',
+            background: 'var(--bg-card)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 2
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              fontSize: '0.92rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              minWidth: 0
+            }}
+          >
+            <span>🔔 Notificări</span>
+            {totalNecitite > 0 && (
+              <span
+                style={{
+                  background: 'rgba(99,102,241,0.15)',
+                  color: '#6366f1',
+                  fontSize: '0.72rem',
+                  padding: '2px 7px',
+                  borderRadius: '999px',
+                  fontWeight: 700,
+                  flexShrink: 0
+                }}
+              >
+                {totalNecitite} noi
+              </span>
+            )}
+          </div>
+
+          {totalNecitite > 0 && (
+            <button
+              type="button"
+              onClick={handleMarkToateCitite}
+              disabled={loading}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#6366f1',
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                flexShrink: 0
+              }}
+            >
+              {loading ? '...' : '✓ Toate'}
+            </button>
+          )}
+        </div>
+
+        {/* Listă */}
+        <div
+          style={{
+            maxHeight: 'inherit',
+            overflowY: 'auto'
+          }}
+        >
+          {notificari.length === 0 ? (
+            <div
+              style={{
+                padding: '2rem 1rem',
+                textAlign: 'center',
+                color: 'var(--text-muted)',
+                fontSize: '0.88rem'
+              }}
+            >
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
+              Nu ai notificări
+            </div>
+          ) : (
+            notificari.map((notif) => (
+              <div
+                key={notif._id}
+                onClick={() => !notif.citit && handleMarkCitit(notif._id)}
+                style={{
+                  padding: '0.9rem 1rem',
+                  borderBottom: '1px solid var(--border-color)',
+                  background: notif.citit ? 'transparent' : 'rgba(99,102,241,0.04)',
+                  cursor: notif.citit ? 'default' : 'pointer',
+                  display: 'flex',
+                  gap: '0.75rem',
+                  alignItems: 'flex-start',
+                  transition: 'background 0.15s'
+                }}
+              >
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: `${getTipColor(notif.tip)}18`,
+                    border: `1px solid ${getTipColor(notif.tip)}30`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.1rem',
+                    flexShrink: 0
+                  }}
+                >
+                  {notif.icon || '🔔'}
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontWeight: notif.citit ? 500 : 700,
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      marginBottom: '0.2rem',
+                      lineHeight: 1.35
+                    }}
+                  >
+                    {notif.titlu}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: '0.78rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.45,
+                      wordBreak: 'break-word'
+                    }}
+                  >
+                    {notif.mesaj}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--text-muted)',
+                      marginTop: '0.35rem'
+                    }}
+                  >
+                    {formatTime(notif.createdAt)}
+                    {!notif.citit && (
+                      <span
+                        style={{
+                          marginLeft: '0.5rem',
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: '#6366f1',
+                          display: 'inline-block',
+                          verticalAlign: 'middle'
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Delete */}
+                <button
+                  type="button"
+                  onClick={(e) => handleDelete(notif._id, e)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    padding: '2px',
+                    flexShrink: 0,
+                    opacity: 0.75
+                  }}
+                  title="Șterge"
+                >
+                  ✕
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </>,
+    document.body
+  ) : null;
+
   return (
-    <div className="notifbell-root">
+    <>
       <button
         ref={buttonRef}
         onClick={handleOpen}
-        className={`notifbell-btn ${open ? 'open' : ''}`}
-        title="Notificări"
         type="button"
+        title="Notificări"
+        style={{
+          position: 'relative',
+          background: open
+            ? 'rgba(99,102,241,0.1)'
+            : 'var(--bg-card)',
+          border: `1px solid ${open
+            ? 'rgba(99,102,241,0.3)'
+            : 'var(--border-color)'}`,
+          borderRadius: 'var(--radius-md)',
+          padding: '0.45rem 0.65rem',
+          cursor: 'pointer',
+          fontSize: '1.1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s',
+          minWidth: 38,
+          minHeight: 38,
+          flexShrink: 0,
+          WebkitTapHighlightColor: 'transparent'
+        }}
       >
         🔔
+
         {totalNecitite > 0 && (
-          <span className="notifbell-badge">
+          <span
+            style={{
+              position: 'absolute',
+              top: -6,
+              right: -6,
+              background: '#ef4444',
+              color: 'white',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              borderRadius: '999px',
+              minWidth: 18,
+              height: 18,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 4px',
+              border: '2px solid var(--bg-primary)'
+            }}
+          >
             {totalNecitite > 99 ? '99+' : totalNecitite}
           </span>
         )}
       </button>
 
-      {open && (
-        <div
-          ref={dropdownRef}
-          className="notifbell-dropdown"
-          style={dropdownStyle}
-        >
-          <div className="notifbell-header">
-            <div className="notifbell-title">
-              🔔 Notificări
-              {totalNecitite > 0 && (
-                <span className="notifbell-count">{totalNecitite} noi</span>
-              )}
-            </div>
-
-            {totalNecitite > 0 && (
-              <button
-                onClick={handleMarkToateCitite}
-                disabled={loading}
-                className="notifbell-markall"
-                type="button"
-              >
-                {loading ? '...' : '✓ Toate citite'}
-              </button>
-            )}
-          </div>
-
-          <div className="notifbell-list">
-            {notificari.length === 0 ? (
-              <div className="notifbell-empty">
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
-                Nu ai notificări
-              </div>
-            ) : (
-              notificari.map(notif => (
-                <div
-                  key={notif._id}
-                  onClick={() => !notif.citit && handleMarkCitit(notif._id)}
-                  className={`notifbell-item ${notif.citit ? '' : 'unread'}`}
-                >
-                  <div
-                    className="notifbell-item-icon"
-                    style={{
-                      background: `${getTipColor(notif.tip)}18`,
-                      border: `1px solid ${getTipColor(notif.tip)}30`
-                    }}
-                  >
-                    {notif.icon || '🔔'}
-                  </div>
-
-                  <div className="notifbell-item-content">
-                    <div className={`notifbell-item-title ${notif.citit ? '' : 'strong'}`}>
-                      {notif.titlu}
-                    </div>
-
-                    <div className="notifbell-item-text">
-                      {notif.mesaj}
-                    </div>
-
-                    <div className="notifbell-item-time">
-                      {formatTime(notif.createdAt)}
-                      {!notif.citit && <span className="notifbell-unread-dot" />}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={(e) => handleDelete(notif._id, e)}
-                    className="notifbell-delete"
-                    title="Șterge"
-                    type="button"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+      {panel}
+    </>
   );
 };
 
