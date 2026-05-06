@@ -1,200 +1,263 @@
-// E:\popas-pentru-suflet\backend\services\geminiService.js
+// backend/services/geminiService.js
 const axios = require('axios');
 
-// ✅ MODELE ORDONATE: cele care funcționează PRIMELE
-const MODELS = [
-  'gemma-3-12b-it',    // ✅ FUNCȚIONEAZĂ - primul!
-  'gemma-3-4b-it',     // ✅ FUNCȚIONEAZĂ - backup
-  'gemini-2.0-flash-lite',  // poate reveni după reset quota
-  'gemini-2.0-flash-001',   // poate reveni după reset quota
+// ═══════════════════════════════════════
+// CONFIGURARE MODELE
+// ═══════════════════════════════════════
+
+const GROQ_MODELS = [
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'gemma2-9b-it',
+  'mixtral-8x7b-32768'
 ];
 
-class GeminiService {
+const GEMINI_MODELS = [
+  'gemma-3-12b-it',
+  'gemma-3-27b-it',
+  'gemma-3-4b-it'
+];
+
+class AIService {
   constructor() {
     this.http = axios.create({ timeout: 60000 });
     this.lastRequestTime = 0;
-    this.MIN_INTERVAL = 3000; // 3 secunde între request-uri
-    
-    // Cache modele care au quota epuizată (resetat la restart)
-    this.exhaustedModels = new Map(); // model -> timestamp când s-a epuizat
-    this.EXHAUSTED_COOLDOWN = 60 * 60 * 1000; // 1 oră cooldown
+    this.MIN_INTERVAL = 1000; // 1 secundă între requests
+    this.exhaustedModels = new Map();
+    this.EXHAUSTED_COOLDOWN = 5 * 60 * 1000; // 5 minute
   }
 
-  get apiKey() {
+  get geminiKey() {
     return process.env.GEMINI_API_KEY?.trim();
   }
 
-  isConfigured() {
-    return !!(this.apiKey && this.apiKey.length > 10);
+  get groqKey() {
+    return process.env.GROQ_API_KEY?.trim();
   }
 
-  // Verifică dacă modelul e în cooldown
-  isModelExhausted(model) {
-    if (!this.exhaustedModels.has(model)) return false;
-    const exhaustedAt = this.exhaustedModels.get(model);
-    const elapsed = Date.now() - exhaustedAt;
-    if (elapsed > this.EXHAUSTED_COOLDOWN) {
-      this.exhaustedModels.delete(model); // Reset după cooldown
+  isConfigured() {
+    return !!(this.geminiKey || this.groqKey);
+  }
+
+  isModelExhausted(modelId) {
+    if (!this.exhaustedModels.has(modelId)) return false;
+    const t = this.exhaustedModels.get(modelId);
+    if (Date.now() - t > this.EXHAUSTED_COOLDOWN) {
+      this.exhaustedModels.delete(modelId);
       return false;
     }
     return true;
   }
 
-  markModelExhausted(model) {
-    this.exhaustedModels.set(model, Date.now());
-    console.log(`🚫 Model ${model} marcat ca epuizat pentru 1 oră`);
+  markExhausted(modelId) {
+    this.exhaustedModels.set(modelId, Date.now());
+    console.log(`🚫 Model ${modelId} în cooldown 5 min`);
   }
 
-  async waitForRateLimit() {
-    const now = Date.now();
-    const elapsed = now - this.lastRequestTime;
+  resetExhaustedModels() {
+    this.exhaustedModels.clear();
+    console.log('♻️ Toate modelele resetate');
+  }
+
+  getModelsStatus() {
+    const allModels = [
+      ...GROQ_MODELS.map(m => ({ model: m, provider: 'groq' })),
+      ...GEMINI_MODELS.map(m => ({ model: m, provider: 'gemini' }))
+    ];
+    return allModels.map(({ model, provider }) => ({
+      model,
+      provider,
+      status: this.isModelExhausted(model) ? 'cooldown' : 'available'
+    }));
+  }
+
+  async waitRateLimit() {
+    const elapsed = Date.now() - this.lastRequestTime;
     if (elapsed < this.MIN_INTERVAL) {
-      const wait = this.MIN_INTERVAL - elapsed;
-      console.log(`⏳ Rate limit wait: ${wait}ms`);
-      await new Promise(r => setTimeout(r, wait));
+      await new Promise(r => setTimeout(r, this.MIN_INTERVAL - elapsed));
     }
     this.lastRequestTime = Date.now();
   }
 
-  async generate(prompt, maxTokens = 2000) {
-    if (!this.isConfigured()) {
-      throw new Error('Gemini API key lipsă. Adaugă GEMINI_API_KEY în .env');
-    }
+  // ═══════════════════════════════════════
+  // GROQ - Cel mai rapid
+  // ═══════════════════════════════════════
+  async tryGroq(prompt, maxTokens) {
+    if (!this.groqKey) return null;
 
-    await this.waitForRateLimit();
+    const available = GROQ_MODELS.filter(m => !this.isModelExhausted(m));
+    if (!available.length) return null;
 
-    // Filtrează modelele disponibile (exclude cele epuizate)
-    const availableModels = MODELS.filter(m => !this.isModelExhausted(m));
-    
-    if (availableModels.length === 0) {
-      throw new Error('Toate modelele AI sunt temporar indisponibile. Încearcă în 1 oră.');
-    }
-
-    let lastError = null;
-
-    for (const model of availableModels) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-      console.log(`🤖 Încerc modelul: ${model}`);
-
+    for (const model of available) {
       try {
+        console.log(`⚡ Groq: ${model}`);
+
         const r = await this.http.post(
-          `${url}?key=${this.apiKey}`,
+          'https://api.groq.com/openai/v1/chat/completions',
           {
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              temperature: 0.85,
-              maxOutputTokens: maxTokens,
-              topP: 0.92,
-              topK: 40
-            }
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: maxTokens,
+            temperature: 0.85
           },
-          { timeout: 60000 }
+          {
+            headers: {
+              'Authorization': `Bearer ${this.groqKey}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 30000
+          }
         );
 
-        const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) {
-          console.log(`⚠️ ${model}: răspuns gol, încerc următorul`);
-          continue;
-        }
+        const text = r.data?.choices?.[0]?.message?.content;
+        if (!text) continue;
 
-        console.log(`✅ Succes cu modelul: ${model}`);
-        return text.trim();
+        console.log(`✅ Groq succes: ${model}`);
+        return { text: text.trim(), model, provider: 'groq' };
 
       } catch (error) {
         const status = error.response?.status;
         const msg = error.response?.data?.error?.message || error.message;
 
-        if (status === 429) {
-          // Quota epuizată - marchează modelul și continuă
-          console.log(`🚫 Quota epuizată pe ${model}`);
-          this.markModelExhausted(model);
-          lastError = new Error(`Quota epuizată pe ${model}`);
+        if (status === 429 || status === 413) {
+          this.markExhausted(model);
+          await new Promise(r => setTimeout(r, 1000));
           continue;
         }
-
-        if (status === 404) {
-          // Model inexistent - elimină permanent din sesiune
-          console.log(`❌ Model inexistent: ${model}`);
-          this.markModelExhausted(model);
-          lastError = new Error(`Model inexistent: ${model}`);
-          continue;
+        if (status === 401) {
+          console.error('❌ Groq API key invalid!');
+          return null;
         }
 
-        if (status === 400) {
-          // Bad request - log detalii pentru debug
-          console.log(`❌ Bad request pe ${model}: ${msg}`);
-          lastError = new Error(`Bad request: ${msg}`);
-          continue;
-        }
-
-        if (status === 401 || status === 403) {
-          throw new Error('API Key Gemini invalid sau expirat!');
-        }
-
-        console.log(`⚠️ Eroare pe ${model} [${status}]: ${msg}`);
-        lastError = error;
+        console.log(`⚠️ Groq ${model}: [${status}] ${msg}`);
         continue;
       }
     }
 
-    // Toate modelele au eșuat
-    const exhaustedCount = MODELS.length - availableModels.length;
-    if (exhaustedCount > 0) {
-      throw new Error(`Quota AI epuizată temporar (${exhaustedCount} modele indisponibile). Încearcă în câteva minute.`);
-    }
-    
-    throw lastError || new Error('Toate modelele AI au eșuat. Încearcă din nou.');
+    return null;
   }
 
+  // ═══════════════════════════════════════
+  // GEMINI - Fallback
+  // ═══════════════════════════════════════
+  async tryGemini(prompt, maxTokens) {
+    if (!this.geminiKey) return null;
+
+    const available = GEMINI_MODELS.filter(m => !this.isModelExhausted(m));
+    if (!available.length) return null;
+
+    for (const model of available) {
+      try {
+        console.log(`🤖 Gemini: ${model}`);
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiKey}`;
+
+        const r = await this.http.post(url, {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.85,
+            maxOutputTokens: maxTokens,
+            topP: 0.92,
+            topK: 40
+          }
+        }, { timeout: 60000 });
+
+        const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) continue;
+
+        console.log(`✅ Gemini succes: ${model}`);
+        return { text: text.trim(), model, provider: 'gemini' };
+
+      } catch (error) {
+        const status = error.response?.status;
+
+        if (status === 429) {
+          this.markExhausted(model);
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        if (status === 404) {
+          this.markExhausted(model);
+          continue;
+        }
+
+        console.log(`⚠️ Gemini ${model}: [${status}]`);
+        continue;
+      }
+    }
+
+    return null;
+  }
+
+  // ═══════════════════════════════════════
+  // GENERATE - Groq first, Gemini fallback
+  // ═══════════════════════════════════════
+  async generate(prompt, maxTokens = 2000) {
+    if (!this.isConfigured()) {
+      throw new Error('Nicio cheie AI configurată (GROQ_API_KEY sau GEMINI_API_KEY)');
+    }
+
+    await this.waitRateLimit();
+
+    // 1. Încearcă Groq (mai rapid)
+    if (this.groqKey) {
+      const groqResult = await this.tryGroq(prompt, maxTokens);
+      if (groqResult) return groqResult.text;
+    }
+
+    // 2. Fallback Gemini
+    if (this.geminiKey) {
+      const geminiResult = await this.tryGemini(prompt, maxTokens);
+      if (geminiResult) return geminiResult.text;
+    }
+
+    throw new Error('Toate modelele AI sunt temporar indisponibile. Încearcă în câteva minute.');
+  }
+
+  // ═══════════════════════════════════════
+  // GENERARE CONȚINUT POST
+  // ═══════════════════════════════════════
   async generatePostContent(verset, referinta, tema, platform) {
     const platformGuide = {
       facebook: {
         name: 'Facebook',
         maxLen: 500,
-        style: 'storytelling, personal, cald, cu o întrebare la final care invită la comentarii',
-        hashtagCount: '8-12',
-        cta: 'exemple: Lasă un ❤️ dacă te-a atins, Distribuie cuiva drag, Ce înseamnă pentru tine?'
+        style: 'storytelling, personal, cald, cu o întrebare la final',
+        cta: 'Lasă un ❤️ dacă te-a atins, Distribuie cuiva drag'
       },
       instagram: {
         name: 'Instagram',
         maxLen: 350,
-        style: 'emoțional, scurt, vizual, inspirațional, cu emoji-uri, primele 2 rânduri captează atenția',
-        hashtagCount: '20-25',
-        cta: 'exemple: Salvează pentru momente grele, Trimite unui prieten care are nevoie'
+        style: 'emoțional, scurt, vizual, inspirațional, cu emoji-uri',
+        cta: 'Salvează pentru momente grele'
       },
       tiktok: {
         name: 'TikTok',
         maxLen: 180,
-        style: 'hook puternic în prima propoziție, scurt, direct, pentru audiență tânără',
-        hashtagCount: '5-8',
-        cta: 'exemple: Follow pentru verset zilnic, Like dacă crezi în puterea rugăciunii'
+        style: 'hook puternic, scurt, direct, pentru tineri',
+        cta: 'Follow pentru verset zilnic'
       }
     };
 
     const p = platformGuide[platform] || platformGuide.facebook;
 
-    // ✅ Prompt optimizat pentru gemma (mai simplu = mai fiabil)
-    const prompt = `Ești un creator de conținut creștin expert pentru ${p.name} în România.
+    const prompt = `Ești un creator de conținut creștin pentru ${p.name} în România.
 
 VERSET: "${verset}"
 REFERINȚĂ: ${referinta}
 TEMA: ${tema}
 
-Creează o postare creștină autentică și caldă pentru audiența română.
-
-Returnează DOAR un JSON valid cu această structură:
+Returnează DOAR JSON valid:
 {
   "hook": "Prima propoziție captivantă, max 15 cuvinte, cu emoji",
   "descriere": "Textul postării, stil ${p.style}, max ${p.maxLen} caractere, include versetul natural",
-  "cta": "Call to action specific, o propoziție",
+  "cta": "Call to action, o propoziție",
   "hashtags_principale": ["credinta", "rugaciune", "dumnezeu", "isus", "biblie"],
   "hashtags_nisa": ["versetulzilei", "crestin", "evanghelie", "hristos", "mantuire", "har", "iubire", "pace"],
   "hashtags_brand": ["PopasPentruSuflet", "VersetulZilei", "BibliaCornilescu"],
-  "story_text": "Max 6 cuvinte impactante pentru Story",
-  "varianta_calda": "Versiune intimă și personală, max ${p.maxLen} caractere",
-  "varianta_puternica": "Versiune inspirațională puternică, max ${p.maxLen} caractere",
+  "story_text": "Max 6 cuvinte impactante",
+  "varianta_calda": "Versiune intimă, max ${p.maxLen} caractere",
+  "varianta_puternica": "Versiune inspirațională, max ${p.maxLen} caractere",
   "ora_recomandata_dimineata": "07:00",
   "ora_recomandata_seara": "19:00",
   "motiv_ore": "Ore cu engagement maxim pentru creștinii din România",
@@ -202,44 +265,38 @@ Returnează DOAR un JSON valid cu această structură:
   "sfat_imagine": "Sugestie scurtă pentru imagine, max 15 cuvinte"
 }
 
-REGULI: Doar română, doar JSON valid, fără text înainte/după, hashtag-urile fără simbolul #`;
+REGULI: Doar română, doar JSON valid, fără text înainte/după, hashtag-urile fără #`;
 
     const raw = await this.generate(prompt, 2500);
 
     try {
       let jsonStr = raw;
 
-      // Extrage JSON din markdown code blocks
-      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) {
-        jsonStr = jsonMatch[1].trim();
+      const blockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (blockMatch) {
+        jsonStr = blockMatch[1].trim();
       } else {
-        const firstBrace = raw.indexOf('{');
-        const lastBrace = raw.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace > firstBrace) {
-          jsonStr = raw.substring(firstBrace, lastBrace + 1);
+        const first = raw.indexOf('{');
+        const last = raw.lastIndexOf('}');
+        if (first !== -1 && last > first) {
+          jsonStr = raw.substring(first, last + 1);
         }
       }
 
-      // Curăță newline-uri din interiorul JSON
       jsonStr = jsonStr.replace(/\n/g, ' ').replace(/\r/g, '');
-
       const parsed = JSON.parse(jsonStr);
 
-      // Construiește hashtags
       const allHashtags = [
-        ...(parsed.hashtags_principale || []).map(h => '#' + h.replace(/^#/, '').trim()),
-        ...(parsed.hashtags_nisa || []).map(h => '#' + h.replace(/^#/, '').trim()),
-        ...(parsed.hashtags_brand || []).map(h => '#' + h.replace(/^#/, '').trim())
+        ...(parsed.hashtags_principale || []).map(h => '#' + h.replace(/^#/, '')),
+        ...(parsed.hashtags_nisa || []).map(h => '#' + h.replace(/^#/, '')),
+        ...(parsed.hashtags_brand || []).map(h => '#' + h.replace(/^#/, ''))
       ].filter(Boolean);
-
-      const uniqueHashtags = [...new Set(allHashtags)];
 
       return {
         hook: parsed.hook || '',
         descriere: parsed.descriere || '',
         cta: parsed.cta || '',
-        hashtags: uniqueHashtags.join(' '),
+        hashtags: [...new Set(allHashtags)].join(' '),
         hashtagsPrincipale: parsed.hashtags_principale || [],
         hashtagsNisa: parsed.hashtags_nisa || [],
         hashtagsBrand: parsed.hashtags_brand || [],
@@ -258,23 +315,21 @@ REGULI: Doar română, doar JSON valid, fără text înainte/după, hashtag-uril
 
     } catch (parseError) {
       console.error('❌ Parse JSON error:', parseError.message);
-      console.error('Raw (first 500):', raw.substring(0, 500));
 
-      // Fallback cu date parțiale
       return {
         hook: '',
         descriere: raw.substring(0, 500),
         cta: '',
-        hashtags: '#PopasPentruSuflet #VersetulZilei #Biblia #Credinta #Dumnezeu #Isus #Rugaciune',
-        hashtagsPrincipale: ['credinta', 'rugaciune', 'dumnezeu'],
-        hashtagsNisa: ['versetulzilei', 'crestin', 'evanghelie'],
-        hashtagsBrand: ['PopasPentruSuflet', 'VersetulZilei'],
+        hashtags: '#PopasPentruSuflet #VersetulZilei #Credinta #Dumnezeu #Isus #Rugaciune',
+        hashtagsPrincipale: [],
+        hashtagsNisa: [],
+        hashtagsBrand: ['PopasPentruSuflet'],
         storyText: '',
         variantaCalda: '',
         variantaPuternica: '',
         oraDimineata: '07:00',
         oraSeara: '19:00',
-        motivOre: 'Ore cu engagement ridicat pentru audiența creștină din România',
+        motivOre: '',
         emojiTema: '🙏 ❤️ ✝️ 📖 🕊️',
         sfatImagine: '',
         platform,
@@ -284,36 +339,36 @@ REGULI: Doar română, doar JSON valid, fără text înainte/după, hashtag-uril
     }
   }
 
-  // Status modele - pentru debug/monitoring
-  getModelsStatus() {
-    return MODELS.map(model => ({
-      model,
-      status: this.isModelExhausted(model) ? 'exhausted' : 'available',
-      exhaustedAt: this.exhaustedModels.get(model) 
-        ? new Date(this.exhaustedModels.get(model)).toISOString() 
-        : null
-    }));
-  }
-
+  // ═══════════════════════════════════════
+  // TEST CONNECTION
+  // ═══════════════════════════════════════
   async testConnection() {
     try {
       const result = await this.generate(
-        'Spune "Salut! Gemini funcționează!" în română. Răspunde DOAR cu salutul.', 
+        'Spune "Salut! AI funcționează perfect!" în română. Răspunde DOAR cu salutul.',
         50
       );
-      return { 
-        success: true, 
+      return {
+        success: true,
         response: result,
-        modelsStatus: this.getModelsStatus()
+        modelsStatus: this.getModelsStatus(),
+        providers: {
+          groq: !!this.groqKey,
+          gemini: !!this.geminiKey
+        }
       };
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error.message,
-        modelsStatus: this.getModelsStatus()
+        modelsStatus: this.getModelsStatus(),
+        providers: {
+          groq: !!this.groqKey,
+          gemini: !!this.geminiKey
+        }
       };
     }
   }
 }
 
-module.exports = new GeminiService();
+module.exports = new AIService();
