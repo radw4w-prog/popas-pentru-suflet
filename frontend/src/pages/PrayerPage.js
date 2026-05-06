@@ -38,6 +38,7 @@ const PrayerPage = () => {
   const [cereriMele, setCereriMele] = useState([]);
   const [toast, setToast] = useState('');
   const [rugaciuniLocale, setRugaciuniLocale] = useState({});
+  const { isAuthenticated, isAdmin, user } = useAuth();
 
   const showToast = (msg) => {
     setToast(msg);
@@ -277,15 +278,18 @@ const PrayerPage = () => {
           ) : (
             <div className="prayer-cards">
               {cereri.map(cerere => (
-                <PrayerCard
-                  key={cerere._id}
-                  cerere={cerere}
-                  onPray={handlePray}
-                  getCatIcon={getCatIcon}
-                  getCatLabel={getCatLabel}
-                  formatDate={formatDate}
-                />
-              ))}
+  <PrayerCard
+    key={cerere._id}
+    cerere={cerere}
+    onPray={handlePray}
+    onDelete={handleDelete}
+    onResolve={handleResolve}
+    getCatIcon={getCatIcon}
+    getCatLabel={getCatLabel}
+    formatDate={formatDate}
+    isAdmin={isAdmin}
+  />
+))}
             </div>
           )}
         </div>
@@ -459,7 +463,7 @@ const PrayerPage = () => {
 // ═══════════════════════════════════════
 // PRAYER CARD COMPONENT
 // ═══════════════════════════════════════
-const PrayerCard = ({ cerere, onPray, getCatIcon, getCatLabel, formatDate }) => {
+const PrayerCard = ({ cerere, onPray, onDelete, onResolve, getCatIcon, getCatLabel, formatDate, isAdmin }) => {
   const [praying, setPraying] = useState(false);
 
   const handlePray = async () => {
@@ -475,7 +479,7 @@ const PrayerCard = ({ cerere, onPray, getCatIcon, getCatLabel, formatDate }) => 
         <span className="prayer-cat-badge">
           {getCatIcon(cerere.categorie)} {getCatLabel(cerere.categorie)}
         </span>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {cerere.rezolvat && (
             <span className="prayer-resolved-badge">✅ Răspunsă</span>
           )}
@@ -486,7 +490,6 @@ const PrayerCard = ({ cerere, onPray, getCatIcon, getCatLabel, formatDate }) => 
       </div>
 
       <h3 className="prayer-card-title">{cerere.titlu}</h3>
-
       <p className="prayer-card-text">{cerere.cerere}</p>
 
       <div className="prayer-card-bottom">
@@ -497,17 +500,39 @@ const PrayerCard = ({ cerere, onPray, getCatIcon, getCatLabel, formatDate }) => 
           <span className="prayer-author-name">{cerere.numeAfisat}</span>
         </div>
 
-        <button
-          onClick={handlePray}
-          disabled={praying}
-          className={`prayer-pray-btn ${cerere.euMAmRugat ? 'prayed' : ''}`}
-        >
-          <span className="prayer-pray-icon">🙏</span>
-          <span>{cerere.rugaciuni}</span>
-          <span className="prayer-pray-label">
-            {cerere.euMAmRugat ? 'M-am rugat' : 'Roagă-te'}
-          </span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={handlePray}
+            disabled={praying}
+            className={`prayer-pray-btn ${cerere.euMAmRugat ? 'prayed' : ''}`}
+          >
+            <span className="prayer-pray-icon">🙏</span>
+            <span>{cerere.rugaciuni}</span>
+            <span className="prayer-pray-label">
+              {cerere.euMAmRugat ? 'Rugat' : 'Roagă-te'}
+            </span>
+          </button>
+
+          {/* Butoane admin/autor */}
+          {cerere.poateSterge && (
+            <>
+              <button
+                onClick={() => onResolve(cerere._id)}
+                className="prayer-action-btn"
+                title={cerere.rezolvat ? 'Reactivează' : 'Marchează răspunsă'}
+              >
+                {cerere.rezolvat ? '↩️' : '✅'}
+              </button>
+              <button
+                onClick={() => onDelete(cerere._id)}
+                className="prayer-action-btn danger"
+                title="Șterge"
+              >
+                🗑️
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

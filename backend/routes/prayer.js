@@ -5,6 +5,49 @@ const PrayerRequest = require('../models/PrayerRequest');
 const { protect, optionalAuth } = require('../middleware/auth');
 
 // ═══════════════════════════════════════
+// IMPORTANT: Rutele fixe ÎNAINTE de /:id
+// ═══════════════════════════════════════
+
+// GET /api/prayer/stats
+router.get('/stats', async (req, res) => {
+  try {
+    const [total, rezolvate, rugaciuniTotal] = await Promise.all([
+      PrayerRequest.countDocuments({ aprobat: true, vizibilitate: 'public' }),
+      PrayerRequest.countDocuments({ aprobat: true, rezolvat: true }),
+      PrayerRequest.aggregate([
+        { $match: { aprobat: true } },
+        { $group: { _id: null, total: { $sum: '$rugaciuni' } } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        total,
+        rezolvate,
+        rugaciuniTotal: rugaciuniTotal[0]?.total || 0,
+        active: total - rezolvate
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/prayer/ale-mele
+router.get('/ale-mele', protect, async (req, res) => {
+  try {
+    const cereri = await PrayerRequest.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ success: true, data: cereri });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ═══════════════════════════════════════
 // GET /api/prayer - Lista cereri publice
 // ═══════════════════════════════════════
 router.get('/', optionalAuth, async (req, res) => {
@@ -38,14 +81,17 @@ router.get('/', optionalAuth, async (req, res) => {
       PrayerRequest.countDocuments(filter)
     ]);
 
-    // Adaugă flag dacă userul curent s-a rugat
     const userId = req.user?._id?.toString();
+    const isAdmin = req.user?.rol === 'admin';
+
     const cereriCuFlag = cereri.map(c => ({
       ...c,
       euMAmRugat: userId
         ? c.rugaciuniUseri?.some(id => id.toString() === userId)
         : false,
-      rugaciuniUseri: undefined // nu trimite lista
+      esteAlMeu: userId ? c.userId?.toString() === userId : false,
+      poateSterge: isAdmin || (userId && c.userId?.toString() === userId),
+      rugaciuniUseri: undefined
     }));
 
     res.json({
@@ -57,13 +103,12 @@ router.get('/', optionalAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Prayer GET error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // ═══════════════════════════════════════
-// POST /api/prayer - Adaugă cerere nouă
+// POST /api/prayer - Adaugă cerere
 // ═══════════════════════════════════════
 router.post('/', optionalAuth, async (req, res) => {
   try {
@@ -105,39 +150,30 @@ router.post('/', optionalAuth, async (req, res) => {
       aprobat: true
     });
 
-    res.status(201).json({
-      success: true,
-      data: cerereNoua
-    });
+    res.status(201).json({ success: true, data: cerereNoua });
 
   } catch (error) {
-    console.error('❌ Prayer POST error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // ═══════════════════════════════════════
-// POST /api/prayer/:id/pray - Marchează rugăciune
+// POST /api/prayer/:id/pray
 // ═══════════════════════════════════════
 router.post('/:id/pray', optionalAuth, async (req, res) => {
   try {
     const cerere = await PrayerRequest.findById(req.params.id);
     if (!cerere) {
-      return res.status(404).json({
-        success: false,
-        error: 'Cererea nu a fost găsită'
-      });
+      return res.status(404).json({ success: false, error: 'Cererea nu a fost găsită' });
     }
 
     const userId = req.user?._id;
     let euMAmRugat = false;
 
     if (userId) {
-      // User autentificat - toggle
       const idx = cerere.rugaciuniUseri.findIndex(
         id => id.toString() === userId.toString()
       );
-
       if (idx === -1) {
         cerere.rugaciuniUseri.push(userId);
         cerere.rugaciuni += 1;
@@ -148,18 +184,12 @@ router.post('/:id/pray', optionalAuth, async (req, res) => {
         euMAmRugat = false;
       }
     } else {
-      // Guest - doar incrementează
       cerere.rugaciuni += 1;
       euMAmRugat = true;
     }
 
     await cerere.save();
-
-    res.json({
-      success: true,
-      rugaciuni: cerere.rugaciuni,
-      euMAmRugat
-    });
+    res.json({ success: true, rugaciuni: cerere.rugaciuni, euMAmRugat });
 
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -167,7 +197,7 @@ router.post('/:id/pray', optionalAuth, async (req, res) => {
 });
 
 // ═══════════════════════════════════════
-// PATCH /api/prayer/:id/resolve - Marchează rezolvat
+// PATCH /api/prayer/:id/resolve
 // ═══════════════════════════════════════
 router.patch('/:id/resolve', protect, async (req, res) => {
   try {
@@ -176,12 +206,11 @@ router.patch('/:id/resolve', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    // Doar autorul sau adminul poate rezolva
     const isAutor = cerere.userId?.toString() === req.user._id.toString();
     const isAdmin = req.user.rol === 'admin';
 
     if (!isAutor && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'Acces interzis' });
+      return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
     }
 
     cerere.rezolvat = !cerere.rezolvat;
@@ -189,6 +218,41 @@ router.patch('/:id/resolve', protect, async (req, res) => {
     cerere.mesajRezolvare = req.body.mesaj || '';
     await cerere.save();
 
+    res.json({ success: true, data: cerere });
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ═══════════════════════════════════════
+// PUT /api/prayer/:id - Editare
+// ═══════════════════════════════════════
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const cerere = await PrayerRequest.findById(req.params.id);
+    if (!cerere) {
+      return res.status(404).json({ success: false, error: 'Nu există' });
+    }
+
+    const isAutor = cerere.userId?.toString() === req.user._id.toString();
+    const isAdmin = req.user.rol === 'admin';
+
+    if (!isAutor && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
+    }
+
+    const { titlu, cerere: text, categorie, anonim } = req.body;
+
+    if (titlu) cerere.titlu = titlu.trim();
+    if (text) cerere.cerere = text.trim();
+    if (categorie) cerere.categorie = categorie;
+    if (typeof anonim === 'boolean') {
+      cerere.anonim = anonim;
+      cerere.numeAfisat = anonim ? 'Anonim' : (req.user.nume || 'Utilizator');
+    }
+
+    await cerere.save();
     res.json({ success: true, data: cerere });
 
   } catch (error) {
@@ -210,55 +274,12 @@ router.delete('/:id', protect, async (req, res) => {
     const isAdmin = req.user.rol === 'admin';
 
     if (!isAutor && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'Acces interzis' });
+      return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
     }
 
     await cerere.deleteOne();
     res.json({ success: true, message: 'Cerere ștearsă' });
 
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// ═══════════════════════════════════════
-// GET /api/prayer/ale-mele - Cererile mele
-// ═══════════════════════════════════════
-router.get('/ale-mele', protect, async (req, res) => {
-  try {
-    const cereri = await PrayerRequest.find({ userId: req.user._id })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.json({ success: true, data: cereri });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// ═══════════════════════════════════════
-// GET /api/prayer/stats - Statistici
-// ═══════════════════════════════════════
-router.get('/stats', async (req, res) => {
-  try {
-    const [total, rezolvate, rugaciuniTotal] = await Promise.all([
-      PrayerRequest.countDocuments({ aprobat: true, vizibilitate: 'public' }),
-      PrayerRequest.countDocuments({ aprobat: true, rezolvat: true }),
-      PrayerRequest.aggregate([
-        { $match: { aprobat: true } },
-        { $group: { _id: null, total: { $sum: '$rugaciuni' } } }
-      ])
-    ]);
-
-    res.json({
-      success: true,
-      stats: {
-        total,
-        rezolvate,
-        rugaciuniTotal: rugaciuniTotal[0]?.total || 0,
-        active: total - rezolvate
-      }
-    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
