@@ -4,12 +4,14 @@ const router = express.Router();
 const PrayerRequest = require('../models/PrayerRequest');
 const { protect, optionalAuth } = require('../middleware/auth');
 
-
-const getCurrentUserId = (req) => {
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+const getUserId = (req) => {
   return req.user?._id?.toString() || req.user?.id?.toString() || null;
 };
 
-const isAdminUser = (req) => {
+const checkAdmin = (req) => {
   return (
     req.user?.rol === 'admin' ||
     req.user?.role === 'admin' ||
@@ -17,8 +19,18 @@ const isAdminUser = (req) => {
   );
 };
 
+const checkOwner = (cerere, req) => {
+  const userId = getUserId(req);
+  const ownerId = cerere.userId ? cerere.userId.toString() : null;
+  return !!(userId && ownerId && ownerId === userId);
+};
+
+const checkPermission = (cerere, req) => {
+  return checkAdmin(req) || checkOwner(cerere, req);
+};
+
 // ═══════════════════════════════════════
-// IMPORTANT: Rutele fixe ÎNAINTE de /:id
+// RUTE FIXE - ÎNAINTE DE /:id
 // ═══════════════════════════════════════
 
 // GET /api/prayer/stats
@@ -43,6 +55,7 @@ router.get('/stats', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('❌ Prayer stats error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -50,12 +63,16 @@ router.get('/stats', async (req, res) => {
 // GET /api/prayer/ale-mele
 router.get('/ale-mele', protect, async (req, res) => {
   try {
+    const userId = getUserId(req);
+    console.log('📋 Ale mele - userId:', userId);
+
     const cereri = await PrayerRequest.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
       .lean();
 
     res.json({ success: true, data: cereri });
   } catch (error) {
+    console.error('❌ Prayer ale-mele error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -94,23 +111,26 @@ router.get('/', optionalAuth, async (req, res) => {
       PrayerRequest.countDocuments(filter)
     ]);
 
-    const userId = getCurrentUserId(req);
-const isAdmin = isAdminUser(req);
+    const userId = getUserId(req);
+    const isAdmin = checkAdmin(req);
+
+    console.log('📋 Prayer list - userId:', userId, '| isAdmin:', isAdmin);
 
     const cereriCuFlag = cereri.map(c => {
-  const ownerId = c.userId ? c.userId.toString() : null;
-  const esteAlMeu = !!(userId && ownerId && ownerId === userId);
+      const ownerId = c.userId ? c.userId.toString() : null;
+      const esteAlMeu = !!(userId && ownerId && ownerId === userId);
 
-  return {
-    ...c,
-    euMAmRugat: userId
-      ? c.rugaciuniUseri?.some(id => id.toString() === userId)
-      : false,
-    esteAlMeu,
-    poateSterge: isAdmin || esteAlMeu,
-    rugaciuniUseri: undefined
-  };
-});
+      return {
+        ...c,
+        euMAmRugat: userId
+          ? c.rugaciuniUseri?.some(id => id.toString() === userId)
+          : false,
+        esteAlMeu,
+        poateSterge: isAdmin || esteAlMeu,
+        poateEdita: isAdmin || esteAlMeu,
+        rugaciuniUseri: undefined
+      };
+    });
 
     res.json({
       success: true,
@@ -121,12 +141,13 @@ const isAdmin = isAdminUser(req);
     });
 
   } catch (error) {
+    console.error('❌ Prayer GET error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // ═══════════════════════════════════════
-// POST /api/prayer - Adaugă cerere
+// POST /api/prayer - Adaugă cerere (trebuie logat)
 // ═══════════════════════════════════════
 router.post('/', protect, async (req, res) => {
   try {
@@ -152,10 +173,9 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
-    let numeAfisat = 'Anonim';
-    if (!anonim && req.user) {
-      numeAfisat = req.user.nume || 'Utilizator';
-    }
+    const numeAfisat = anonim ? 'Anonim' : (req.user.nume || req.user.name || 'Utilizator');
+
+    console.log('➕ Prayer create - userId:', req.user._id, '| anonim:', anonim, '| nume:', numeAfisat);
 
     const cerereNoua = await PrayerRequest.create({
       titlu: titlu.trim(),
@@ -163,7 +183,7 @@ router.post('/', protect, async (req, res) => {
       categorie,
       anonim,
       numeAfisat,
-      userId: req.user?._id || null,
+      userId: req.user._id,
       vizibilitate,
       aprobat: true
     });
@@ -171,6 +191,7 @@ router.post('/', protect, async (req, res) => {
     res.status(201).json({ success: true, data: cerereNoua });
 
   } catch (error) {
+    console.error('❌ Prayer POST error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -185,15 +206,15 @@ router.post('/:id/pray', optionalAuth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Cererea nu a fost găsită' });
     }
 
-    const userId = req.user?._id;
+    const userId = getUserId(req);
     let euMAmRugat = false;
 
     if (userId) {
       const idx = cerere.rugaciuniUseri.findIndex(
-        id => id.toString() === userId.toString()
+        id => id.toString() === userId
       );
       if (idx === -1) {
-        cerere.rugaciuniUseri.push(userId);
+        cerere.rugaciuniUseri.push(req.user._id);
         cerere.rugaciuni += 1;
         euMAmRugat = true;
       } else {
@@ -210,6 +231,7 @@ router.post('/:id/pray', optionalAuth, async (req, res) => {
     res.json({ success: true, rugaciuni: cerere.rugaciuni, euMAmRugat });
 
   } catch (error) {
+    console.error('❌ Prayer pray error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -224,12 +246,10 @@ router.patch('/:id/resolve', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    const currentUserId = getCurrentUserId(req);
-const ownerId = cerere.userId ? cerere.userId.toString() : null;
-const isAutor = !!(currentUserId && ownerId && ownerId === currentUserId);
-const isAdmin = isAdminUser(req);
+    const hasPermission = checkPermission(cerere, req);
+    console.log('✅ Resolve - hasPermission:', hasPermission, '| isAdmin:', checkAdmin(req), '| isOwner:', checkOwner(cerere, req));
 
-    if (!isAutor && !isAdmin) {
+    if (!hasPermission) {
       return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
     }
 
@@ -241,6 +261,7 @@ const isAdmin = isAdminUser(req);
     res.json({ success: true, data: cerere });
 
   } catch (error) {
+    console.error('❌ Prayer resolve error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -255,29 +276,28 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    const currentUserId = getCurrentUserId(req);
-const ownerId = cerere.userId ? cerere.userId.toString() : null;
-const isAutor = !!(currentUserId && ownerId && ownerId === currentUserId);
-const isAdmin = isAdminUser(req);
+    const hasPermission = checkPermission(cerere, req);
+    console.log('✏️ Edit - hasPermission:', hasPermission, '| isAdmin:', checkAdmin(req), '| isOwner:', checkOwner(cerere, req));
 
-    if (!isAutor && !isAdmin) {
+    if (!hasPermission) {
       return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
     }
 
     const { titlu, cerere: text, categorie, anonim } = req.body;
 
-    if (titlu) cerere.titlu = titlu.trim();
-    if (text) cerere.cerere = text.trim();
-    if (categorie) cerere.categorie = categorie;
+    if (titlu !== undefined) cerere.titlu = titlu.trim();
+    if (text !== undefined) cerere.cerere = text.trim();
+    if (categorie !== undefined) cerere.categorie = categorie;
     if (typeof anonim === 'boolean') {
       cerere.anonim = anonim;
-      cerere.numeAfisat = anonim ? 'Anonim' : (req.user.nume || 'Utilizator');
+      cerere.numeAfisat = anonim ? 'Anonim' : (req.user.nume || req.user.name || 'Utilizator');
     }
 
     await cerere.save();
     res.json({ success: true, data: cerere });
 
   } catch (error) {
+    console.error('❌ Prayer edit error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -292,19 +312,28 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    const currentUserId = getCurrentUserId(req);
-const ownerId = cerere.userId ? cerere.userId.toString() : null;
-const isAutor = !!(currentUserId && ownerId && ownerId === currentUserId);
-const isAdmin = isAdminUser(req);
+    const hasPermission = checkPermission(cerere, req);
+    console.log('🗑️ Delete - hasPermission:', hasPermission, '| isAdmin:', checkAdmin(req), '| isOwner:', checkOwner(cerere, req));
+    console.log('   cerere.userId:', cerere.userId?.toString(), '| req.user._id:', getUserId(req));
 
-    if (!isAutor && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Nu ai permisiune să ștergi această cerere',
+        debug: {
+          isAdmin: checkAdmin(req),
+          isOwner: checkOwner(cerere, req),
+          cerereUserId: cerere.userId?.toString(),
+          requestUserId: getUserId(req)
+        }
+      });
     }
 
     await cerere.deleteOne();
     res.json({ success: true, message: 'Cerere ștearsă' });
 
   } catch (error) {
+    console.error('❌ Prayer delete error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
