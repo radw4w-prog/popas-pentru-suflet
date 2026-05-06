@@ -7807,3 +7807,174 @@ a {
 [data-theme="light"] .prayer-pray-btn {
   background: rgba(124,58,237,0.05);
 }
+/* ═══════════════════════════════════════
+   GLOBAL MOBILE WIDTH FIX
+═══════════════════════════════════════ */
+
+html, body, #root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  position: relative;
+}
+
+.app-layout,
+.main-content,
+.page-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* toate elementele media să nu depășească ecranul */
+img,
+video,
+canvas,
+svg,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* texte lungi să se rupă */
+h1, h2, h3, h4, h5, h6,
+p, span, div, button, a {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* cards și blocuri mari */
+.card,
+.prayer-card,
+.analytics-block,
+.analytics-top-post,
+.analytics-page-card,
+.devotional-card,
+.verses-hero,
+.prayer-hero,
+.analytics-hero,
+.dash-hero {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* grid-uri care pot forța overflow */
+.stats-grid,
+.grid-2,
+.grid-3,
+.analytics-kpi-grid,
+.analytics-mini-grid,
+.prayer-cards,
+.verses-grid,
+.dashboard-grid {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* butoane și input-uri */
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+/* tabele / liste late */
+.table-container,
+.tabs,
+.prayer-cats,
+.prayer-tabs {
+  max-width: 100%;
+}
+/* ═══════════════════════════════════════
+   HEADER MOBILE OVERFLOW FIX
+═══════════════════════════════════════ */
+
+.header {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.header-title {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .header {
+    gap: 0.5rem;
+    flex-wrap: nowrap !important;
+  }
+
+  .header-actions {
+    gap: 0.35rem !important;
+  }
+
+  .header-actions > * {
+    flex-shrink: 0;
+  }
+
+  .menu-btn {
+    flex-shrink: 0;
+  }
+}
+/* ═══════════════════════════════════════
+   HORIZONTAL SCROLL CONTROL
+═══════════════════════════════════════ */
+
+.prayer-tabs,
+.prayer-cats,
+.tabs,
+.analytics-period-switch {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.prayer-tabs::-webkit-scrollbar,
+.prayer-cats::-webkit-scrollbar,
+.tabs::-webkit-scrollbar,
+.analytics-period-switch::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 768px) {
+  .page-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    overflow-x: hidden !important;
+  }
+
+  .main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .sidebar {
+    max-width: calc(100vw - 32px) !important;
+  }
+}
