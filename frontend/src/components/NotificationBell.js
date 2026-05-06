@@ -8,6 +8,10 @@ const NotificationBell = () => {
   const [totalNecitite, setTotalNecitite] = useState(0);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({});
+
+  const wrapperRef = useRef(null);
+  const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
 
   const getHeaders = () => {
@@ -36,14 +40,65 @@ const NotificationBell = () => {
     return () => clearInterval(interval);
   }, [loadNotificari]);
 
+  const updateDropdownPosition = useCallback(() => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const isMobile = window.innerWidth <= 768;
+    const dropdownWidth = Math.min(isMobile ? 320 : 340, window.innerWidth - 24);
+
+    let top = rect.bottom + 8;
+    let left = rect.right - dropdownWidth;
+
+    // margine minimă în stânga
+    if (left < 12) left = 12;
+
+    // dacă pe mobil e prea aproape de marginea dreaptă
+    if (left + dropdownWidth > window.innerWidth - 12) {
+      left = window.innerWidth - dropdownWidth - 12;
+    }
+
+    setDropdownStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${dropdownWidth}px`,
+      maxWidth: 'calc(100vw - 24px)',
+      zIndex: 99999
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    updateDropdownPosition();
+
+    const handleResize = () => updateDropdownPosition();
+    const handleScroll = () => updateDropdownPosition();
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [open, updateDropdownPosition]);
+
+  // Închide la click outside
   useEffect(() => {
     const handleClick = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      const clickInsideButton = buttonRef.current?.contains(e.target);
+      const clickInsideDropdown = dropdownRef.current?.contains(e.target);
+
+      if (!clickInsideButton && !clickInsideDropdown) {
         setOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('touchstart', handleClick);
+
     return () => {
       document.removeEventListener('mousedown', handleClick);
       document.removeEventListener('touchstart', handleClick);
@@ -53,8 +108,12 @@ const NotificationBell = () => {
   const handleOpen = async () => {
     const next = !open;
     setOpen(next);
+
     if (next) {
       await loadNotificari();
+      requestAnimationFrame(() => {
+        updateDropdownPosition();
+      });
     }
   };
 
@@ -65,6 +124,7 @@ const NotificationBell = () => {
         {},
         { headers: getHeaders() }
       );
+
       setNotificari(prev =>
         prev.map(n => n._id === id ? { ...n, citit: true } : n)
       );
@@ -95,7 +155,9 @@ const NotificationBell = () => {
         `${API}/api/notifications/${id}`,
         { headers: getHeaders() }
       );
+
       setNotificari(prev => prev.filter(n => n._id !== id));
+
       const deleted = notificari.find(n => n._id === id);
       if (deleted && !deleted.citit) {
         setTotalNecitite(prev => Math.max(0, prev - 1));
@@ -129,9 +191,10 @@ const NotificationBell = () => {
   };
 
   return (
-    <div ref={dropdownRef} className="notification-bell-wrapper">
-      {/* Bell */}
+    <div ref={wrapperRef} className="notification-bell-wrapper">
+      {/* Bell Button */}
       <button
+        ref={buttonRef}
         onClick={handleOpen}
         className={`notification-bell-btn ${open ? 'open' : ''}`}
         title="Notificări"
@@ -144,9 +207,14 @@ const NotificationBell = () => {
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown FIXED overlay */}
       {open && (
-        <div className="notification-dropdown">
+        <div
+          ref={dropdownRef}
+          className="notification-dropdown"
+          style={dropdownStyle}
+        >
+          {/* Header */}
           <div className="notification-dropdown-header">
             <div className="notification-dropdown-title">
               🔔 Notificări
@@ -168,6 +236,7 @@ const NotificationBell = () => {
             )}
           </div>
 
+          {/* Lista */}
           <div className="notification-dropdown-list">
             {notificari.length === 0 ? (
               <div className="notification-empty">
