@@ -4,6 +4,19 @@ const router = express.Router();
 const PrayerRequest = require('../models/PrayerRequest');
 const { protect, optionalAuth } = require('../middleware/auth');
 
+
+const getCurrentUserId = (req) => {
+  return req.user?._id?.toString() || req.user?.id?.toString() || null;
+};
+
+const isAdminUser = (req) => {
+  return (
+    req.user?.rol === 'admin' ||
+    req.user?.role === 'admin' ||
+    req.user?.isAdmin === true
+  );
+};
+
 // ═══════════════════════════════════════
 // IMPORTANT: Rutele fixe ÎNAINTE de /:id
 // ═══════════════════════════════════════
@@ -81,18 +94,23 @@ router.get('/', optionalAuth, async (req, res) => {
       PrayerRequest.countDocuments(filter)
     ]);
 
-    const userId = req.user?._id?.toString();
-    const isAdmin = req.user?.rol === 'admin';
+    const userId = getCurrentUserId(req);
+const isAdmin = isAdminUser(req);
 
-    const cereriCuFlag = cereri.map(c => ({
-      ...c,
-      euMAmRugat: userId
-        ? c.rugaciuniUseri?.some(id => id.toString() === userId)
-        : false,
-      esteAlMeu: userId ? c.userId?.toString() === userId : false,
-      poateSterge: isAdmin || (userId && c.userId?.toString() === userId),
-      rugaciuniUseri: undefined
-    }));
+    const cereriCuFlag = cereri.map(c => {
+  const ownerId = c.userId ? c.userId.toString() : null;
+  const esteAlMeu = !!(userId && ownerId && ownerId === userId);
+
+  return {
+    ...c,
+    euMAmRugat: userId
+      ? c.rugaciuniUseri?.some(id => id.toString() === userId)
+      : false,
+    esteAlMeu,
+    poateSterge: isAdmin || esteAlMeu,
+    rugaciuniUseri: undefined
+  };
+});
 
     res.json({
       success: true,
@@ -110,7 +128,7 @@ router.get('/', optionalAuth, async (req, res) => {
 // ═══════════════════════════════════════
 // POST /api/prayer - Adaugă cerere
 // ═══════════════════════════════════════
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const {
       titlu,
@@ -206,8 +224,10 @@ router.patch('/:id/resolve', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    const isAutor = cerere.userId?.toString() === req.user._id.toString();
-    const isAdmin = req.user.rol === 'admin';
+    const currentUserId = getCurrentUserId(req);
+const ownerId = cerere.userId ? cerere.userId.toString() : null;
+const isAutor = !!(currentUserId && ownerId && ownerId === currentUserId);
+const isAdmin = isAdminUser(req);
 
     if (!isAutor && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
@@ -235,8 +255,10 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    const isAutor = cerere.userId?.toString() === req.user._id.toString();
-    const isAdmin = req.user.rol === 'admin';
+    const currentUserId = getCurrentUserId(req);
+const ownerId = cerere.userId ? cerere.userId.toString() : null;
+const isAutor = !!(currentUserId && ownerId && ownerId === currentUserId);
+const isAdmin = isAdminUser(req);
 
     if (!isAutor && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Nu ai permisiune' });
@@ -270,8 +292,10 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Nu există' });
     }
 
-    const isAutor = cerere.userId?.toString() === req.user._id.toString();
-    const isAdmin = req.user.rol === 'admin';
+    const currentUserId = getCurrentUserId(req);
+const ownerId = cerere.userId ? cerere.userId.toString() : null;
+const isAutor = !!(currentUserId && ownerId && ownerId === currentUserId);
+const isAdmin = isAdminUser(req);
 
     if (!isAutor && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Nu ai permisiune' });

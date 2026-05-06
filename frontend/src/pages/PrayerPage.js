@@ -406,9 +406,19 @@ const PrayerPage = () => {
             <div className="empty-state">
               <div className="empty-state-icon">🙏</div>
               <div className="empty-state-title">Nu ai cereri de rugăciune</div>
-              <button className="btn btn-gold" onClick={() => setTab('adauga')} style={{ marginTop: '1rem' }}>
-                ➕ Adaugă prima ta cerere
-              </button>
+             <button
+  className={`prayer-tab ${tab === 'adauga' ? 'active' : ''}`}
+  onClick={() => {
+    if (!isAuthenticated) {
+      showToast('🔑 Trebuie să fii autentificat pentru a adăuga o cerere.');
+      return;
+    }
+    setTab('adauga');
+  }}
+>
+  ➕ Adaugă cerere
+</button>
+			  
             </div>
           ) : (
             <div className="prayer-cards">
