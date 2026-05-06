@@ -385,6 +385,22 @@ router.post('/', optionalAuth, checkGenerateLimit, async (req, res) => {
   }
 });
 
+
+
+// Adaugă în backend/routes/generate.js
+router.post('/ai/reset', async (req, res) => {
+  try {
+    geminiService.resetExhaustedModels();
+    res.json({
+      success: true,
+      message: 'Modele AI resetate!',
+      status: geminiService.getModelsStatus()
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // POST /api/generate/ai
 router.post('/ai', optionalAuth, checkGenerateLimit, async (req, res) => {
   try {
