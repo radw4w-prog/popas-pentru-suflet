@@ -7978,3 +7978,290 @@ textarea {
     max-width: calc(100vw - 32px) !important;
   }
 }
+/* ═══════════════════════════════════════════════
+   MOTOROLA / ANDROID OVERFLOW FIX GLOBAL
+═══════════════════════════════════════════════ */
+
+/* Radical fix - nimic nu depășește ecranul */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+#root {
+  overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+.app-layout {
+  overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+.main-content {
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+.page-content {
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+/* Imagini responsive */
+img, video, iframe, embed, object {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Text lung */
+* {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Elemente flex/grid să nu iasă */
+.header,
+.header-actions,
+.bottom-nav,
+.bottom-nav-inner,
+.sidebar {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ─── MOBILE SPECIFIC ─── */
+@media (max-width: 768px) {
+
+  /* Header - cea mai frecventă cauză */
+  .header {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    padding: 0.65rem 0.85rem !important;
+    gap: 0.4rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .header > div:first-child {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .header-actions {
+    flex: 0 0 auto !important;
+    gap: 0.3rem !important;
+    flex-wrap: nowrap !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .header-title {
+    font-size: 0.95rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  /* Page content */
+  .page-content {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0.75rem !important;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 16px)) !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Cards */
+  .card,
+  .dash-card,
+  .prayer-card,
+  .devotional-card,
+  .ap-card,
+  .ap-hero,
+  .ap-page-card,
+  .prayer-hero,
+  .dash-hero,
+  .verses-hero {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Grids */
+  .stats-grid,
+  .grid-2,
+  .grid-3,
+  .ap-kpi-grid,
+  .ap-totals-grid,
+  .ap-mini-grid,
+  .prayer-cards,
+  .dash-actions,
+  .dash-discover-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Tabs scroll orizontal */
+  .tabs,
+  .prayer-tabs,
+  .prayer-cats,
+  .ap-period-bar {
+    display: flex !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    max-width: 100% !important;
+  }
+
+  .tabs::-webkit-scrollbar,
+  .prayer-tabs::-webkit-scrollbar,
+  .prayer-cats::-webkit-scrollbar,
+  .ap-period-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    width: 100% !important;
+    max-width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .bottom-nav-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Sidebar overlay */
+  .sidebar-overlay {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  /* Buttons */
+  .btn {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Input fields */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 16px !important; /* previne zoom iOS */
+  }
+
+  /* Analytics specific */
+  .ap-wrap,
+  .analytics-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .ap-hero-content {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .ap-hero-right {
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+  }
+
+  /* Prayer specific */
+  .prayer-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .prayer-form-card,
+  .prayer-encourage {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Devotional */
+  .devotional-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Table overflow */
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Generator page */
+  .animate-in {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Toast */
+  .prayer-toast {
+    max-width: calc(100vw - 2rem) !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+}
+
+/* ─── EXTRA SMALL (sub 360px - telefoane vechi) ─── */
+@media (max-width: 360px) {
+  .page-content {
+    padding: 0.5rem !important;
+    padding-bottom: calc(65px + env(safe-area-inset-bottom, 12px)) !important;
+  }
+
+  .header {
+    padding: 0.5rem 0.6rem !important;
+  }
+
+  .bottom-nav-item {
+    min-width: 44px !important;
+    padding: 0.3rem 0.4rem !important;
+  }
+
+  .bottom-nav-label {
+    font-size: 0.5rem !important;
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.1rem !important;
+  }
+}
