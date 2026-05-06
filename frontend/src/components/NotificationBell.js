@@ -10,7 +10,6 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState({});
 
-  const wrapperRef = useRef(null);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -30,7 +29,7 @@ const NotificationBell = () => {
         setTotalNecitite(res.data.totalNecitite || 0);
       }
     } catch (err) {
-      // silent fail
+      // silent
     }
   }, []);
 
@@ -41,38 +40,36 @@ const NotificationBell = () => {
   }, [loadNotificari]);
 
   const updateDropdownPosition = useCallback(() => {
-  if (!buttonRef.current) return;
+    if (!buttonRef.current) return;
 
-  const rect = buttonRef.current.getBoundingClientRect();
-  const isMobile = window.innerWidth <= 500;
-  const dropdownWidth = isMobile ? window.innerWidth - 24 : 340;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const isMobile = window.innerWidth <= 768;
+    const dropdownWidth = Math.min(
+      isMobile ? window.innerWidth - 24 : 340,
+      window.innerWidth - 24
+    );
 
-  let top = rect.bottom + 8;
-  let left;
+    let top = rect.bottom + 8;
+    let left = rect.right - dropdownWidth;
 
-  if (isMobile) {
-    // Pe mobil: centrează pe ecran
-    left = 12;
-  } else {
-    // Pe desktop: aliniază dreapta dropdown cu dreapta butonului
-    left = rect.right - dropdownWidth;
-    // Dacă iese din ecran în stânga
     if (left < 12) left = 12;
-  }
 
-  // Dacă iese din ecran în dreapta
-  if (left + dropdownWidth > window.innerWidth - 12) {
-    left = window.innerWidth - dropdownWidth - 12;
-  }
+    if (left + dropdownWidth > window.innerWidth - 12) {
+      left = window.innerWidth - dropdownWidth - 12;
+    }
 
-  setDropdownStyle({
-    position: 'fixed',
-    top: `${Math.round(top)}px`,
-    left: `${Math.round(left)}px`,
-    width: `${dropdownWidth}px`,
-    zIndex: 99999
-  });
-}, []);
+    setDropdownStyle({
+      position: 'fixed',
+      top: `${Math.round(top)}px`,
+      left: `${Math.round(left)}px`,
+      right: 'auto',
+      width: `${Math.round(dropdownWidth)}px`,
+      maxWidth: 'calc(100vw - 24px)',
+      zIndex: 99999,
+      transform: 'none',
+      margin: 0
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -91,23 +88,22 @@ const NotificationBell = () => {
     };
   }, [open, updateDropdownPosition]);
 
-  // Închide la click outside
   useEffect(() => {
-    const handleClick = (e) => {
-      const clickInsideButton = buttonRef.current?.contains(e.target);
-      const clickInsideDropdown = dropdownRef.current?.contains(e.target);
+    const handleClickOutside = (e) => {
+      const insideButton = buttonRef.current?.contains(e.target);
+      const insideDropdown = dropdownRef.current?.contains(e.target);
 
-      if (!clickInsideButton && !clickInsideDropdown) {
+      if (!insideButton && !insideDropdown) {
         setOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('touchstart', handleClick);
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
 
     return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('touchstart', handleClick);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, []);
 
@@ -141,11 +137,13 @@ const NotificationBell = () => {
   const handleMarkToateCitite = async () => {
     try {
       setLoading(true);
+
       await axios.put(
         `${API}/api/notifications/citit-toate`,
         {},
         { headers: getHeaders() }
       );
+
       setNotificari(prev => prev.map(n => ({ ...n, citit: true })));
       setTotalNecitite(0);
     } catch (err) {
@@ -156,11 +154,11 @@ const NotificationBell = () => {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
+
     try {
-      await axios.delete(
-        `${API}/api/notifications/${id}`,
-        { headers: getHeaders() }
-      );
+      await axios.delete(`${API}/api/notifications/${id}`, {
+        headers: getHeaders()
+      });
 
       setNotificari(prev => prev.filter(n => n._id !== id));
 
@@ -197,37 +195,33 @@ const NotificationBell = () => {
   };
 
   return (
-    <div ref={wrapperRef} className="notification-bell-wrapper">
-      {/* Bell Button */}
+    <div className="notifbell-root">
       <button
         ref={buttonRef}
         onClick={handleOpen}
-        className={`notification-bell-btn ${open ? 'open' : ''}`}
+        className={`notifbell-btn ${open ? 'open' : ''}`}
         title="Notificări"
+        type="button"
       >
         🔔
         {totalNecitite > 0 && (
-          <span className="notification-bell-badge">
+          <span className="notifbell-badge">
             {totalNecitite > 99 ? '99+' : totalNecitite}
           </span>
         )}
       </button>
 
-      {/* Dropdown FIXED overlay */}
       {open && (
         <div
           ref={dropdownRef}
-          className="notification-dropdown"
+          className="notifbell-dropdown"
           style={dropdownStyle}
         >
-          {/* Header */}
-          <div className="notification-dropdown-header">
-            <div className="notification-dropdown-title">
+          <div className="notifbell-header">
+            <div className="notifbell-title">
               🔔 Notificări
               {totalNecitite > 0 && (
-                <span className="notification-dropdown-count">
-                  {totalNecitite} noi
-                </span>
+                <span className="notifbell-count">{totalNecitite} noi</span>
               )}
             </div>
 
@@ -235,17 +229,17 @@ const NotificationBell = () => {
               <button
                 onClick={handleMarkToateCitite}
                 disabled={loading}
-                className="notification-mark-all-btn"
+                className="notifbell-markall"
+                type="button"
               >
                 {loading ? '...' : '✓ Toate citite'}
               </button>
             )}
           </div>
 
-          {/* Lista */}
-          <div className="notification-dropdown-list">
+          <div className="notifbell-list">
             {notificari.length === 0 ? (
-              <div className="notification-empty">
+              <div className="notifbell-empty">
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
                 Nu ai notificări
               </div>
@@ -254,10 +248,10 @@ const NotificationBell = () => {
                 <div
                   key={notif._id}
                   onClick={() => !notif.citit && handleMarkCitit(notif._id)}
-                  className={`notification-item ${notif.citit ? '' : 'unread'}`}
+                  className={`notifbell-item ${notif.citit ? '' : 'unread'}`}
                 >
                   <div
-                    className="notification-item-icon"
+                    className="notifbell-item-icon"
                     style={{
                       background: `${getTipColor(notif.tip)}18`,
                       border: `1px solid ${getTipColor(notif.tip)}30`
@@ -266,23 +260,26 @@ const NotificationBell = () => {
                     {notif.icon || '🔔'}
                   </div>
 
-                  <div className="notification-item-content">
-                    <div className={`notification-item-title ${notif.citit ? '' : 'strong'}`}>
+                  <div className="notifbell-item-content">
+                    <div className={`notifbell-item-title ${notif.citit ? '' : 'strong'}`}>
                       {notif.titlu}
                     </div>
-                    <div className="notification-item-text">
+
+                    <div className="notifbell-item-text">
                       {notif.mesaj}
                     </div>
-                    <div className="notification-item-time">
+
+                    <div className="notifbell-item-time">
                       {formatTime(notif.createdAt)}
-                      {!notif.citit && <span className="notification-unread-dot" />}
+                      {!notif.citit && <span className="notifbell-unread-dot" />}
                     </div>
                   </div>
 
                   <button
                     onClick={(e) => handleDelete(notif._id, e)}
-                    className="notification-delete-btn"
+                    className="notifbell-delete"
                     title="Șterge"
+                    type="button"
                   >
                     ✕
                   </button>
