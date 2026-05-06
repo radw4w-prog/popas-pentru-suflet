@@ -40,53 +40,42 @@ const NotificationBell = () => {
   }, [loadNotificari]);
 
   const updateDropdownPosition = useCallback(() => {
-    if (!buttonRef.current) return;
+  if (!buttonRef.current) return;
 
-    const rect = buttonRef.current.getBoundingClientRect();
-    const isMobile = window.innerWidth <= 768;
-    const dropdownWidth = Math.min(
-      isMobile ? window.innerWidth - 24 : 340,
-      window.innerWidth - 24
-    );
+  const rect = buttonRef.current.getBoundingClientRect();
+  const isMobile = window.innerWidth <= 768;
+  const dropdownWidth = Math.min(
+    isMobile ? window.innerWidth - 24 : 340,
+    window.innerWidth - 24
+  );
 
-    let top = rect.bottom + 8;
-    let left = rect.right - dropdownWidth;
+  let top = rect.bottom + 8;
 
-    if (left < 12) left = 12;
-
-    if (left + dropdownWidth > window.innerWidth - 12) {
-      left = window.innerWidth - dropdownWidth - 12;
-    }
-
-    setDropdownStyle({
-      position: 'fixed',
-      top: `${Math.round(top)}px`,
-      left: `${Math.round(left)}px`,
-      right: 'auto',
-      width: `${Math.round(dropdownWidth)}px`,
-      maxWidth: 'calc(100vw - 24px)',
-      zIndex: 99999,
-      transform: 'none',
-      margin: 0
-    });
-  }, []);
+  setDropdownStyle({
+    position: 'fixed',
+    top: `${Math.round(top)}px`,
+    right: isMobile ? '12px' : '16px',
+    left: isMobile ? '12px' : 'auto',
+    width: isMobile ? 'auto' : `${Math.round(dropdownWidth)}px`,
+    maxWidth: isMobile ? 'none' : '340px',
+    zIndex: 99999,
+    transform: 'none',
+    margin: 0
+  });
+}, []);
 
   useEffect(() => {
-    if (!open) return;
+  if (!open) return;
 
-    updateDropdownPosition();
+  updateDropdownPosition();
 
-    const handleResize = () => updateDropdownPosition();
-    const handleScroll = () => updateDropdownPosition();
+  const handleResize = () => updateDropdownPosition();
+  window.addEventListener('resize', handleResize);
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [open, updateDropdownPosition]);
+  return () => {
+    window.removeEventListener('resize', handleResize);
+  };
+}, [open, updateDropdownPosition]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {

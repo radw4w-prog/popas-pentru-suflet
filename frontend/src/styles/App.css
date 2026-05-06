@@ -57,13 +57,7 @@
   border: 2px solid var(--bg-primary);
 }
 
-.notifbell-dropdown {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
+
 
 .notifbell-header {
   padding: 0.875rem 1rem;
@@ -193,12 +187,7 @@
 .notifbell-delete:hover {
   opacity: 1;
   color: #ef4444;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .notifbell-dropdown {
-    border-radius: 18px;
+	 
   }
 
   .notifbell-header {
@@ -209,6 +198,9 @@
     padding: 0.8rem 0.9rem;
   }
 }
+
+
+
 
 
 /* ═══════════════════════════════════════
