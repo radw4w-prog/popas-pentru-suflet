@@ -41,32 +41,38 @@ const NotificationBell = () => {
   }, [loadNotificari]);
 
   const updateDropdownPosition = useCallback(() => {
-    if (!buttonRef.current) return;
+  if (!buttonRef.current) return;
 
-    const rect = buttonRef.current.getBoundingClientRect();
-    const isMobile = window.innerWidth <= 768;
-    const dropdownWidth = Math.min(isMobile ? 320 : 340, window.innerWidth - 24);
+  const rect = buttonRef.current.getBoundingClientRect();
+  const isMobile = window.innerWidth <= 500;
+  const dropdownWidth = isMobile ? window.innerWidth - 24 : 340;
 
-    let top = rect.bottom + 8;
-    let left = rect.right - dropdownWidth;
+  let top = rect.bottom + 8;
+  let left;
 
-    // margine minimă în stânga
+  if (isMobile) {
+    // Pe mobil: centrează pe ecran
+    left = 12;
+  } else {
+    // Pe desktop: aliniază dreapta dropdown cu dreapta butonului
+    left = rect.right - dropdownWidth;
+    // Dacă iese din ecran în stânga
     if (left < 12) left = 12;
+  }
 
-    // dacă pe mobil e prea aproape de marginea dreaptă
-    if (left + dropdownWidth > window.innerWidth - 12) {
-      left = window.innerWidth - dropdownWidth - 12;
-    }
+  // Dacă iese din ecran în dreapta
+  if (left + dropdownWidth > window.innerWidth - 12) {
+    left = window.innerWidth - dropdownWidth - 12;
+  }
 
-    setDropdownStyle({
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${left}px`,
-      width: `${dropdownWidth}px`,
-      maxWidth: 'calc(100vw - 24px)',
-      zIndex: 99999
-    });
-  }, []);
+  setDropdownStyle({
+    position: 'fixed',
+    top: `${Math.round(top)}px`,
+    left: `${Math.round(left)}px`,
+    width: `${dropdownWidth}px`,
+    zIndex: 99999
+  });
+}, []);
 
   useEffect(() => {
     if (!open) return;
