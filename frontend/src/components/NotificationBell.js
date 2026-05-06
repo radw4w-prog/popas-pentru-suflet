@@ -26,18 +26,16 @@ const NotificationBell = () => {
         setTotalNecitite(res.data.totalNecitite || 0);
       }
     } catch (err) {
-      // Ignorăm eroarea silențios
+      // silent fail
     }
   }, []);
 
-  // Load la mount + polling la 5 minute
   useEffect(() => {
     loadNotificari();
     const interval = setInterval(loadNotificari, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [loadNotificari]);
 
-  // Închide la click outside
   useEffect(() => {
     const handleClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -45,12 +43,17 @@ const NotificationBell = () => {
       }
     };
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+    };
   }, []);
 
   const handleOpen = async () => {
-    setOpen(!open);
-    if (!open) {
+    const next = !open;
+    setOpen(next);
+    if (next) {
       await loadNotificari();
     }
   };
@@ -79,8 +82,10 @@ const NotificationBell = () => {
       );
       setNotificari(prev => prev.map(n => ({ ...n, citit: true })));
       setTotalNecitite(0);
-    } catch (err) {}
-    finally { setLoading(false); }
+    } catch (err) {
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id, e) => {
@@ -106,7 +111,11 @@ const NotificationBell = () => {
     if (diff < 60) return 'Acum';
     if (diff < 3600) return `${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-    return d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'short' });
+
+    return d.toLocaleDateString('ro-RO', {
+      day: 'numeric',
+      month: 'short'
+    });
   };
 
   const getTipColor = (tip) => {
@@ -120,48 +129,16 @@ const NotificationBell = () => {
   };
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
-      {/* Bell Button */}
+    <div ref={dropdownRef} className="notification-bell-wrapper">
+      {/* Bell */}
       <button
         onClick={handleOpen}
-        style={{
-          position: 'relative',
-          background: open
-            ? 'rgba(99,102,241,0.1)'
-            : 'var(--bg-card)',
-          border: `1px solid ${open
-            ? 'rgba(99,102,241,0.3)'
-            : 'var(--border-color)'}`,
-          borderRadius: 'var(--radius-md)',
-          padding: '0.45rem 0.65rem',
-          cursor: 'pointer',
-          fontSize: '1.1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.2s',
-          minWidth: 38,
-          minHeight: 38
-        }}
+        className={`notification-bell-btn ${open ? 'open' : ''}`}
         title="Notificări"
       >
         🔔
         {totalNecitite > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: -6, right: -6,
-            background: '#ef4444',
-            color: 'white',
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            borderRadius: '999px',
-            minWidth: 18, height: 18,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 4px',
-            border: '2px solid var(--bg-primary)'
-          }}>
+          <span className="notification-bell-badge">
             {totalNecitite > 99 ? '99+' : totalNecitite}
           </span>
         )}
@@ -169,43 +146,12 @@ const NotificationBell = () => {
 
       {/* Dropdown */}
       {open && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 8px)',
-          right: 0,
-          width: 340,
-          maxWidth: '90vw',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-          zIndex: 1000,
-          overflow: 'hidden'
-        }}>
-          {/* Header */}
-          <div style={{
-            padding: '0.875rem 1rem',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div style={{
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              fontSize: '0.9rem'
-            }}>
+        <div className="notification-dropdown">
+          <div className="notification-dropdown-header">
+            <div className="notification-dropdown-title">
               🔔 Notificări
               {totalNecitite > 0 && (
-                <span style={{
-                  marginLeft: '0.5rem',
-                  background: 'rgba(99,102,241,0.15)',
-                  color: '#6366f1',
-                  fontSize: '0.72rem',
-                  padding: '1px 6px',
-                  borderRadius: '10px',
-                  fontWeight: 600
-                }}>
+                <span className="notification-dropdown-count">
                   {totalNecitite} noi
                 </span>
               )}
@@ -215,35 +161,17 @@ const NotificationBell = () => {
               <button
                 onClick={handleMarkToateCitite}
                 disabled={loading}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#6366f1',
-                  cursor: 'pointer',
-                  fontSize: '0.78rem',
-                  fontWeight: 600
-                }}
+                className="notification-mark-all-btn"
               >
                 {loading ? '...' : '✓ Toate citite'}
               </button>
             )}
           </div>
 
-          {/* Lista notificări */}
-          <div style={{
-            maxHeight: 380,
-            overflowY: 'auto'
-          }}>
+          <div className="notification-dropdown-list">
             {notificari.length === 0 ? (
-              <div style={{
-                padding: '2rem',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.875rem'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-                  🔕
-                </div>
+              <div className="notification-empty">
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
                 Nu ai notificări
               </div>
             ) : (
@@ -251,83 +179,34 @@ const NotificationBell = () => {
                 <div
                   key={notif._id}
                   onClick={() => !notif.citit && handleMarkCitit(notif._id)}
-                  style={{
-                    padding: '0.875rem 1rem',
-                    borderBottom: '1px solid var(--border-color)',
-                    background: notif.citit
-                      ? 'transparent'
-                      : 'rgba(99,102,241,0.04)',
-                    cursor: notif.citit ? 'default' : 'pointer',
-                    display: 'flex',
-                    gap: '0.75rem',
-                    alignItems: 'flex-start',
-                    transition: 'background 0.15s'
-                  }}
+                  className={`notification-item ${notif.citit ? '' : 'unread'}`}
                 >
-                  {/* Icon */}
-                  <div style={{
-                    width: 36, height: 36,
-                    borderRadius: '10px',
-                    background: `${getTipColor(notif.tip)}18`,
-                    border: `1px solid ${getTipColor(notif.tip)}30`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.1rem',
-                    flexShrink: 0
-                  }}>
+                  <div
+                    className="notification-item-icon"
+                    style={{
+                      background: `${getTipColor(notif.tip)}18`,
+                      border: `1px solid ${getTipColor(notif.tip)}30`
+                    }}
+                  >
                     {notif.icon || '🔔'}
                   </div>
 
-                  {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontWeight: notif.citit ? 500 : 700,
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      marginBottom: '0.2rem'
-                    }}>
+                  <div className="notification-item-content">
+                    <div className={`notification-item-title ${notif.citit ? '' : 'strong'}`}>
                       {notif.titlu}
                     </div>
-                    <div style={{
-                      fontSize: '0.78rem',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.4
-                    }}>
+                    <div className="notification-item-text">
                       {notif.mesaj}
                     </div>
-                    <div style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--text-muted)',
-                      marginTop: '0.3rem'
-                    }}>
+                    <div className="notification-item-time">
                       {formatTime(notif.createdAt)}
-                      {!notif.citit && (
-                        <span style={{
-                          marginLeft: '0.5rem',
-                          width: 6, height: 6,
-                          borderRadius: '50%',
-                          background: '#6366f1',
-                          display: 'inline-block',
-                          verticalAlign: 'middle'
-                        }} />
-                      )}
+                      {!notif.citit && <span className="notification-unread-dot" />}
                     </div>
                   </div>
 
-                  {/* Delete */}
                   <button
                     onClick={(e) => handleDelete(notif._id, e)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      padding: '2px',
-                      flexShrink: 0,
-                      opacity: 0.6
-                    }}
+                    className="notification-delete-btn"
                     title="Șterge"
                   >
                     ✕

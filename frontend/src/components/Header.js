@@ -34,18 +34,17 @@ const Header = ({ theme, toggleTheme }) => {
     if (sidebar) {
       const isOpen = sidebar.classList.toggle('open');
       setMenuOpen(isOpen);
-      if (overlay) {
-        overlay.style.display = isOpen ? 'block' : 'none';
-      }
+      if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
     }
   };
 
+  // Close menus on outside click
   useEffect(() => {
     const handleClick = (e) => {
+      // Sidebar
       const sidebar = document.querySelector('.sidebar');
       const overlay = document.querySelector('.sidebar-overlay');
       const btn = document.querySelector('.menu-btn');
-
       if (sidebar && sidebar.classList.contains('open')) {
         if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
           sidebar.classList.remove('open');
@@ -54,27 +53,39 @@ const Header = ({ theme, toggleTheme }) => {
         }
       }
 
+      // User menu
       if (!e.target.closest('.user-menu-wrapper')) {
         setUserMenuOpen(false);
       }
+
+      // Font menu
       if (!e.target.closest('.font-menu-wrapper')) {
         setFontMenuOpen(false);
       }
     };
 
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+    };
   }, []);
 
-  // Închide sidebar la schimbare de rută pe mobile
+  // Close sidebar on route change (mobile)
   useEffect(() => {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-    if (sidebar && isMobile) {
-      sidebar.classList.remove('open');
-      setMenuOpen(false);
-      if (overlay) overlay.style.display = 'none';
+    if (isMobile) {
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.querySelector('.sidebar-overlay');
+      if (sidebar) {
+        sidebar.classList.remove('open');
+        setMenuOpen(false);
+        if (overlay) overlay.style.display = 'none';
+      }
     }
+    // Close all dropdowns on route change
+    setUserMenuOpen(false);
+    setFontMenuOpen(false);
   }, [location.pathname, isMobile]);
 
   const pageTitles = {
@@ -82,6 +93,7 @@ const Header = ({ theme, toggleTheme }) => {
     '/devotional': { title: 'Devoțional zilnic', subtitle: 'meditație, rugăciune și aplicație practică' },
     '/generate': { title: 'Creator Creștin', subtitle: 'imagini și texte inspiraționale pentru postări' },
     '/bookmarks': { title: 'Semnele mele', subtitle: 'versete salvate, evidențiate și cu notițe personale' },
+    '/prayer': { title: 'Cereri de rugăciune', subtitle: 'comunitate de rugăciune și susținere' },
     '/schedule': { title: 'Programări Facebook', subtitle: 'publicare organizată și consecventă' },
     '/history': { title: 'Istoric Publicări', subtitle: 'urmărește postările create și distribuite' },
     '/verses': { title: 'Biblia Cornilescu', subtitle: '31.102 versete pentru citire, căutare și meditație' },
@@ -116,13 +128,7 @@ const Header = ({ theme, toggleTheme }) => {
   return (
     <div className="header">
       {/* STÂNGA */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.65rem',
-        minWidth: 0,
-        flex: 1
-      }}>
+      <div className="header-left">
         <button
           className="menu-btn"
           onClick={toggleMenu}
@@ -131,87 +137,35 @@ const Header = ({ theme, toggleTheme }) => {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <h1 className="header-title" style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            {current.title}
-          </h1>
-          <div className="header-subtext">
-            {current.subtitle}
-          </div>
+        <div className="header-info">
+          <h1 className="header-title">{current.title}</h1>
+          <div className="header-subtext">{current.subtitle}</div>
         </div>
       </div>
 
       {/* DREAPTA */}
       <div className="header-actions">
 
-        {/* FONT SIZE - ascuns pe mobile mic */}
+        {/* FONT SIZE - doar desktop */}
         {!isMobile && (
-          <div className="font-menu-wrapper" style={{ position: 'relative' }}>
+          <div className="font-menu-wrapper">
             <button
               onClick={() => setFontMenuOpen(!fontMenuOpen)}
+              className="header-action-btn"
               title="Mărime text"
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0.45rem 0.75rem',
-                cursor: 'pointer',
-                color: 'var(--text-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '0.85rem'
-              }}
             >
               <span>Aa</span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▼</span>
+              <span className="header-action-arrow">▼</span>
             </button>
 
             {fontMenuOpen && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0.5rem',
-                zIndex: 1000,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-                minWidth: 140
-              }}>
-                <div style={{
-                  fontSize: '0.7rem',
-                  color: 'var(--text-muted)',
-                  padding: '0.25rem 0.5rem',
-                  marginBottom: '0.25rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Mărime text
-                </div>
+              <div className="header-font-dropdown">
+                <div className="header-dropdown-label">Mărime text</div>
                 {fontSizeOptions.map(opt => (
                   <button
                     key={opt.key}
                     onClick={() => { setFontSize(opt.key); setFontMenuOpen(false); }}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      background: fontSize === opt.key ? 'rgba(99,102,241,0.1)' : 'transparent',
-                      border: fontSize === opt.key ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      color: fontSize === opt.key ? '#6366f1' : 'var(--text-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.5rem',
-                      marginBottom: '2px'
-                    }}
+                    className={`header-dropdown-option ${fontSize === opt.key ? 'active' : ''}`}
                   >
                     <span style={{ fontSize: opt.size, fontWeight: 600 }}>{opt.label}</span>
                     <span style={{ fontSize: opt.size, opacity: 0.6 }}>Abc</span>
@@ -225,28 +179,17 @@ const Header = ({ theme, toggleTheme }) => {
         {/* THEME */}
         <button
           onClick={toggleTheme}
+          className="header-action-btn header-theme-btn"
           title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
           style={{
             background: theme === 'dark'
               ? 'linear-gradient(135deg, rgba(244,208,63,0.15), rgba(244,208,63,0.05))'
               : 'linear-gradient(135deg, rgba(30,30,60,0.15), rgba(30,30,60,0.05))',
-            border: `1px solid ${theme === 'dark' ? 'rgba(244,208,63,0.3)' : 'rgba(30,30,60,0.2)'}`,
-            borderRadius: 'var(--radius-md)',
-            padding: '0.45rem 0.65rem',
-            cursor: 'pointer',
-            fontSize: '1rem',
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            transition: 'all 0.3s ease',
-            flexShrink: 0
+            borderColor: theme === 'dark' ? 'rgba(244,208,63,0.3)' : 'rgba(30,30,60,0.2)'
           }}
         >
           {theme === 'dark' ? '☀️' : '🌙'}
-          <span className="theme-label" style={{ fontSize: '0.78rem', fontWeight: 500 }}>
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </span>
+          <span className="theme-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
         </button>
 
         {/* CEAS - doar desktop */}
@@ -259,138 +202,83 @@ const Header = ({ theme, toggleTheme }) => {
 
         {/* USER MENU */}
         {isAuthenticated ? (
-          <div className="user-menu-wrapper" style={{ position: 'relative' }}>
+          <div className="user-menu-wrapper">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0.4rem 0.65rem',
-                cursor: 'pointer',
-                color: 'var(--text-primary)',
-                transition: 'all 0.2s',
-                flexShrink: 0
-              }}
+              className="header-user-btn"
             >
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: isAdmin
-                  ? 'linear-gradient(135deg, #f4d03f, #e67e22)'
-                  : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                color: 'white',
-                flexShrink: 0,
-                overflow: 'hidden'
-              }}>
+              <div
+                className="header-user-avatar"
+                style={{
+                  background: isAdmin
+                    ? 'linear-gradient(135deg, #f4d03f, #e67e22)'
+                    : 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                }}
+              >
                 {user?.avatar ? (
-                  <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={user.avatar} alt="" className="header-user-avatar-img" />
                 ) : (
                   getInitiale(user?.nume)
                 )}
               </div>
 
-              <span className="user-name" style={{
-                fontSize: '0.82rem',
-                fontWeight: 500,
-                maxWidth: 80,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}>
-                {user?.nume}
-              </span>
+              <span className="user-name">{user?.nume}</span>
 
-              {isAdmin && (
-                <span className="admin-badge" style={{
-                  fontSize: '0.6rem',
-                  background: 'linear-gradient(135deg, #f4d03f, #e67e22)',
-                  color: '#000',
-                  padding: '1px 5px',
-                  borderRadius: '10px',
-                  fontWeight: 700
-                }}>
-                  ADMIN
-                </span>
-              )}
+              {isAdmin && <span className="admin-badge">ADMIN</span>}
 
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              <span className="header-action-arrow">
                 {userMenuOpen ? '▲' : '▼'}
               </span>
             </button>
 
             {userMenuOpen && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '0.5rem',
-                minWidth: 210,
-                zIndex: 1000,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
-              }}>
-                <div style={{
-                  padding: '0.5rem 0.75rem',
-                  borderBottom: '1px solid var(--border-color)',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {user?.nume}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {user?.email}
-                  </div>
+              <div className="header-user-dropdown">
+                {/* User info */}
+                <div className="header-dropdown-user-info">
+                  <div className="header-dropdown-user-name">{user?.nume}</div>
+                  <div className="header-dropdown-user-email">{user?.email}</div>
                 </div>
 
                 {isAdmin && (
-                  <button onClick={() => { navigate('/admin'); setUserMenuOpen(false); }} style={dropdownItemStyle}>
+                  <button
+                    onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
+                    className="header-dropdown-item"
+                  >
                     🛡️ Admin Panel
                   </button>
                 )}
 
-                <button onClick={() => { navigate('/settings'); setUserMenuOpen(false); }} style={dropdownItemStyle}>
+                <button
+                  onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
+                  className="header-dropdown-item"
+                >
                   ⚙️ Setări cont
                 </button>
 
-                {/* Font size în dropdown pe mobile */}
+                {/* Font size pe mobile - în user dropdown */}
                 {isMobile && (
                   <>
-                    <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
-                    <div style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Mărime text
-                    </div>
+                    <div className="header-dropdown-separator" />
+                    <div className="header-dropdown-label">Mărime text</div>
                     {fontSizeOptions.map(opt => (
                       <button
                         key={opt.key}
                         onClick={() => { setFontSize(opt.key); setUserMenuOpen(false); }}
-                        style={{
-                          ...dropdownItemStyle,
-                          color: fontSize === opt.key ? '#6366f1' : 'var(--text-primary)',
-                          background: fontSize === opt.key ? 'rgba(99,102,241,0.08)' : 'transparent'
-                        }}
+                        className={`header-dropdown-item ${fontSize === opt.key ? 'font-active' : ''}`}
                       >
                         <span style={{ fontSize: opt.size }}>Aa</span>
-                        {opt.label}
+                        <span>{opt.label}</span>
                         {fontSize === opt.key && <span style={{ marginLeft: 'auto' }}>✓</span>}
                       </button>
                     ))}
                   </>
                 )}
 
-                <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
-                <button onClick={handleLogout} style={{ ...dropdownItemStyle, color: '#ef4444' }}>
+                <div className="header-dropdown-separator" />
+                <button
+                  onClick={handleLogout}
+                  className="header-dropdown-item logout"
+                >
                   🚪 Deconectare
                 </button>
               </div>
@@ -399,20 +287,7 @@ const Header = ({ theme, toggleTheme }) => {
         ) : (
           <button
             onClick={() => navigate('/login')}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              padding: '0.45rem 1rem',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              color: 'white',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0
-            }}
+            className="header-login-btn"
           >
             🔑 <span className="theme-label">Login</span>
           </button>
@@ -420,23 +295,6 @@ const Header = ({ theme, toggleTheme }) => {
       </div>
     </div>
   );
-};
-
-const dropdownItemStyle = {
-  width: '100%',
-  padding: '0.6rem 0.75rem',
-  background: 'transparent',
-  border: 'none',
-  borderRadius: 'var(--radius-sm)',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  color: 'var(--text-primary)',
-  textAlign: 'left',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  transition: 'background 0.15s',
-  WebkitTapHighlightColor: 'transparent'
 };
 
 export default Header;

@@ -1,0 +1,10 @@
+Frontend Vercel
+✅ Backend Render  
+✅ MongoDB Atlas
+✅ AI Groq + Gemini
+✅ Facebook Login + Post + Schedule
+✅ Biblia 31.102 versete
+✅ Devoțional zilnic AI
+✅ Cereri de rugăciune ← NOU
+✅ PWA Mobile
+✅ Cost: 0 lei/lună
