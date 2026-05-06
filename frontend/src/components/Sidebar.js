@@ -13,6 +13,8 @@ const Sidebar = ({ theme }) => {
     { path: '/generate', icon: '✨', label: 'Generează' },
     { path: '/verses', icon: '📖', label: 'Biblia' },
     { path: '/devotional', icon: '🙏', label: 'Devoțional zilnic' },
+	// În publicItems sau userItems:
+{ path: '/prayer', icon: '🙏', label: 'Cereri rugăciune' }
   ];
 
   const userItems = [

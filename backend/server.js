@@ -63,6 +63,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/devotionals', require('./routes/devotionals'));
+app.use('/api/prayer', require('./routes/prayer'));
+
 
 // ═══════════════════════════════════════
 // SCHEDULER

@@ -24,6 +24,7 @@ import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import PrayerPage from './pages/PrayerPage';
 
 import './styles/App.css';
 import './styles/Premium.css';
@@ -103,6 +104,11 @@ function App() {
                 <DashboardPage />
               </AppLayout>
             } />
+			<Route path="/prayer" element={
+  <AppLayout theme={theme} toggleTheme={toggleTheme}>
+    <PrayerPage />
+  </AppLayout>
+} />
             <Route path="/devotional" element={
               <AppLayout theme={theme} toggleTheme={toggleTheme}>
                 <DevotionalPage />
