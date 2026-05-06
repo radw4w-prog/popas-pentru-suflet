@@ -1,6 +1,6 @@
 	import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 	import axios from 'axios';
-import api from '../services/api'; // ← importă instanța
+
 
 	const AuthContext = createContext(null);
 	const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -59,14 +59,14 @@ import api from '../services/api'; // ← importă instanța
 	  const [user, setUser] = useState(null);
 	  const [loading, setLoading] = useState(true);
 
-	  const setAuthHeader = useCallback((tok) => {
+	  // În AuthContext.js - ȘTERGE importul de api și revert la original:
+// NU mai ai nevoie de: import api from '../services/api';
+
+const setAuthHeader = useCallback((tok) => {
   if (tok) {
-    // Setează pe AMBELE
     axios.defaults.headers.common['Authorization'] = `Bearer ${tok}`;
-    api.defaults.headers.common['Authorization'] = `Bearer ${tok}`;
   } else {
     delete axios.defaults.headers.common['Authorization'];
-    delete api.defaults.headers.common['Authorization'];
   }
 }, []);
 
