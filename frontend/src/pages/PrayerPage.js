@@ -1,26 +1,6 @@
 // frontend/src/pages/PrayerPage.js
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || '';
-
-// Helper cu token garantat
-const authCall = {
-  get: (url) => axios.get(`${API_URL}${url}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  }),
-  post: (url, data = {}) => axios.post(`${API_URL}${url}`, data, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  }),
-  patch: (url, data = {}) => axios.patch(`${API_URL}${url}`, data, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  }),
-  delete: (url) => axios.delete(`${API_URL}${url}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  })
-};
 
 const CATEGORII = [
   { id: 'toate', label: 'Toate', icon: '🙏' },
@@ -34,18 +14,76 @@ const CATEGORII = [
   { id: 'altele', label: 'Altele', icon: '📌' }
 ];
 
+// ✅ HTTP helper cu fetch nativ - fără axios, fără api.js
+const API_URL = process.env.REACT_APP_API_URL || '';
+
+const http = {
+  getToken: () => localStorage.getItem('token') || '',
+
+  async get(path) {
+    const r = await fetch(`${API_URL}${path}`, {
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || data.error || `Eroare ${r.status}`);
+    return data;
+  },
+
+  async post(path, body = {}) {
+    const r = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || data.error || `Eroare ${r.status}`);
+    return data;
+  },
+
+  async patch(path, body = {}) {
+    const r = await fetch(`${API_URL}${path}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || data.error || `Eroare ${r.status}`);
+    return data;
+  },
+
+  async delete(path) {
+    const r = await fetch(`${API_URL}${path}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || data.error || `Eroare ${r.status}`);
+    return data;
+  }
+};
+
 const PrayerPage = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
 
   const [cereri, setCereri] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
   const [categorie, setCategorie] = useState('toate');
   const [sort, setSort] = useState('nou');
-  const [tab, setTab] = useState('lista'); // lista | adauga | ale-mele
-
+  const [tab, setTab] = useState('lista');
   const [form, setForm] = useState({
     titlu: '',
     cerere: '',
@@ -53,11 +91,8 @@ const PrayerPage = () => {
     anonim: false,
     vizibilitate: 'public'
   });
-
   const [cereriMele, setCereriMele] = useState([]);
   const [toast, setToast] = useState('');
-  const [rugaciuniLocale, setRugaciuniLocale] = useState({});
-  const { isAuthenticated, isAdmin, user } = useAuth();
 
   const showToast = (msg) => {
     setToast(msg);
@@ -66,19 +101,22 @@ const PrayerPage = () => {
 
   const loadStats = useCallback(async () => {
     try {
-      const res = await api.get('/api/prayer/stats');
-      if (res.data.success) setStats(res.data.stats);
-    } catch (e) {}
+      const data = await http.get('/api/prayer/stats');
+      if (data.success) setStats(data.stats);
+    } catch (e) {
+      console.error('Stats error:', e.message);
+    }
   }, []);
 
   const loadCereri = useCallback(async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({ categorie, sort, limit: 30 });
-      const res = await api.get(`/api/prayer?${params}`);
-      if (res.data.success) setCereri(res.data.data);
+      const data = await http.get(
+        `/api/prayer?categorie=${categorie}&sort=${sort}&limit=30`
+      );
+      if (data.success) setCereri(data.data);
     } catch (e) {
-      console.error('Load error:', e.message);
+      console.error('Load cereri error:', e.message);
     } finally {
       setLoading(false);
     }
@@ -87,9 +125,11 @@ const PrayerPage = () => {
   const loadCereriMele = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      const res = await api.get('/api/prayer/ale-mele');
-      if (res.data.success) setCereriMele(res.data.data);
-    } catch (e) {}
+      const data = await http.get('/api/prayer/ale-mele');
+      if (data.success) setCereriMele(data.data);
+    } catch (e) {
+      console.error('Ale mele error:', e.message);
+    }
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -107,19 +147,33 @@ const PrayerPage = () => {
       showToast('❌ Completează titlul și cererea!');
       return;
     }
+    if (!isAuthenticated) {
+      showToast('❌ Trebuie să fii autentificat!');
+      return;
+    }
 
     try {
       setSubmitting(true);
-      const res = await api.post('/api/prayer', form);
-      if (res.data.success) {
+      const token = http.getToken();
+      console.log('🔑 Submit - token preview:', token?.substring(0, 30));
+
+      const data = await http.post('/api/prayer', form);
+      if (data.success) {
         showToast('✅ Cererea a fost adăugată!');
-        setForm({ titlu: '', cerere: '', categorie: 'altele', anonim: false, vizibilitate: 'public' });
+        setForm({
+          titlu: '',
+          cerere: '',
+          categorie: 'altele',
+          anonim: false,
+          vizibilitate: 'public'
+        });
         setTab('lista');
         loadCereri();
         loadStats();
       }
     } catch (e) {
-      showToast('❌ ' + (e.response?.data?.error || 'Eroare la salvare'));
+      console.error('Submit error:', e.message);
+      showToast('❌ ' + e.message);
     } finally {
       setSubmitting(false);
     }
@@ -127,30 +181,14 @@ const PrayerPage = () => {
 
   const handlePray = async (id) => {
     try {
-      const res = await api.post(`/api/prayer/${id}/pray`);
-      if (res.data.success) {
+      const data = await http.post(`/api/prayer/${id}/pray`);
+      if (data.success) {
         setCereri(prev => prev.map(c =>
           c._id === id
-            ? { ...c, rugaciuni: res.data.rugaciuni, euMAmRugat: res.data.euMAmRugat }
+            ? { ...c, rugaciuni: data.rugaciuni, euMAmRugat: data.euMAmRugat }
             : c
         ));
-        setRugaciuniLocale(prev => ({ ...prev, [id]: res.data.euMAmRugat }));
-        showToast(res.data.euMAmRugat ? '🙏 M-am rugat pentru această cerere!' : '↩️ Rugăciune anulată');
-      }
-    } catch (e) {
-      showToast('❌ Eroare');
-    }
-  };
-
-  const handleResolve = async (id) => {
-    try {
-      const res = await api.patch(`/api/prayer/${id}/resolve`);
-      if (res.data.success) {
-        setCereriMele(prev => prev.map(c =>
-          c._id === id ? { ...c, rezolvat: res.data.data.rezolvat } : c
-        ));
-        showToast(res.data.data.rezolvat ? '✅ Marcat ca răspuns!' : '↩️ Reactivat');
-        loadStats();
+        showToast(data.euMAmRugat ? '🙏 M-am rugat!' : '↩️ Anulat');
       }
     } catch (e) {
       showToast('❌ Eroare');
@@ -160,12 +198,32 @@ const PrayerPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Ștergi această cerere?')) return;
     try {
-      await api.delete(`/api/prayer/${id}`);
+      await http.delete(`/api/prayer/${id}`);
+      setCereri(prev => prev.filter(c => c._id !== id));
       setCereriMele(prev => prev.filter(c => c._id !== id));
       showToast('🗑️ Cerere ștearsă');
       loadStats();
     } catch (e) {
-      showToast('❌ Eroare la ștergere');
+      console.error('Delete error:', e.message);
+      showToast('❌ ' + e.message);
+    }
+  };
+
+  const handleResolve = async (id) => {
+    try {
+      const data = await http.patch(`/api/prayer/${id}/resolve`);
+      if (data.success) {
+        setCereri(prev => prev.map(c =>
+          c._id === id ? { ...c, rezolvat: data.data.rezolvat } : c
+        ));
+        setCereriMele(prev => prev.map(c =>
+          c._id === id ? { ...c, rezolvat: data.data.rezolvat } : c
+        ));
+        showToast(data.data.rezolvat ? '✅ Marcată ca răspunsă!' : '↩️ Reactivată');
+        loadStats();
+      }
+    } catch (e) {
+      showToast('❌ ' + e.message);
     }
   };
 
@@ -175,8 +233,7 @@ const PrayerPage = () => {
   const formatDate = (d) => {
     if (!d) return '';
     const date = new Date(d);
-    const acum = Date.now();
-    const diff = acum - date.getTime();
+    const diff = Date.now() - date.getTime();
     const ore = Math.floor(diff / 3600000);
     const zile = Math.floor(diff / 86400000);
     if (ore < 1) return 'acum câteva minute';
@@ -198,10 +255,8 @@ const PrayerPage = () => {
           <div className="prayer-hero-icon">🙏</div>
           <h1 className="prayer-hero-title">Cereri de Rugăciune</h1>
           <p className="prayer-hero-sub">
-            Împreună suntem mai puternici în rugăciune. Adaugă o cerere sau roagă-te pentru cei din comunitate.
+            Împreună suntem mai puternici în rugăciune.
           </p>
-
-          {/* Stats */}
           {stats && (
             <div className="prayer-stats-row">
               <div className="prayer-stat">
@@ -233,9 +288,15 @@ const PrayerPage = () => {
         </button>
         <button
           className={`prayer-tab ${tab === 'adauga' ? 'active' : ''}`}
-          onClick={() => setTab('adauga')}
+          onClick={() => {
+            if (!isAuthenticated) {
+              showToast('🔑 Trebuie să fii autentificat!');
+              return;
+            }
+            setTab('adauga');
+          }}
         >
-          ➕ Adaugă cerere
+          ➕ Adaugă
         </button>
         {isAuthenticated && (
           <button
@@ -247,11 +308,9 @@ const PrayerPage = () => {
         )}
       </div>
 
-      {/* ═══ LISTA CERERI ═══ */}
+      {/* LISTA */}
       {tab === 'lista' && (
         <div className="prayer-lista">
-
-          {/* Filtre */}
           <div className="prayer-filters">
             <div className="prayer-cats">
               {CATEGORII.map(cat => (
@@ -264,7 +323,6 @@ const PrayerPage = () => {
                 </button>
               ))}
             </div>
-
             <div className="prayer-sort">
               <select
                 value={sort}
@@ -279,64 +337,67 @@ const PrayerPage = () => {
             </div>
           </div>
 
-          {/* Cards */}
           {loading ? (
             <div className="prayer-loading">
               <div className="spinner" />
-              <p>Se încarcă cererile...</p>
+              <p>Se încarcă...</p>
             </div>
           ) : cereri.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🙏</div>
-              <div className="empty-state-title">Nu există cereri în această categorie</div>
-              <div className="empty-state-text">Fii primul care adaugă o cerere de rugăciune!</div>
-              <button className="btn btn-gold" onClick={() => setTab('adauga')} style={{ marginTop: '1rem' }}>
+              <div className="empty-state-title">Nu există cereri</div>
+              <button
+                className="btn btn-gold"
+                onClick={() => setTab('adauga')}
+                style={{ marginTop: '1rem' }}
+              >
                 ➕ Adaugă cerere
               </button>
             </div>
           ) : (
             <div className="prayer-cards">
               {cereri.map(cerere => (
-  <PrayerCard
-    key={cerere._id}
-    cerere={cerere}
-    onPray={handlePray}
-    onDelete={handleDelete}
-    onResolve={handleResolve}
-    getCatIcon={getCatIcon}
-    getCatLabel={getCatLabel}
-    formatDate={formatDate}
-    isAdmin={isAdmin}
-  />
-))}
+                <PrayerCard
+                  key={cerere._id}
+                  cerere={cerere}
+                  onPray={handlePray}
+                  onDelete={handleDelete}
+                  onResolve={handleResolve}
+                  getCatIcon={getCatIcon}
+                  getCatLabel={getCatLabel}
+                  formatDate={formatDate}
+                  currentUserId={user?._id || user?.id}
+                  isAdminUser={isAdmin}
+                />
+              ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ═══ ADAUGĂ CERERE ═══ */}
+      {/* ADAUGĂ */}
       {tab === 'adauga' && (
         <div className="prayer-form-wrap">
           <div className="prayer-form-card">
             <div className="prayer-form-header">
               <h2 className="prayer-form-title">🙏 Adaugă cererea ta</h2>
               <p className="prayer-form-sub">
-                Comunitatea va fi alături de tine în rugăciune. Poți fi anonim dacă dorești.
+                Comunitatea va fi alături de tine în rugăciune.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="prayer-form">
               <div className="form-group">
-                <label className="form-label">Titlu cerere *</label>
+                <label className="form-label">Titlu *</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="ex: Rugăciune pentru vindecarea mamei mele"
+                  placeholder="ex: Rugăciune pentru vindecarea mamei"
                   value={form.titlu}
                   onChange={e => setForm(p => ({ ...p, titlu: e.target.value }))}
                   maxLength={100}
                 />
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '2px' }}>
                   {form.titlu.length}/100
                 </div>
               </div>
@@ -345,13 +406,13 @@ const PrayerPage = () => {
                 <label className="form-label">Cererea ta *</label>
                 <textarea
                   className="form-textarea"
-                  placeholder="Scrie cererea ta de rugăciune... Cu cât ești mai specific, cu atât comunitatea se poate ruga mai bine pentru tine."
+                  placeholder="Scrie cererea ta de rugăciune..."
                   value={form.cerere}
                   onChange={e => setForm(p => ({ ...p, cerere: e.target.value }))}
                   maxLength={1000}
                   rows={5}
                 />
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: 'right' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '2px' }}>
                   {form.cerere.length}/1000
                 </div>
               </div>
@@ -373,20 +434,18 @@ const PrayerPage = () => {
                 </div>
               </div>
 
-              <div className="prayer-options">
-                <label className="prayer-option-row">
-                  <input
-                    type="checkbox"
-                    checked={form.anonim}
-                    onChange={e => setForm(p => ({ ...p, anonim: e.target.checked }))}
-                    style={{ accentColor: 'var(--gold-primary)', width: 16, height: 16 }}
-                  />
-                  <span>Postează anonim</span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    (numele tău nu va fi afișat)
-                  </span>
-                </label>
-              </div>
+              <label className="prayer-option-row">
+                <input
+                  type="checkbox"
+                  checked={form.anonim}
+                  onChange={e => setForm(p => ({ ...p, anonim: e.target.checked }))}
+                  style={{ accentColor: 'var(--gold-primary)', width: 16, height: 16 }}
+                />
+                <span>Postează anonim</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  (numele nu va fi afișat)
+                </span>
+              </label>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
@@ -407,7 +466,6 @@ const PrayerPage = () => {
             </form>
           </div>
 
-          {/* Verset de încurajare */}
           <div className="prayer-encourage">
             <div className="prayer-encourage-icon">✝️</div>
             <p className="prayer-encourage-text">
@@ -418,31 +476,28 @@ const PrayerPage = () => {
         </div>
       )}
 
-      {/* ═══ ALE MELE ═══ */}
+      {/* ALE MELE */}
       {tab === 'ale-mele' && isAuthenticated && (
         <div className="prayer-mele">
           {cereriMele.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🙏</div>
-              <div className="empty-state-title">Nu ai cereri de rugăciune</div>
-             <button
-  className={`prayer-tab ${tab === 'adauga' ? 'active' : ''}`}
-  onClick={() => {
-    if (!isAuthenticated) {
-      showToast('🔑 Trebuie să fii autentificat pentru a adăuga o cerere.');
-      return;
-    }
-    setTab('adauga');
-  }}
->
-  ➕ Adaugă cerere
-</button>
-			  
+              <div className="empty-state-title">Nu ai cereri</div>
+              <button
+                className="btn btn-gold"
+                onClick={() => setTab('adauga')}
+                style={{ marginTop: '1rem' }}
+              >
+                ➕ Prima cerere
+              </button>
             </div>
           ) : (
             <div className="prayer-cards">
               {cereriMele.map(cerere => (
-                <div key={cerere._id} className={`prayer-card my-card ${cerere.rezolvat ? 'resolved' : ''}`}>
+                <div
+                  key={cerere._id}
+                  className={`prayer-card my-card ${cerere.rezolvat ? 'resolved' : ''}`}
+                >
                   <div className="prayer-card-top">
                     <span className="prayer-cat-badge">
                       {getCatIcon(cerere.categorie)} {getCatLabel(cerere.categorie)}
@@ -456,14 +511,10 @@ const PrayerPage = () => {
                       </span>
                     </div>
                   </div>
-
                   <h3 className="prayer-card-title">{cerere.titlu}</h3>
                   <p className="prayer-card-text">{cerere.cerere}</p>
-
                   <div className="prayer-card-bottom">
-                    <div className="prayer-rugaciuni">
-                      🙏 {cerere.rugaciuni} rugăciuni
-                    </div>
+                    <div className="prayer-rugaciuni">🙏 {cerere.rugaciuni} rugăciuni</div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
                         onClick={() => handleResolve(cerere._id)}
@@ -490,9 +541,19 @@ const PrayerPage = () => {
 };
 
 // ═══════════════════════════════════════
-// PRAYER CARD COMPONENT
+// PRAYER CARD
 // ═══════════════════════════════════════
-const PrayerCard = ({ cerere, onPray, onDelete, onResolve, getCatIcon, getCatLabel, formatDate, isAdmin }) => {
+const PrayerCard = ({
+  cerere,
+  onPray,
+  onDelete,
+  onResolve,
+  getCatIcon,
+  getCatLabel,
+  formatDate,
+  currentUserId,
+  isAdminUser
+}) => {
   const [praying, setPraying] = useState(false);
 
   const handlePray = async () => {
@@ -502,13 +563,18 @@ const PrayerCard = ({ cerere, onPray, onDelete, onResolve, getCatIcon, getCatLab
     setTimeout(() => setPraying(false), 1000);
   };
 
+  // Verifică dacă poate șterge/edita
+  const ownerId = cerere.userId?.toString ? cerere.userId.toString() : cerere.userId;
+  const userId = currentUserId?.toString ? currentUserId.toString() : currentUserId;
+  const canModify = isAdminUser || (userId && ownerId && ownerId === userId) || cerere.poateSterge;
+
   return (
     <div className={`prayer-card ${cerere.rezolvat ? 'resolved' : ''}`}>
       <div className="prayer-card-top">
         <span className="prayer-cat-badge">
           {getCatIcon(cerere.categorie)} {getCatLabel(cerere.categorie)}
         </span>
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
           {cerere.rezolvat && (
             <span className="prayer-resolved-badge">✅ Răspunsă</span>
           )}
@@ -524,12 +590,12 @@ const PrayerCard = ({ cerere, onPray, onDelete, onResolve, getCatIcon, getCatLab
       <div className="prayer-card-bottom">
         <div className="prayer-card-author">
           <span className="prayer-author-avatar">
-            {cerere.numeAfisat?.[0] || '?'}
+            {cerere.numeAfisat?.[0]?.toUpperCase() || '?'}
           </span>
           <span className="prayer-author-name">{cerere.numeAfisat}</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
           <button
             onClick={handlePray}
             disabled={praying}
@@ -542,8 +608,7 @@ const PrayerCard = ({ cerere, onPray, onDelete, onResolve, getCatIcon, getCatLab
             </span>
           </button>
 
-          {/* Butoane admin/autor */}
-          {cerere.poateSterge && (
+          {canModify && (
             <>
               <button
                 onClick={() => onResolve(cerere._id)}
