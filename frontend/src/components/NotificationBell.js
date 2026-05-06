@@ -30,7 +30,7 @@ const NotificationBell = () => {
         setTotalNecitite(res.data.totalNecitite || 0);
       }
     } catch (err) {
-      // silent fail
+      // silent
     }
   }, []);
 
@@ -48,35 +48,46 @@ const NotificationBell = () => {
     const vh = window.innerHeight;
     const mobile = vw <= 768;
 
-    const panelWidth = mobile ? Math.min(vw - 24, 360) : 340;
     let top = rect.bottom + 10;
-    let left = mobile ? 12 : rect.right - panelWidth;
 
-    if (left < 12) left = 12;
-    if (left + panelWidth > vw - 12) {
-      left = vw - panelWidth - 12;
-    }
-
-    let maxHeight = vh - top - 12;
-    if (maxHeight < 220) {
+    // dacă e prea jos, mută puțin mai sus
+    if (top > vh - 180) {
       top = Math.max(12, vh - 420);
-      maxHeight = vh - top - 12;
     }
 
-    setPanelStyle({
-      position: 'fixed',
-      top: `${Math.round(top)}px`,
-      left: `${Math.round(left)}px`,
-      width: `${Math.round(panelWidth)}px`,
-      maxWidth: 'calc(100vw - 24px)',
-      maxHeight: `${Math.round(maxHeight)}px`,
-      zIndex: 100000,
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '18px',
-      boxShadow: '0 18px 48px rgba(0,0,0,0.38)',
-      overflow: 'hidden'
-    });
+    if (mobile) {
+      setPanelStyle({
+        position: 'fixed',
+        top: `${Math.round(top)}px`,
+        left: '12px',
+        right: '12px',
+        width: 'auto',
+        maxHeight: `${Math.max(220, vh - top - 12)}px`,
+        zIndex: 100000,
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '18px',
+        boxShadow: '0 18px 48px rgba(0,0,0,0.38)',
+        overflow: 'hidden'
+      });
+    } else {
+      // ✅ desktop: poziționare simplă și stabilă
+      setPanelStyle({
+        position: 'fixed',
+        top: `${Math.round(top)}px`,
+        right: '16px',
+        left: 'auto',
+        width: '340px',
+        maxWidth: '340px',
+        maxHeight: `${Math.max(240, vh - top - 16)}px`,
+        zIndex: 100000,
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '18px',
+        boxShadow: '0 18px 48px rgba(0,0,0,0.38)',
+        overflow: 'hidden'
+      });
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -191,216 +202,214 @@ const NotificationBell = () => {
     return colors[tip] || '#6366f1';
   };
 
-  const panel = open ? ReactDOM.createPortal(
-    <>
-      {/* Backdrop transparent pentru click outside */}
-      <div
-        onClick={() => setOpen(false)}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 99998,
-          background: 'transparent'
-        }}
-      />
-
-      <div
-        ref={panelRef}
-        style={panelStyle}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: '0.9rem 1rem',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '0.75rem',
-            background: 'var(--bg-card)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 2
-          }}
-        >
+  const panel = open
+    ? ReactDOM.createPortal(
+        <>
           <div
+            onClick={() => setOpen(false)}
             style={{
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              fontSize: '0.92rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              minWidth: 0
+              position: 'fixed',
+              inset: 0,
+              zIndex: 99999,
+              background: 'transparent'
             }}
+          />
+
+          <div
+            ref={panelRef}
+            style={panelStyle}
+            onClick={(e) => e.stopPropagation()}
           >
-            <span>🔔 Notificări</span>
-            {totalNecitite > 0 && (
-              <span
-                style={{
-                  background: 'rgba(99,102,241,0.15)',
-                  color: '#6366f1',
-                  fontSize: '0.72rem',
-                  padding: '2px 7px',
-                  borderRadius: '999px',
-                  fontWeight: 700,
-                  flexShrink: 0
-                }}
-              >
-                {totalNecitite} noi
-              </span>
-            )}
-          </div>
-
-          {totalNecitite > 0 && (
-            <button
-              type="button"
-              onClick={handleMarkToateCitite}
-              disabled={loading}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#6366f1',
-                cursor: 'pointer',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                flexShrink: 0
-              }}
-            >
-              {loading ? '...' : '✓ Toate'}
-            </button>
-          )}
-        </div>
-
-        {/* Listă */}
-        <div
-          style={{
-            maxHeight: 'inherit',
-            overflowY: 'auto'
-          }}
-        >
-          {notificari.length === 0 ? (
+            {/* Header */}
             <div
               style={{
-                padding: '2rem 1rem',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.88rem'
+                padding: '0.9rem 1rem',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '0.75rem',
+                background: 'var(--bg-card)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 2
               }}
             >
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
-              Nu ai notificări
-            </div>
-          ) : (
-            notificari.map((notif) => (
               <div
-                key={notif._id}
-                onClick={() => !notif.citit && handleMarkCitit(notif._id)}
                 style={{
-                  padding: '0.9rem 1rem',
-                  borderBottom: '1px solid var(--border-color)',
-                  background: notif.citit ? 'transparent' : 'rgba(99,102,241,0.04)',
-                  cursor: notif.citit ? 'default' : 'pointer',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontSize: '0.92rem',
                   display: 'flex',
-                  gap: '0.75rem',
-                  alignItems: 'flex-start',
-                  transition: 'background 0.15s'
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  minWidth: 0
                 }}
               >
-                {/* Icon */}
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: `${getTipColor(notif.tip)}18`,
-                    border: `1px solid ${getTipColor(notif.tip)}30`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.1rem',
-                    flexShrink: 0
-                  }}
-                >
-                  {notif.icon || '🔔'}
-                </div>
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
+                <span>🔔 Notificări</span>
+                {totalNecitite > 0 && (
+                  <span
                     style={{
-                      fontWeight: notif.citit ? 500 : 700,
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      marginBottom: '0.2rem',
-                      lineHeight: 1.35
+                      background: 'rgba(99,102,241,0.15)',
+                      color: '#6366f1',
+                      fontSize: '0.72rem',
+                      padding: '2px 7px',
+                      borderRadius: '999px',
+                      fontWeight: 700,
+                      flexShrink: 0
                     }}
                   >
-                    {notif.titlu}
-                  </div>
+                    {totalNecitite} noi
+                  </span>
+                )}
+              </div>
 
-                  <div
-                    style={{
-                      fontSize: '0.78rem',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.45,
-                      wordBreak: 'break-word'
-                    }}
-                  >
-                    {notif.mesaj}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--text-muted)',
-                      marginTop: '0.35rem'
-                    }}
-                  >
-                    {formatTime(notif.createdAt)}
-                    {!notif.citit && (
-                      <span
-                        style={{
-                          marginLeft: '0.5rem',
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: '#6366f1',
-                          display: 'inline-block',
-                          verticalAlign: 'middle'
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Delete */}
+              {totalNecitite > 0 && (
                 <button
                   type="button"
-                  onClick={(e) => handleDelete(notif._id, e)}
+                  onClick={handleMarkToateCitite}
+                  disabled={loading}
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: 'var(--text-muted)',
+                    color: '#6366f1',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    padding: '2px',
-                    flexShrink: 0,
-                    opacity: 0.75
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    flexShrink: 0
                   }}
-                  title="Șterge"
                 >
-                  ✕
+                  {loading ? '...' : '✓ Toate'}
                 </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </>,
-    document.body
-  ) : null;
+              )}
+            </div>
+
+            {/* Listă */}
+            <div
+              style={{
+                maxHeight: 'inherit',
+                overflowY: 'auto'
+              }}
+            >
+              {notificari.length === 0 ? (
+                <div
+                  style={{
+                    padding: '2rem 1rem',
+                    textAlign: 'center',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.88rem'
+                  }}
+                >
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
+                  Nu ai notificări
+                </div>
+              ) : (
+                notificari.map((notif) => (
+                  <div
+                    key={notif._id}
+                    onClick={() => !notif.citit && handleMarkCitit(notif._id)}
+                    style={{
+                      padding: '0.9rem 1rem',
+                      borderBottom: '1px solid var(--border-color)',
+                      background: notif.citit ? 'transparent' : 'rgba(99,102,241,0.04)',
+                      cursor: notif.citit ? 'default' : 'pointer',
+                      display: 'flex',
+                      gap: '0.75rem',
+                      alignItems: 'flex-start',
+                      transition: 'background 0.15s'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: `${getTipColor(notif.tip)}18`,
+                        border: `1px solid ${getTipColor(notif.tip)}30`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.1rem',
+                        flexShrink: 0
+                      }}
+                    >
+                      {notif.icon || '🔔'}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontWeight: notif.citit ? 500 : 700,
+                          color: 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          marginBottom: '0.2rem',
+                          lineHeight: 1.35
+                        }}
+                      >
+                        {notif.titlu}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: '0.78rem',
+                          color: 'var(--text-secondary)',
+                          lineHeight: 1.45,
+                          wordBreak: 'break-word'
+                        }}
+                      >
+                        {notif.mesaj}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: '0.7rem',
+                          color: 'var(--text-muted)',
+                          marginTop: '0.35rem'
+                        }}
+                      >
+                        {formatTime(notif.createdAt)}
+                        {!notif.citit && (
+                          <span
+                            style={{
+                              marginLeft: '0.5rem',
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              background: '#6366f1',
+                              display: 'inline-block',
+                              verticalAlign: 'middle'
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleDelete(notif._id, e)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        padding: '2px',
+                        flexShrink: 0,
+                        opacity: 0.75
+                      }}
+                      title="Șterge"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>,
+        document.body
+      )
+    : null;
 
   return (
     <>
@@ -414,9 +423,9 @@ const NotificationBell = () => {
           background: open
             ? 'rgba(99,102,241,0.1)'
             : 'var(--bg-card)',
-          border: `1px solid ${open
-            ? 'rgba(99,102,241,0.3)'
-            : 'var(--border-color)'}`,
+          border: `1px solid ${
+            open ? 'rgba(99,102,241,0.3)' : 'var(--border-color)'
+          }`,
           borderRadius: 'var(--radius-md)',
           padding: '0.45rem 0.65rem',
           cursor: 'pointer',
