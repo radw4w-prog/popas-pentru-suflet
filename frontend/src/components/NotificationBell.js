@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 
@@ -9,7 +9,6 @@ const NotificationBell = () => {
   const [totalNecitite, setTotalNecitite] = useState(0);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [panelStyle, setPanelStyle] = useState({});
 
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
@@ -30,7 +29,7 @@ const NotificationBell = () => {
         setTotalNecitite(res.data.totalNecitite || 0);
       }
     } catch (err) {
-      // silent
+      console.error('Notif load error:', err?.response?.data || err.message);
     }
   }, []);
 
@@ -40,90 +39,22 @@ const NotificationBell = () => {
     return () => clearInterval(interval);
   }, [loadNotificari]);
 
-  const computePanelPosition = useCallback(() => {
-    if (!buttonRef.current) return;
-
-    const rect = buttonRef.current.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const mobile = vw <= 768;
-
-    let top = rect.bottom + 10;
-
-    // dacă e prea jos, mută puțin mai sus
-    if (top > vh - 180) {
-      top = Math.max(12, vh - 420);
-    }
-
-    if (mobile) {
-      setPanelStyle({
-        position: 'fixed',
-        top: `${Math.round(top)}px`,
-        left: '12px',
-        right: '12px',
-        width: 'auto',
-        maxHeight: `${Math.max(220, vh - top - 12)}px`,
-        zIndex: 100000,
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '18px',
-        boxShadow: '0 18px 48px rgba(0,0,0,0.38)',
-        overflow: 'hidden'
-      });
-    } else {
-      // ✅ desktop: poziționare simplă și stabilă
-      setPanelStyle({
-        position: 'fixed',
-        top: `${Math.round(top)}px`,
-        right: '16px',
-        left: 'auto',
-        width: '340px',
-        maxWidth: '340px',
-        maxHeight: `${Math.max(240, vh - top - 16)}px`,
-        zIndex: 100000,
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '18px',
-        boxShadow: '0 18px 48px rgba(0,0,0,0.38)',
-        overflow: 'hidden'
-      });
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    computePanelPosition();
-  }, [open, computePanelPosition, totalNecitite, notificari.length]);
-
   useEffect(() => {
     if (!open) return;
 
-    const handleResize = () => computePanelPosition();
-    const handleScroll = () => computePanelPosition();
     const handleKey = (e) => {
       if (e.key === 'Escape') setOpen(false);
     };
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleScroll, true);
     document.addEventListener('keydown', handleKey);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll, true);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open, computePanelPosition]);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [open]);
 
   const handleOpen = async () => {
     const next = !open;
     setOpen(next);
-
     if (next) {
       await loadNotificari();
-      requestAnimationFrame(() => {
-        computePanelPosition();
-      });
     }
   };
 
@@ -202,51 +133,76 @@ const NotificationBell = () => {
     return colors[tip] || '#6366f1';
   };
 
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+
   const panel = open
     ? ReactDOM.createPortal(
-        <>
-          <div
-            onClick={() => setOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 99999,
-              background: 'transparent'
-            }}
-          />
-
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100000,
+            background: 'rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: isMobile ? 'flex-end' : 'center',
+            justifyContent: 'center',
+            padding: isMobile ? '0' : '24px'
+          }}
+        >
           <div
             ref={panelRef}
-            style={panelStyle}
             onClick={(e) => e.stopPropagation()}
+            style={{
+              width: isMobile ? '100%' : 'min(420px, 92vw)',
+              maxWidth: isMobile ? '100%' : '420px',
+              maxHeight: isMobile ? '78vh' : 'min(78vh, 720px)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: isMobile ? '22px 22px 0 0' : '22px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              transform: 'translateY(0)',
+              animation: isMobile ? 'notifSheetIn 0.2s ease' : 'notifModalIn 0.18s ease'
+            }}
           >
             {/* Header */}
             <div
               style={{
-                padding: '0.9rem 1rem',
+                padding: '1rem 1rem 0.9rem',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: '0.75rem',
-                background: 'var(--bg-card)',
                 position: 'sticky',
                 top: 0,
-                zIndex: 2
+                zIndex: 2,
+                background: 'var(--bg-card)'
               }}
             >
               <div
                 style={{
-                  fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  fontSize: '0.92rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   minWidth: 0
                 }}
               >
-                <span>🔔 Notificări</span>
+                <span style={{ fontSize: '1.05rem' }}>🔔</span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  Notificări
+                </span>
                 {totalNecitite > 0 && (
                   <span
                     style={{
@@ -264,43 +220,62 @@ const NotificationBell = () => {
                 )}
               </div>
 
-              {totalNecitite > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {totalNecitite > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkToateCitite}
+                    disabled={loading}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#6366f1',
+                      cursor: 'pointer',
+                      fontSize: '0.78rem',
+                      fontWeight: 700
+                    }}
+                  >
+                    {loading ? '...' : '✓ Toate'}
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  onClick={handleMarkToateCitite}
-                  disabled={loading}
+                  onClick={() => setOpen(false)}
                   style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#6366f1',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--bg-input)',
+                    color: 'var(--text-secondary)',
                     cursor: 'pointer',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
+                    fontSize: '0.95rem',
                     flexShrink: 0
                   }}
                 >
-                  {loading ? '...' : '✓ Toate'}
+                  ✕
                 </button>
-              )}
+              </div>
             </div>
 
-            {/* Listă */}
+            {/* List */}
             <div
               style={{
-                maxHeight: 'inherit',
-                overflowY: 'auto'
+                overflowY: 'auto',
+                flex: 1
               }}
             >
               {notificari.length === 0 ? (
                 <div
                   style={{
-                    padding: '2rem 1rem',
+                    padding: '2.5rem 1rem',
                     textAlign: 'center',
                     color: 'var(--text-muted)',
-                    fontSize: '0.88rem'
+                    fontSize: '0.9rem'
                   }}
                 >
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔕</div>
+                  <div style={{ fontSize: '2.2rem', marginBottom: '0.6rem' }}>🔕</div>
                   Nu ai notificări
                 </div>
               ) : (
@@ -309,21 +284,20 @@ const NotificationBell = () => {
                     key={notif._id}
                     onClick={() => !notif.citit && handleMarkCitit(notif._id)}
                     style={{
-                      padding: '0.9rem 1rem',
+                      padding: '0.95rem 1rem',
                       borderBottom: '1px solid var(--border-color)',
                       background: notif.citit ? 'transparent' : 'rgba(99,102,241,0.04)',
                       cursor: notif.citit ? 'default' : 'pointer',
                       display: 'flex',
                       gap: '0.75rem',
-                      alignItems: 'flex-start',
-                      transition: 'background 0.15s'
+                      alignItems: 'flex-start'
                     }}
                   >
                     <div
                       style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 10,
+                        width: 38,
+                        height: 38,
+                        borderRadius: 12,
                         background: `${getTipColor(notif.tip)}18`,
                         border: `1px solid ${getTipColor(notif.tip)}30`,
                         display: 'flex',
@@ -341,8 +315,8 @@ const NotificationBell = () => {
                         style={{
                           fontWeight: notif.citit ? 500 : 700,
                           color: 'var(--text-primary)',
-                          fontSize: '0.85rem',
-                          marginBottom: '0.2rem',
+                          fontSize: '0.86rem',
+                          marginBottom: '0.18rem',
                           lineHeight: 1.35
                         }}
                       >
@@ -351,7 +325,7 @@ const NotificationBell = () => {
 
                       <div
                         style={{
-                          fontSize: '0.78rem',
+                          fontSize: '0.79rem',
                           color: 'var(--text-secondary)',
                           lineHeight: 1.45,
                           wordBreak: 'break-word'
@@ -392,10 +366,10 @@ const NotificationBell = () => {
                         border: 'none',
                         color: 'var(--text-muted)',
                         cursor: 'pointer',
-                        fontSize: '0.9rem',
+                        fontSize: '0.95rem',
                         padding: '2px',
                         flexShrink: 0,
-                        opacity: 0.75
+                        opacity: 0.8
                       }}
                       title="Șterge"
                     >
@@ -406,7 +380,33 @@ const NotificationBell = () => {
               )}
             </div>
           </div>
-        </>,
+
+          <style>
+            {`
+              @keyframes notifModalIn {
+                from {
+                  opacity: 0;
+                  transform: translateY(10px) scale(0.98);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0) scale(1);
+                }
+              }
+
+              @keyframes notifSheetIn {
+                from {
+                  opacity: 0;
+                  transform: translateY(20px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            `}
+          </style>
+        </div>,
         document.body
       )
     : null;
@@ -423,9 +423,7 @@ const NotificationBell = () => {
           background: open
             ? 'rgba(99,102,241,0.1)'
             : 'var(--bg-card)',
-          border: `1px solid ${
-            open ? 'rgba(99,102,241,0.3)' : 'var(--border-color)'
-          }`,
+          border: `1px solid ${open ? 'rgba(99,102,241,0.3)' : 'var(--border-color)'}`,
           borderRadius: 'var(--radius-md)',
           padding: '0.45rem 0.65rem',
           cursor: 'pointer',
