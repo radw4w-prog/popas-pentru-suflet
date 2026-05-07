@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+// frontend/src/components/BibleNavigator.js
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import AudioBiblePlayer from './AudioBiblePlayer';
 
 const BibleNavigator = ({ onSelectCapitol, onClose }) => {
-  const [step, setStep] = useState('carti'); // carti | capitole | versete
+  const [step, setStep] = useState('carti');
   const [ordineBiblie, setOrdineBiblie] = useState([]);
   const [cartiData, setCartiData] = useState([]);
   const [selectedCarte, setSelectedCarte] = useState(null);
@@ -13,70 +15,69 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   const [redLetter, setRedLetter] = useState({});
   const [copiat, setCopiat] = useState(null);
   const [testamentFilter, setTestamentFilter] = useState('all');
-const { isAuthenticated } = useAuth();
-const [bookmarksMap, setBookmarksMap] = useState({});
-const [showActions, setShowActions] = useState(null);
+  const [showActions, setShowActions] = useState(null);
 
+  // Audio
+  const [showAudio, setShowAudio] = useState(false);
+  const [audioIndex, setAudioIndex] = useState(0);
+  const activeVerseRef = useRef(null);
 
+  const { isAuthenticated } = useAuth();
+  const [bookmarksMap, setBookmarksMap] = useState({});
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
-const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+  const fetchBookmarksForCapitol = async (carte, capitol) => {
+    if (!isAuthenticated) return;
+    try {
+      const r = await api.get(
+        `/api/bookmarks/capitol?carte=${encodeURIComponent(carte)}&capitol=${capitol}`,
+        { headers: getHeaders() }
+      );
+      if (r.data?.success) setBookmarksMap(r.data.bookmarks || {});
+    } catch (e) {}
+  };
 
-const fetchBookmarksForCapitol = async (carte, capitol) => {
-  if (!isAuthenticated) return;
-  try {
-    const r = await api.get(
-      `/api/bookmarks/capitol?carte=${encodeURIComponent(carte)}&capitol=${capitol}`,
-      { headers: getHeaders() }
-    );
-    if (r.data?.success) setBookmarksMap(r.data.bookmarks || {});
-  } catch (e) {}
-};
+  const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
+    if (!isAuthenticated) return;
+    try {
+      const existing = bookmarksMap[verse.verset];
+      if (existing && existing.tip === tip) {
+        await api.delete(`/api/bookmarks/${existing._id}`, { headers: getHeaders() });
+        const newMap = { ...bookmarksMap };
+        delete newMap[verse.verset];
+        setBookmarksMap(newMap);
+      } else {
+        const r = await api.post('/api/bookmarks', {
+          carte: verse.carte,
+          capitol: verse.capitol,
+          verset: verse.verset,
+          text: verse.text,
+          referinta: `${verse.carte} ${verse.capitol}:${verse.verset}`,
+          testament: verse.testament,
+          tip,
+          culoare
+        }, { headers: getHeaders() });
 
-const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
-  if (!isAuthenticated) return;
-  try {
-    const existing = bookmarksMap[verse.verset];
-    if (existing && existing.tip === tip) {
-      await api.delete(`/api/bookmarks/${existing._id}`, { headers: getHeaders() });
-      const newMap = { ...bookmarksMap };
-      delete newMap[verse.verset];
-      setBookmarksMap(newMap);
-    } else {
-      const r = await api.post('/api/bookmarks', {
-        carte: verse.carte,
-        capitol: verse.capitol,
-        verset: verse.verset,
-        text: verse.text,
-        referinta: `${verse.carte} ${verse.capitol}:${verse.verset}`,
-        testament: verse.testament,
-        tip,
-        culoare
-      }, { headers: getHeaders() });
-
-      if (r.data?.success) {
-        setBookmarksMap(prev => ({
-          ...prev,
-          [verse.verset]: r.data.bookmark
-        }));
+        if (r.data?.success) {
+          setBookmarksMap(prev => ({
+            ...prev,
+            [verse.verset]: r.data.bookmark
+          }));
+        }
       }
+    } catch (e) {
+      console.error('Bookmark error:', e);
     }
-  } catch (e) {
-    console.error('Bookmark error:', e);
-  }
-  setShowActions(null);
-};
-
-
-
-
+    setShowActions(null);
+  };
 
   const fetchData = async () => {
     try {
@@ -113,6 +114,7 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
     setSelectedCarte(carte);
     setSelectedCapitol(null);
     setVersete([]);
+    setShowAudio(false);
     setStep('capitole');
   };
 
@@ -120,13 +122,14 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
     setSelectedCapitol(capitol);
     setStep('versete');
     setLoadingVersete(true);
+    setShowAudio(false);
 
     try {
       const r = await api.get(
         `/api/verses?carte=${encodeURIComponent(selectedCarte.carte)}&capitol=${capitol}&limit=500`
       );
       setVersete(r.data?.versete || []);
-	  await fetchBookmarksForCapitol(selectedCarte.carte, capitol);
+      await fetchBookmarksForCapitol(selectedCarte.carte, capitol);
     } catch (e) {
       console.error(e);
     } finally {
@@ -143,9 +146,11 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
       setStep('capitole');
       setSelectedCapitol(null);
       setVersete([]);
+      setShowAudio(false);
     } else if (step === 'capitole') {
       setStep('carti');
       setSelectedCarte(null);
+      setShowAudio(false);
     }
   };
 
@@ -169,7 +174,7 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
   const carti = getCartiSorted();
 
   return (
-    <div className="bible-nav">
+    <div className={`bible-nav ${showAudio ? 'has-audio-player' : ''}`}>
 
       {/* HEADER */}
       <div className="bible-nav-header">
@@ -188,6 +193,7 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
                 setSelectedCarte(null);
                 setSelectedCapitol(null);
                 setVersete([]);
+                setShowAudio(false);
               }}
             >
               📖 Biblia
@@ -202,6 +208,7 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
                     setStep('capitole');
                     setSelectedCapitol(null);
                     setVersete([]);
+                    setShowAudio(false);
                   }}
                 >
                   {selectedCarte.ab}
@@ -220,16 +227,30 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
           </div>
         </div>
 
-        {onClose && (
-          <button className="bible-nav-close" onClick={onClose}>✕</button>
-        )}
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+          {/* Buton Audio - doar când avem versete */}
+          {step === 'versete' && versete.length > 0 && (
+            <button
+              className={`bible-audio-btn ${showAudio ? 'active' : ''}`}
+              onClick={() => setShowAudio(!showAudio)}
+              title={showAudio ? 'Oprește audio' : 'Ascultă capitolul'}
+            >
+              {showAudio ? '⏹' : '🔊'}
+              <span className="bible-audio-btn-text">
+                {showAudio ? 'Stop' : 'Audio'}
+              </span>
+            </button>
+          )}
+
+          {onClose && (
+            <button className="bible-nav-close" onClick={onClose}>✕</button>
+          )}
+        </div>
       </div>
 
       {/* STEP 1: CĂRȚI */}
       {step === 'carti' && (
         <div className="bible-nav-body">
-
-          {/* Testament filter */}
           <div className="bible-test-filter">
             {[
               { key: 'all', label: '📚 Toate' },
@@ -246,7 +267,6 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
             ))}
           </div>
 
-          {/* Secțiuni VT/NT */}
           {(testamentFilter === 'all' || testamentFilter === 'VT') && (
             <div className="bible-section">
               <div className="bible-section-title">📜 Vechiul Testament</div>
@@ -327,6 +347,15 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
             <div className="bible-carte-meta">
               {versete.length} versete
               {' '}• {selectedCarte.test === 'VT' ? '📜 Vechiul Testament' : '✝️ Noul Testament'}
+              {showAudio && (
+                <span style={{
+                  marginLeft: '0.5rem',
+                  color: '#7c3aed',
+                  fontWeight: 700
+                }}>
+                  🔊 Audio activ
+                </span>
+              )}
             </div>
           </div>
 
@@ -339,92 +368,112 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
             </div>
           ) : (
             <div className="bible-verses-list">
-              {versete.map(verse => {
-  const rl = isRedLetter(verse);
-  const isCopiat = copiat === verse._id;
-  const bm = bookmarksMap[verse.verset];
-  const isBookmarked = !!bm;
-  const actionsOpen = showActions === verse.verset;
+              {versete.map((verse, index) => {
+                const rl = isRedLetter(verse);
+                const isCopiat = copiat === verse._id;
+                const bm = bookmarksMap[verse.verset];
+                const isBookmarked = !!bm;
+                const actionsOpen = showActions === verse.verset;
+                const isAudioActive = showAudio && audioIndex === index;
 
-  return (
-    <div
-      key={verse._id}
-      className={`bible-verse-row ${rl ? 'red-letter' : ''} ${isCopiat ? 'copied' : ''} ${isBookmarked ? `highlighted-${bm.culoare}` : ''}`}
-    >
-      <span className="bible-verse-num">{verse.verset}</span>
+                return (
+                  <div
+                    key={verse._id}
+                    ref={isAudioActive ? activeVerseRef : null}
+                    className={`bible-verse-row ${rl ? 'red-letter' : ''} ${isCopiat ? 'copied' : ''} ${isBookmarked ? `highlighted-${bm.culoare}` : ''} ${isAudioActive ? 'audio-active-verse' : ''}`}
+                  >
+                    <span className="bible-verse-num">{verse.verset}</span>
 
-      <span
-        className={`bible-verse-text ${rl ? 'rl-text' : ''}`}
-        onClick={() => copyVerse(verse)}
-      >
-        {verse.text}
-      </span>
+                    <span
+                      className={`bible-verse-text ${rl ? 'rl-text' : ''}`}
+                      onClick={() => {
+                        if (showAudio) {
+                          // Click pe verset = play de acolo
+                          setAudioIndex(index);
+                          window.__audioBiblePlayFrom?.(index);
+                        } else {
+                          copyVerse(verse);
+                        }
+                      }}
+                    >
+                      {verse.text}
+                    </span>
 
-      <div className="bible-verse-actions">
-        {/* Copiere */}
-        <button
-          className="bva-btn"
-          onClick={() => copyVerse(verse)}
-          title="Copiază"
-        >
-          {isCopiat ? '✅' : '📋'}
-        </button>
+                    <div className="bible-verse-actions">
+                      {/* Play din acest verset */}
+                      {showAudio && (
+                        <button
+                          className={`bva-btn ${isAudioActive ? 'active' : ''}`}
+                          onClick={() => {
+                            setAudioIndex(index);
+                            window.__audioBiblePlayFrom?.(index);
+                          }}
+                          title="Ascultă de aici"
+                        >
+                          {isAudioActive ? '🔊' : '▶'}
+                        </button>
+                      )}
 
-        {/* Bookmark */}
-        {isAuthenticated && (
-          <button
-            className={`bva-btn ${isBookmarked ? 'active' : ''}`}
-            onClick={() => setShowActions(actionsOpen ? null : verse.verset)}
-            title="Semn de carte"
-          >
-            {isBookmarked ? '🔖' : '🏷️'}
-          </button>
-        )}
-      </div>
+                      <button
+                        className="bva-btn"
+                        onClick={() => copyVerse(verse)}
+                        title="Copiază"
+                      >
+                        {isCopiat ? '✅' : '📋'}
+                      </button>
 
-      {/* Actions popup */}
-      {actionsOpen && isAuthenticated && (
-        <div className="bible-verse-popup">
-          <button
-            className={`bvp-btn ${bm?.tip === 'bookmark' ? 'active' : ''}`}
-            onClick={() => handleBookmark(verse, 'bookmark', 'gold')}
-          >
-            🔖 Semn de carte
-          </button>
+                      {isAuthenticated && (
+                        <button
+                          className={`bva-btn ${isBookmarked ? 'active' : ''}`}
+                          onClick={() => setShowActions(actionsOpen ? null : verse.verset)}
+                          title="Semn de carte"
+                        >
+                          {isBookmarked ? '🔖' : '🏷️'}
+                        </button>
+                      )}
+                    </div>
 
-          <div className="bvp-colors">
-            {['gold', 'red', 'green', 'blue', 'purple'].map(c => (
-              <button
-                key={c}
-                className={`bvp-color ${bm?.culoare === c ? 'active' : ''}`}
-                onClick={() => handleBookmark(verse, 'highlight', c)}
-                title={`Evidențiază ${c}`}
-              >
-                <span className={`bvp-dot ${c}`} />
-              </button>
-            ))}
-          </div>
+                    {actionsOpen && isAuthenticated && (
+                      <div className="bible-verse-popup">
+                        <button
+                          className={`bvp-btn ${bm?.tip === 'bookmark' ? 'active' : ''}`}
+                          onClick={() => handleBookmark(verse, 'bookmark', 'gold')}
+                        >
+                          🔖 Semn de carte
+                        </button>
 
-          {isBookmarked && (
-            <button
-              className="bvp-btn remove"
-              onClick={() => handleBookmark(verse, bm.tip)}
-            >
-              🗑️ Șterge semnul
-            </button>
-          )}
-        </div>
-      )}
+                        <div className="bvp-colors">
+                          {['gold', 'red', 'green', 'blue', 'purple'].map(c => (
+                            <button
+                              key={c}
+                              className={`bvp-color ${bm?.culoare === c ? 'active' : ''}`}
+                              onClick={() => handleBookmark(verse, 'highlight', c)}
+                              title={`Evidențiază ${c}`}
+                            >
+                              <span className={`bvp-dot ${c}`} />
+                            </button>
+                          ))}
+                        </div>
 
-      {/* Nota indicator */}
-      {bm?.nota && (
-        <div className="bible-verse-note-indicator" title={bm.nota}>
-          📝
-        </div>
-      )}
-    </div>
-  );
-})}
+                        {isBookmarked && (
+                          <button
+                            className="bvp-btn remove"
+                            onClick={() => handleBookmark(verse, bm.tip)}
+                          >
+                            🗑️ Șterge semnul
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {bm?.nota && (
+                      <div className="bible-verse-note-indicator" title={bm.nota}>
+                        📝
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -451,6 +500,26 @@ const handleBookmark = async (verse, tip = 'bookmark', culoare = 'gold') => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* AUDIO PLAYER */}
+      {showAudio && versete.length > 0 && (
+        <AudioBiblePlayer
+          verses={versete}
+          bookName={selectedCarte?.carte || ''}
+          chapter={selectedCapitol}
+          onClose={() => setShowAudio(false)}
+          onVerseChange={(index) => {
+            setAudioIndex(index);
+            // Auto scroll
+            if (activeVerseRef.current) {
+              activeVerseRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              });
+            }
+          }}
+        />
       )}
     </div>
   );

@@ -646,3 +646,278 @@
     background: var(--gold-subtle);
   }
 }
+/* ═══════════════════════════════════════
+   🔊 AUDIO BIBLE PLAYER
+═══════════════════════════════════════ */
+
+.audio-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 8000;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -6px 30px rgba(0,0,0,0.25);
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Progress */
+.audio-progress-bar {
+  height: 3px;
+  background: var(--bg-input);
+  width: 100%;
+}
+
+.audio-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple), var(--gold-primary));
+  transition: width 0.3s ease;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Info */
+.audio-info {
+  padding: 0.55rem 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.audio-title {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.audio-verse-preview {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-style: italic;
+}
+
+/* Controls */
+.audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem 0.55rem;
+  gap: 0.5rem;
+}
+
+.audio-main-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.audio-right-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Buttons */
+.audio-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text-primary);
+}
+
+.audio-btn:hover {
+  border-color: var(--gold-primary);
+  background: var(--gold-subtle);
+}
+
+.audio-btn:active {
+  transform: scale(0.92);
+}
+
+.audio-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.audio-btn-main {
+  width: 48px;
+  height: 48px;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, var(--accent-purple), var(--gold-primary));
+  border: none;
+  color: white;
+  box-shadow: 0 3px 12px rgba(124,58,237,0.3);
+}
+
+.audio-btn-main:hover {
+  box-shadow: 0 5px 18px rgba(124,58,237,0.4);
+  transform: scale(1.05);
+}
+
+.audio-btn-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+  cursor: pointer;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text-muted);
+}
+
+.audio-btn-sm.active {
+  background: rgba(99,102,241,0.1);
+  border-color: rgba(99,102,241,0.3);
+  color: #6366f1;
+}
+
+.audio-btn-sm:active {
+  transform: scale(0.92);
+}
+
+/* Speed */
+.audio-speed {
+  flex-shrink: 0;
+}
+
+.audio-speed-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+
+/* Counter */
+.audio-counter {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  padding: 0 0 0.35rem;
+}
+
+/* Active verse highlight */
+.audio-active-verse {
+  background: rgba(124,58,237,0.08) !important;
+  border-left: 3px solid #7c3aed !important;
+  transition: background 0.3s ease;
+}
+
+/* ─── MOBILE ─── */
+@media (max-width: 768px) {
+  .audio-player {
+    bottom: 56px; /* deasupra bottom nav */
+    padding-bottom: 0;
+  }
+
+  .audio-info {
+    padding: 0.4rem 0.75rem 0;
+  }
+
+  .audio-title {
+    font-size: 0.78rem;
+  }
+
+  .audio-verse-preview {
+    font-size: 0.7rem;
+  }
+
+  .audio-controls {
+    padding: 0.3rem 0.5rem 0.4rem;
+  }
+
+  .audio-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .audio-btn-main {
+    width: 44px;
+    height: 44px;
+    font-size: 1.15rem;
+  }
+
+  .audio-btn-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+}
+
+/* ─── HAS AUDIO PLAYER (fix page content) ─── */
+.has-audio-player .page-content {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (max-width: 768px) {
+  .has-audio-player .page-content {
+    padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+/* ═══════════════════════════════════════
+   BIBLE AUDIO BUTTON
+═══════════════════════════════════════ */
+
+.bible-audio-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(124,58,237,0.25);
+  background: rgba(124,58,237,0.08);
+  color: #7c3aed;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.bible-audio-btn.active {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.3);
+  color: #ef4444;
+}
+
+.bible-audio-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .bible-audio-btn-text {
+    display: none;
+  }
+
+  .bible-audio-btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.85rem;
+  }
+}
