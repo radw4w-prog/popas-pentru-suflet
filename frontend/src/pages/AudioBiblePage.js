@@ -271,9 +271,8 @@ const AudioBiblePage = () => {
         });
       }
 
-      setTimeout(() => {
-        audioRef.current?.play().catch(() => {});
-      }, 1500);
+      // Play direct — fără setTimeout pentru compatibilitate mobile lock screen
+audioRef.current?.play().catch(() => {});
 
     } else {
       // Ultimul capitol din carte — mergi la cartea următoare
@@ -298,9 +297,8 @@ const AudioBiblePage = () => {
         });
       }
 
-      setTimeout(() => {
-        audioRef.current?.play().catch(() => {});
-      }, 1500);
+      // Play direct — fără setTimeout pentru compatibilitate mobile lock screen
+audioRef.current?.play().catch(() => {});
     }
   }, [loadCapitolDirect]);
 
@@ -349,17 +347,16 @@ const AudioBiblePage = () => {
     });
 
     audio.addEventListener('ended', () => {
-      setPlaying(false);
-      const carte = selectedCarteRef.current;
-      const capitol = selectedCapitolRef.current;
+  setPlaying(false);
+  const carte = selectedCarteRef.current;
+  const capitol = selectedCapitolRef.current;
 
-      if (carte && capitol) {
-        saveProgress(carte, capitol, audio.duration, audio.duration, true);
-        setTimeout(() => {
-          goNextRef.current();
-        }, 1500);
-      }
-    });
+  if (carte && capitol) {
+    saveProgress(carte, capitol, audio.duration, audio.duration, true);
+    // Fără setTimeout — pe mobile cu ecran blocat setTimeout e suspendat
+    goNextRef.current();
+  }
+});
 
     audio.addEventListener('waiting', () => setLoading(true));
     audio.addEventListener('canplay', () => setLoading(false));
