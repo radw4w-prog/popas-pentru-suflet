@@ -16,7 +16,7 @@ const Header = ({ theme, toggleTheme }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
+console.log('✅ HEADER BUILD TEST 777');
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -184,8 +184,12 @@ const Header = ({ theme, toggleTheme }) => {
         >
           <span className="header-brand-icon">🕊️</span>
           <div className="header-brand-text">
-            <h1 className="header-title">{current.title}</h1>
-            <p className="header-subtitle">{current.subtitle}</p>
+            <h1 className="header-title" style={{ color: 'red', fontSize: '32px' }}>
+  TEST HEADER NOU 777
+</h1>
+            <p className="header-subtitle" style={{ color: 'lime', fontSize: '18px' }}>
+  DACA VEZI ASTA, HEADER.JS ESTE CEL CORECT
+</p>
           </div>
         </div>
       </div>

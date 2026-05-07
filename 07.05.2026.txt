@@ -1,0 +1,11 @@
+✅ Logo clickabil → duce la /dashboard
+✅ Greeting personalizat (dimineață/zi/seară + nume)
+✅ Subtitluri SEO-friendly per pagină
+✅ Notificări = pagină dedicată (fără dropdown buggy)
+✅ Font size în user dropdown pe mobil
+✅ Admin badge + rol în dropdown
+✅ Curățat complet de cod vechi
+✅ Responsive desktop/tablet/mobil
+✅ Dark + Light theme
+✅ Touch feedback
+✅ Accessibility (aria-labels, role, tabIndex)
