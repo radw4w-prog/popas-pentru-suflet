@@ -412,11 +412,11 @@ const AudioBiblePage = () => {
       setAudioError('Nu am putut încărca audio. Verifică conexiunea.');
     });
 
-    return () => {
+        return () => {
       audio.pause();
       audio.src = '';
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line
   }, []);
 
   // Actualizează goNext în listener când se schimbă (prin ref trick)
