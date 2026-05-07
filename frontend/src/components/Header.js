@@ -87,6 +87,10 @@ const Header = ({ theme, toggleTheme }) => {
       title: 'Devoțional zilnic',
       subtitle: 'Meditație biblică, rugăciune și gânduri de credință'
     },
+	'/audio-bible': {
+  title: 'Audio Biblie',
+  subtitle: 'Ascultă Biblia Cornilescu completă în română'
+},
     '/generate': {
       title: 'Creator Conținut',
       subtitle: 'Generează postări creștine cu AI pentru social media'

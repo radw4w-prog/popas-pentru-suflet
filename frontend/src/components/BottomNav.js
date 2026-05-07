@@ -54,6 +54,7 @@ const BottomNav = () => {
     moreItems.push(
       { path: '/schedule', icon: '📅', label: 'Programare' },
       { path: '/history', icon: '📜', label: 'Istoric' },
+	  { path: '/audio-bible', icon: '🎧', label: 'Audio' },
       { path: '/analytics', icon: '📊', label: 'Analytics' },
       { path: '/settings', icon: '⚙️', label: 'Setări' },
       { path: '/admin', icon: '🛡️', label: 'Admin' },

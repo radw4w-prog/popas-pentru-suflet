@@ -102,6 +102,11 @@ function App() {
     </AppLayout>
   </ProtectedRoute>
 } />
+<Route path="/audio-bible" element={
+  <AppLayout theme={theme} toggleTheme={toggleTheme}>
+    <AudioBiblePage />
+  </AppLayout>
+} />
             <Route path="/auth/facebook/callback" element={
               <div data-theme={theme}><FacebookCallbackPage /></div>
             } />
