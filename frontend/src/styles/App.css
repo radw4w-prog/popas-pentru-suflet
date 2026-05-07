@@ -1074,3 +1074,67 @@
   .ab-books-grid { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
   .ab-chapters-grid { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
 }
+/* ═══ VOLUM ═══ */
+.ab-volume-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 0 4px;
+}
+
+.ab-volume-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ab-volume-slider {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--primary, #6c63ff);
+  cursor: pointer;
+}
+
+.ab-volume-pct {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #888);
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.ab-boost-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 2px solid var(--primary, #6c63ff);
+  background: transparent;
+  color: var(--primary, #6c63ff);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ab-boost-btn.active {
+  background: linear-gradient(135deg, #ff6b35, #f7c59f);
+  border-color: #ff6b35;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(255, 107, 53, 0.4);
+}
+
+.ab-boost-btn:hover {
+  transform: scale(1.05);
+}
+
+.ab-boost-warning {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 107, 53, 0.12);
+  border-left: 3px solid #ff6b35;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #ff6b35;
+}

@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 const API_URL = process.env.REACT_APP_API_URL || '';
 const AUDIO_BASE = 'https://www.wordproaudio.net/bibles/app/audio/34';
 
-// Toate cărțile Bibliei
 const CARTI = [
   { index: 1,  ab: 'Gen',   nume: 'Geneza',                    capitole: 50, test: 'VT' },
   { index: 2,  ab: 'Ex',    nume: 'Exodul',                    capitole: 40, test: 'VT' },
@@ -113,7 +112,6 @@ const AudioBiblePage = () => {
   const [selectedCapitol, setSelectedCapitol] = useState(null);
 
   const [progressMap, setProgressMap] = useState({});
-  const [carteProgressMap, setCarteProgressMap] = useState({});
   const [stats, setStats] = useState(null);
   const [ultimul, setUltimul] = useState(null);
 
@@ -125,9 +123,91 @@ const AudioBiblePage = () => {
   const [speed, setSpeed] = useState(1);
   const [audioError, setAudioError] = useState('');
 
+  // Volum + boost
+  const [volume, setVolume] = useState(1);
+  const [boostActive, setBoostActive] = useState(false);
+
+  // ═══════════════════════════════════════
+  // REFS
+  // ═══════════════════════════════════════
   const audioRef = useRef(null);
-  const saveTimerRef = useRef(null);
   const lastSavedRef = useRef(0);
+
+  // Refs pentru valori fresh în event listeners (fix stale closure)
+  const selectedCarteRef = useRef(null);
+  const selectedCapitolRef = useRef(null);
+  const progressMapRef = useRef({});
+
+  // AudioContext refs pentru boost volum
+  const audioCtxRef = useRef(null);
+  const gainNodeRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const audioCtxInitedRef = useRef(false);
+
+  // ═══════════════════════════════════════
+  // SYNC REFS la fiecare schimbare de state
+  // ═══════════════════════════════════════
+  useEffect(() => {
+    selectedCarteRef.current = selectedCarte;
+  }, [selectedCarte]);
+
+  useEffect(() => {
+    selectedCapitolRef.current = selectedCapitol;
+  }, [selectedCapitol]);
+
+  useEffect(() => {
+    progressMapRef.current = progressMap;
+  }, [progressMap]);
+
+  // ═══════════════════════════════════════
+  // AUDIO CONTEXT — boost volum
+  // ═══════════════════════════════════════
+  const initAudioContext = useCallback(() => {
+    if (audioCtxInitedRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+
+      const ctx = new AudioContext();
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = boostActive ? 2.5 : volume;
+
+      const source = ctx.createMediaElementSource(audio);
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      audioCtxRef.current = ctx;
+      gainNodeRef.current = gainNode;
+      sourceNodeRef.current = source;
+      audioCtxInitedRef.current = true;
+    } catch (e) {
+      // AudioContext nu e suportat sau audio e deja conectat
+      console.warn('AudioContext init failed:', e.message);
+    }
+  }, [boostActive, volume]);
+
+  // Actualizează gain când se schimbă volumul sau boostul
+  useEffect(() => {
+    if (!gainNodeRef.current) return;
+    if (boostActive) {
+      gainNodeRef.current.gain.value = 2.5;
+    } else {
+      gainNodeRef.current.gain.value = volume;
+    }
+  }, [volume, boostActive]);
+
+  // Actualizează și volumul direct pe elementul audio (fallback)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    // Fără boost: volume direct pe element
+    if (!audioCtxInitedRef.current) {
+      audio.volume = volume;
+    }
+  }, [volume]);
 
   // ═══════════════════════════════════════
   // LOAD PROGRES
@@ -153,7 +233,6 @@ const AudioBiblePage = () => {
   // ═══════════════════════════════════════
   const saveProgress = useCallback(async (carte, capitol, pozitie, durata, complet = false) => {
     if (!isAuthenticated) return;
-
     try {
       await http.post('/api/audio-bible/progress', {
         carteIndex: carte.index,
@@ -164,7 +243,6 @@ const AudioBiblePage = () => {
         complet
       });
 
-      // Actualizează map local
       setProgressMap(prev => ({
         ...prev,
         [carte.index]: {
@@ -180,13 +258,11 @@ const AudioBiblePage = () => {
   }, [isAuthenticated]);
 
   // ═══════════════════════════════════════
-  // AUDIO CONTROLS
+  // NAVIGARE CAPITOL / CARTE — folosesc refs
   // ═══════════════════════════════════════
-  const getAudioUrl = (carteIndex, capitol) => {
-    return `${AUDIO_BASE}/${carteIndex}/${capitol}.mp3`;
-  };
 
-  const loadCapitol = useCallback(async (carte, capitol) => {
+  // Funcție internă de încărcare capitol (nu depinde de state, ci de parametri direcți)
+  const loadCapitolDirect = useCallback((carte, capitol, currentProgressMap) => {
     const audio = audioRef.current;
     if (!audio) return;
 
@@ -196,32 +272,170 @@ const AudioBiblePage = () => {
     setCurrentTime(0);
     setDuration(0);
 
-    const url = getAudioUrl(carte.index, capitol);
+    const url = `${AUDIO_BASE}/${carte.index}/${capitol}.mp3`;
     audio.src = url;
+    audio.playbackRate = speed;
     audio.load();
 
-    // Verifică progres salvat
-    const cap = progressMap[carte.index]?.[capitol];
+    const map = currentProgressMap || progressMapRef.current;
+    const cap = map[carte.index]?.[capitol];
     if (cap && cap.pozitieSecunde > 10 && !cap.complet) {
-      audio.currentTime = cap.pozitieSecunde;
+      // Se setează după loadedmetadata
+      audio.addEventListener('loadedmetadata', function onMeta() {
+        audio.currentTime = cap.pozitieSecunde;
+        audio.removeEventListener('loadedmetadata', onMeta);
+      }, { once: true });
     }
+  }, [speed]);
 
-  }, [progressMap]);
+  // Next capitol sau next carte — folosit din event listener (ref-based)
+  const goNext = useCallback(() => {
+    const carte = selectedCarteRef.current;
+    const capitol = selectedCapitolRef.current;
+    if (!carte || !capitol) return;
 
-  const handleSelectCarte = (carte) => {
-    setSelectedCarte(carte);
-    setStep('capitole');
-  };
+    if (capitol < carte.capitole) {
+      // Next capitol în aceeași carte
+      const nextCapitol = capitol + 1;
+      setSelectedCapitol(nextCapitol);
+      selectedCapitolRef.current = nextCapitol;
+      loadCapitolDirect(carte, nextCapitol, progressMapRef.current);
 
-  const handleSelectCapitol = (capitol) => {
-    setSelectedCapitol(capitol);
-    setStep('player');
-    loadCapitol(selectedCarte, capitol);
-  };
+      // Update Media Session
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: `${carte.nume} ${nextCapitol}`,
+          artist: 'Popas pentru Suflet',
+          album: 'Biblia Cornilescu Audio',
+          artwork: [
+            { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+          ]
+        });
+      }
 
+      // Auto play după 1.5s
+      setTimeout(() => {
+        audioRef.current?.play().catch(() => {});
+      }, 1500);
+
+    } else {
+      // Ultima carte s-a terminat — mergi la cartea următoare
+      const nextCarteObj = CARTI.find(c => c.index === carte.index + 1);
+      if (!nextCarteObj) return; // Apocalipsa s-a terminat
+
+      setSelectedCarte(nextCarteObj);
+      selectedCarteRef.current = nextCarteObj;
+      setSelectedCapitol(1);
+      selectedCapitolRef.current = 1;
+      loadCapitolDirect(nextCarteObj, 1, progressMapRef.current);
+
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: `${nextCarteObj.nume} 1`,
+          artist: 'Popas pentru Suflet',
+          album: 'Biblia Cornilescu Audio',
+          artwork: [
+            { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+          ]
+        });
+      }
+
+      setTimeout(() => {
+        audioRef.current?.play().catch(() => {});
+      }, 1500);
+    }
+  }, [loadCapitolDirect]);
+
+  // ═══════════════════════════════════════
+  // AUDIO EVENTS — montat o singură dată
+  // ═══════════════════════════════════════
+  useEffect(() => {
+    const audio = new Audio();
+    audioRef.current = audio;
+
+    audio.addEventListener('loadedmetadata', () => {
+      setDuration(audio.duration);
+      setLoading(false);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      setCurrentTime(audio.currentTime);
+
+      // Salvează la fiecare 10 secunde
+      if (audio.currentTime - lastSavedRef.current >= 10) {
+        lastSavedRef.current = audio.currentTime;
+        const carte = selectedCarteRef.current;
+        const capitol = selectedCapitolRef.current;
+        if (carte && capitol) {
+          saveProgress(carte, capitol, audio.currentTime, audio.duration, false);
+        }
+      }
+    });
+
+    audio.addEventListener('play', () => {
+      setPlaying(true);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    });
+
+    audio.addEventListener('pause', () => {
+      setPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      setPlaying(false);
+      const carte = selectedCarteRef.current;
+      const capitol = selectedCapitolRef.current;
+
+      if (carte && capitol) {
+        // Marchează ca complet
+        saveProgress(carte, capitol, audio.duration, audio.duration, true);
+
+        // Merge automat la next (capitol sau carte)
+        setTimeout(() => {
+          goNext();
+        }, 1500);
+      }
+    });
+
+    audio.addEventListener('waiting', () => setLoading(true));
+    audio.addEventListener('canplay', () => setLoading(false));
+
+    audio.addEventListener('error', () => {
+      setLoading(false);
+      setAudioError('Nu am putut încărca audio. Verifică conexiunea.');
+    });
+
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Actualizează goNext în listener când se schimbă (prin ref trick)
+  const goNextRef = useRef(goNext);
+  useEffect(() => {
+    goNextRef.current = goNext;
+  }, [goNext]);
+
+  // ═══════════════════════════════════════
+  // CONTROLS UI
+  // ═══════════════════════════════════════
   const handlePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
+    // Inițializează AudioContext la primul play (necesită user gesture)
+    initAudioContext();
+    if (audioCtxRef.current?.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
     audio.play().catch(e => setAudioError('Nu pot reda audio: ' + e.message));
   };
 
@@ -243,14 +457,51 @@ const AudioBiblePage = () => {
     if (audioRef.current) audioRef.current.playbackRate = newSpeed;
   };
 
+  const handleVolumeChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setVolume(val);
+    setBoostActive(false);
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = val;
+    } else if (audioRef.current) {
+      audioRef.current.volume = val;
+    }
+  };
+
+  const handleBoost = () => {
+    const newBoost = !boostActive;
+    setBoostActive(newBoost);
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = newBoost ? 2.5 : volume;
+    } else {
+      // Dacă AudioContext nu e inițiat, încearcă init la boost
+      if (newBoost) initAudioContext();
+    }
+  };
+
   const handlePrevCapitol = () => {
-    if (!selectedCarte || selectedCapitol <= 1) return;
-    handleSelectCapitol(selectedCapitol - 1);
+    const carte = selectedCarteRef.current;
+    const capitol = selectedCapitolRef.current;
+    if (!carte || !capitol || capitol <= 1) return;
+    const prev = capitol - 1;
+    setSelectedCapitol(prev);
+    selectedCapitolRef.current = prev;
+    loadCapitolDirect(carte, prev, progressMapRef.current);
   };
 
   const handleNextCapitol = () => {
-    if (!selectedCarte || selectedCapitol >= selectedCarte.capitole) return;
-    handleSelectCapitol(selectedCapitol + 1);
+    goNext();
+  };
+
+  const handleSelectCarte = (carte) => {
+    setSelectedCarte(carte);
+    setStep('capitole');
+  };
+
+  const handleSelectCapitol = (capitol) => {
+    setSelectedCapitol(capitol);
+    setStep('player');
+    loadCapitolDirect(selectedCarte, capitol, progressMapRef.current);
   };
 
   const handleBack = () => {
@@ -273,74 +524,12 @@ const AudioBiblePage = () => {
     setSelectedCarte(carte);
     setSelectedCapitol(ultimul.capitol);
     setStep('player');
-    loadCapitol(carte, ultimul.capitol);
+    loadCapitolDirect(carte, ultimul.capitol, progressMapRef.current);
   };
 
   // ═══════════════════════════════════════
-  // AUDIO EVENTS
+  // MEDIA SESSION
   // ═══════════════════════════════════════
-  useEffect(() => {
-    const audio = new Audio();
-    audioRef.current = audio;
-
-    audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration);
-      setLoading(false);
-    });
-
-    audio.addEventListener('timeupdate', () => {
-      setCurrentTime(audio.currentTime);
-
-      // Salvează la fiecare 10 secunde
-      if (audio.currentTime - lastSavedRef.current >= 10) {
-        lastSavedRef.current = audio.currentTime;
-        if (selectedCarte && selectedCapitol) {
-          saveProgress(selectedCarte, selectedCapitol, audio.currentTime, audio.duration, false);
-        }
-      }
-    });
-
-    audio.addEventListener('play', () => {
-      setPlaying(true);
-      // Media Session
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
-      }
-    });
-
-    audio.addEventListener('pause', () => {
-      setPlaying(false);
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'paused';
-      }
-    });
-
-    audio.addEventListener('ended', () => {
-      setPlaying(false);
-      if (selectedCarte && selectedCapitol) {
-        saveProgress(selectedCarte, selectedCapitol, audio.duration, audio.duration, true);
-        // Auto next capitol
-        if (selectedCapitol < selectedCarte.capitole) {
-          setTimeout(() => handleNextCapitol(), 1500);
-        }
-      }
-    });
-
-    audio.addEventListener('waiting', () => setLoading(true));
-    audio.addEventListener('canplay', () => setLoading(false));
-
-    audio.addEventListener('error', () => {
-      setLoading(false);
-      setAudioError('Nu am putut încărca audio. Verifică conexiunea.');
-    });
-
-    return () => {
-      audio.pause();
-      audio.src = '';
-    };
-  }, []);
-
-  // Media Session
   useEffect(() => {
     if (!('mediaSession' in navigator) || !selectedCarte || !selectedCapitol) return;
 
@@ -389,6 +578,9 @@ const AudioBiblePage = () => {
   const carti_vt = CARTI.filter(c => c.test === 'VT');
   const carti_nt = CARTI.filter(c => c.test === 'NT');
 
+  // ═══════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════
   return (
     <div className="ab-page">
 
@@ -656,7 +848,7 @@ const AudioBiblePage = () => {
               <button
                 className="ab-ctrl-btn"
                 onClick={handleNextCapitol}
-                disabled={selectedCapitol >= selectedCarte.capitole}
+                disabled={selectedCapitol >= selectedCarte.capitole && selectedCarte.index >= 66}
                 title="Capitol următor"
               >
                 ⏭
@@ -675,6 +867,37 @@ const AudioBiblePage = () => {
                 </button>
               ))}
             </div>
+
+            {/* ═══ VOLUM + BOOST ═══ */}
+            <div className="ab-volume-row">
+              <span className="ab-volume-icon">
+                {volume === 0 ? '🔇' : volume < 0.4 ? '🔈' : volume < 0.8 ? '🔉' : '🔊'}
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="ab-volume-slider"
+                title={`Volum: ${Math.round(volume * 100)}%`}
+              />
+              <span className="ab-volume-pct">{Math.round(volume * 100)}%</span>
+              <button
+                className={`ab-boost-btn ${boostActive ? 'active' : ''}`}
+                onClick={handleBoost}
+                title={boostActive ? 'Boost activ (250%) — click pentru dezactivare' : 'Boost volum la 250%'}
+              >
+                {boostActive ? '🔥 Boost ON' : '⚡ Boost'}
+              </button>
+            </div>
+
+            {boostActive && (
+              <div className="ab-boost-warning">
+                ⚠️ Boost activ — volum amplificat. Folosește cu grijă căștile.
+              </div>
+            )}
           </div>
 
           {/* Status capitol */}
@@ -705,7 +928,7 @@ const AudioBiblePage = () => {
             <button
               className="ab-nav-btn"
               onClick={handleNextCapitol}
-              disabled={selectedCapitol >= selectedCarte.capitole}
+              disabled={selectedCapitol >= selectedCarte.capitole && selectedCarte.index >= 66}
             >
               Cap. {selectedCapitol + 1} →
             </button>
