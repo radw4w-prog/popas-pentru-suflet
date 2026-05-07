@@ -133,19 +133,13 @@ const AudioBiblePage = () => {
   const audioRef = useRef(null);
   const lastSavedRef = useRef(0);
 
-  // Refs pentru valori fresh în event listeners (fix stale closure)
+  // Refs pentru valori fresh în event listeners
   const selectedCarteRef = useRef(null);
   const selectedCapitolRef = useRef(null);
   const progressMapRef = useRef({});
 
-  // AudioContext refs pentru boost volum
-  const audioCtxRef = useRef(null);
-  const gainNodeRef = useRef(null);
-  const sourceNodeRef = useRef(null);
-  const audioCtxInitedRef = useRef(false);
-
   // ═══════════════════════════════════════
-  // SYNC REFS la fiecare schimbare de state
+  // SYNC REFS
   // ═══════════════════════════════════════
   useEffect(() => {
     selectedCarteRef.current = selectedCarte;
@@ -160,54 +154,19 @@ const AudioBiblePage = () => {
   }, [progressMap]);
 
   // ═══════════════════════════════════════
-  // AUDIO CONTEXT — boost volum
+  // VOLUM — direct pe elementul audio
+  // AudioContext NU se folosește: wordproaudio.net
+  // nu trimite header CORS, AudioContext ar bloca audio
   // ═══════════════════════════════════════
-  const initAudioContext = useCallback(() => {
-    if (audioCtxInitedRef.current) return;
+  useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-
-      const ctx = new AudioContext();
-      const gainNode = ctx.createGain();
-      gainNode.gain.value = boostActive ? 2.5 : volume;
-
-      const source = ctx.createMediaElementSource(audio);
-      source.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      audioCtxRef.current = ctx;
-      gainNodeRef.current = gainNode;
-      sourceNodeRef.current = source;
-      audioCtxInitedRef.current = true;
-    } catch (e) {
-      // AudioContext nu e suportat sau audio e deja conectat
-      console.warn('AudioContext init failed:', e.message);
-    }
-  }, [boostActive, volume]);
-
-  // Actualizează gain când se schimbă volumul sau boostul
-  useEffect(() => {
-    if (!gainNodeRef.current) return;
     if (boostActive) {
-      gainNodeRef.current.gain.value = 2.5;
+      audio.volume = 1;
     } else {
-      gainNodeRef.current.gain.value = volume;
-    }
-  }, [volume, boostActive]);
-
-  // Actualizează și volumul direct pe elementul audio (fallback)
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    // Fără boost: volume direct pe element
-    if (!audioCtxInitedRef.current) {
       audio.volume = volume;
     }
-  }, [volume]);
+  }, [volume, boostActive]);
 
   // ═══════════════════════════════════════
   // LOAD PROGRES
@@ -258,10 +217,8 @@ const AudioBiblePage = () => {
   }, [isAuthenticated]);
 
   // ═══════════════════════════════════════
-  // NAVIGARE CAPITOL / CARTE — folosesc refs
+  // LOAD CAPITOL DIRECT
   // ═══════════════════════════════════════
-
-  // Funcție internă de încărcare capitol (nu depinde de state, ci de parametri direcți)
   const loadCapitolDirect = useCallback((carte, capitol, currentProgressMap) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -280,7 +237,6 @@ const AudioBiblePage = () => {
     const map = currentProgressMap || progressMapRef.current;
     const cap = map[carte.index]?.[capitol];
     if (cap && cap.pozitieSecunde > 10 && !cap.complet) {
-      // Se setează după loadedmetadata
       audio.addEventListener('loadedmetadata', function onMeta() {
         audio.currentTime = cap.pozitieSecunde;
         audio.removeEventListener('loadedmetadata', onMeta);
@@ -288,7 +244,9 @@ const AudioBiblePage = () => {
     }
   }, [speed]);
 
-  // Next capitol sau next carte — folosit din event listener (ref-based)
+  // ═══════════════════════════════════════
+  // GO NEXT — capitol sau carte
+  // ═══════════════════════════════════════
   const goNext = useCallback(() => {
     const carte = selectedCarteRef.current;
     const capitol = selectedCapitolRef.current;
@@ -301,7 +259,6 @@ const AudioBiblePage = () => {
       selectedCapitolRef.current = nextCapitol;
       loadCapitolDirect(carte, nextCapitol, progressMapRef.current);
 
-      // Update Media Session
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: `${carte.nume} ${nextCapitol}`,
@@ -314,13 +271,12 @@ const AudioBiblePage = () => {
         });
       }
 
-      // Auto play după 1.5s
       setTimeout(() => {
         audioRef.current?.play().catch(() => {});
       }, 1500);
 
     } else {
-      // Ultima carte s-a terminat — mergi la cartea următoare
+      // Ultimul capitol din carte — mergi la cartea următoare
       const nextCarteObj = CARTI.find(c => c.index === carte.index + 1);
       if (!nextCarteObj) return; // Apocalipsa s-a terminat
 
@@ -348,6 +304,11 @@ const AudioBiblePage = () => {
     }
   }, [loadCapitolDirect]);
 
+  const goNextRef = useRef(goNext);
+  useEffect(() => {
+    goNextRef.current = goNext;
+  }, [goNext]);
+
   // ═══════════════════════════════════════
   // AUDIO EVENTS — montat o singură dată
   // ═══════════════════════════════════════
@@ -363,7 +324,6 @@ const AudioBiblePage = () => {
     audio.addEventListener('timeupdate', () => {
       setCurrentTime(audio.currentTime);
 
-      // Salvează la fiecare 10 secunde
       if (audio.currentTime - lastSavedRef.current >= 10) {
         lastSavedRef.current = audio.currentTime;
         const carte = selectedCarteRef.current;
@@ -394,12 +354,9 @@ const AudioBiblePage = () => {
       const capitol = selectedCapitolRef.current;
 
       if (carte && capitol) {
-        // Marchează ca complet
         saveProgress(carte, capitol, audio.duration, audio.duration, true);
-
-        // Merge automat la next (capitol sau carte)
         setTimeout(() => {
-          goNext();
+          goNextRef.current();
         }, 1500);
       }
     });
@@ -412,30 +369,19 @@ const AudioBiblePage = () => {
       setAudioError('Nu am putut încărca audio. Verifică conexiunea.');
     });
 
-        return () => {
+    return () => {
       audio.pause();
       audio.src = '';
     };
   // eslint-disable-next-line
   }, []);
 
-  // Actualizează goNext în listener când se schimbă (prin ref trick)
-  const goNextRef = useRef(goNext);
-  useEffect(() => {
-    goNextRef.current = goNext;
-  }, [goNext]);
-
   // ═══════════════════════════════════════
-  // CONTROLS UI
+  // CONTROLS
   // ═══════════════════════════════════════
   const handlePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    // Inițializează AudioContext la primul play (necesită user gesture)
-    initAudioContext();
-    if (audioCtxRef.current?.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
     audio.play().catch(e => setAudioError('Nu pot reda audio: ' + e.message));
   };
 
@@ -461,9 +407,7 @@ const AudioBiblePage = () => {
     const val = parseFloat(e.target.value);
     setVolume(val);
     setBoostActive(false);
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.value = val;
-    } else if (audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.volume = val;
     }
   };
@@ -471,11 +415,8 @@ const AudioBiblePage = () => {
   const handleBoost = () => {
     const newBoost = !boostActive;
     setBoostActive(newBoost);
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.value = newBoost ? 2.5 : volume;
-    } else {
-      // Dacă AudioContext nu e inițiat, încearcă init la boost
-      if (newBoost) initAudioContext();
+    if (audioRef.current) {
+      audioRef.current.volume = newBoost ? 1 : volume;
     }
   };
 
@@ -772,7 +713,6 @@ const AudioBiblePage = () => {
             ← {selectedCarte.ab}
           </button>
 
-          {/* Player Card */}
           <div className="ab-player-card">
             <div className="ab-player-header">
               <div className="ab-player-icon">📖</div>
@@ -887,15 +827,15 @@ const AudioBiblePage = () => {
               <button
                 className={`ab-boost-btn ${boostActive ? 'active' : ''}`}
                 onClick={handleBoost}
-                title={boostActive ? 'Boost activ (250%) — click pentru dezactivare' : 'Boost volum la 250%'}
+                title={boostActive ? 'Volum maxim activ' : 'Setează volum maxim'}
               >
-                {boostActive ? '🔥 Boost ON' : '⚡ Boost'}
+                {boostActive ? '🔥 MAX ON' : '⚡ MAX'}
               </button>
             </div>
 
             {boostActive && (
               <div className="ab-boost-warning">
-                ⚠️ Boost activ — volum amplificat. Folosește cu grijă căștile.
+                🔊 Volum maxim activ. Mărește volumul din dispozitiv pentru mai mult.
               </div>
             )}
           </div>
