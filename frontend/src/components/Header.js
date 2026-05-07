@@ -16,7 +16,7 @@ const Header = ({ theme, toggleTheme }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-console.log('✅ HEADER BUILD TEST 777');
+
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -152,7 +152,7 @@ console.log('✅ HEADER BUILD TEST 777');
   const fontSizeOptions = [
     { key: 'small', label: 'Mic', size: '13px' },
     { key: 'medium', label: 'Mediu', size: '15px' },
-    { key: 'large', label: 'Mare', size: '17px' },
+    { key: 'large', label: 'Mare', size: '17px' }
   ];
 
   const greeting = () => {
@@ -164,7 +164,6 @@ console.log('✅ HEADER BUILD TEST 777');
 
   return (
     <header className="header" role="banner">
-      {/* STÂNGA */}
       <div className="header-left">
         <button
           className="menu-btn"
@@ -180,38 +179,29 @@ console.log('✅ HEADER BUILD TEST 777');
           role="link"
           tabIndex={0}
           onKeyDown={e => e.key === 'Enter' && navigate('/dashboard')}
-          title="Pagina principală — Popas pentru Suflet"
+          title="Pagina principală"
         >
           <span className="header-brand-icon">🕊️</span>
           <div className="header-brand-text">
-            <h1 className="header-title" style={{ color: 'red', fontSize: '32px' }}>
-  TEST HEADER NOU 777
-</h1>
-            <p className="header-subtitle" style={{ color: 'lime', fontSize: '18px' }}>
-  DACA VEZI ASTA, HEADER.JS ESTE CEL CORECT
-</p>
+            <h1 className="header-title">{current.title}</h1>
+            <p className="header-subtitle">{current.subtitle}</p>
           </div>
         </div>
       </div>
 
-      {/* DREAPTA */}
       <div className="header-actions">
-
-        {/* Greeting - doar desktop */}
         {!isMobile && isAuthenticated && (
           <div className="header-greeting">
             {greeting()}, <strong>{user?.nume?.split(' ')[0]}</strong>
           </div>
         )}
 
-        {/* Font Size - doar desktop */}
         {!isMobile && (
           <div className="font-menu-wrapper">
             <button
               onClick={() => setFontMenuOpen(!fontMenuOpen)}
               className="header-action-btn"
               title="Mărime text"
-              aria-label="Schimbă mărimea textului"
             >
               Aa <span className="header-arrow">▼</span>
             </button>
@@ -234,12 +224,10 @@ console.log('✅ HEADER BUILD TEST 777');
           </div>
         )}
 
-        {/* Theme */}
         <button
           onClick={toggleTheme}
           className="header-action-btn"
           title={theme === 'dark' ? 'Mod luminos' : 'Mod întunecat'}
-          aria-label={theme === 'dark' ? 'Comută la modul luminos' : 'Comută la modul întunecat'}
           style={{
             background: theme === 'dark'
               ? 'linear-gradient(135deg, rgba(244,208,63,0.12), rgba(244,208,63,0.04))'
@@ -251,21 +239,17 @@ console.log('✅ HEADER BUILD TEST 777');
           <span className="theme-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
         </button>
 
-        {/* Ceas - doar desktop */}
         <div className="header-time">
           🕐 {time.toLocaleTimeString('ro-RO')}
         </div>
 
-        {/* Notificări */}
         {isAuthenticated && <NotificationBell />}
 
-        {/* User Menu */}
         {isAuthenticated ? (
           <div className="user-menu-wrapper">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="header-user-btn"
-              aria-label="Meniu utilizator"
             >
               <div
                 className="header-user-avatar"
@@ -306,20 +290,12 @@ console.log('✅ HEADER BUILD TEST 777');
                 )}
 
                 <button
-                  onClick={() => { navigate('/notifications'); setUserMenuOpen(false); }}
-                  className="header-dropdown-item"
-                >
-                  🔔 Notificări
-                </button>
-
-                <button
                   onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
                   className="header-dropdown-item"
                 >
                   ⚙️ Setări cont
                 </button>
 
-                {/* Font size pe mobil */}
                 {isMobile && (
                   <>
                     <div className="header-dropdown-separator" />
@@ -339,25 +315,16 @@ console.log('✅ HEADER BUILD TEST 777');
                 )}
 
                 <div className="header-dropdown-separator" />
-
-                <button
-                  onClick={handleLogout}
-                  className="header-dropdown-item logout"
-                >
+                <button onClick={handleLogout} className="header-dropdown-item logout">
                   🚪 Deconectare
                 </button>
               </div>
             )}
           </div>
         ) : (
-          <div className="header-auth-buttons">
-            <button
-              onClick={() => navigate('/login')}
-              className="header-login-btn"
-            >
-              🔑 <span className="theme-label">Intră în cont</span>
-            </button>
-          </div>
+          <button onClick={() => navigate('/login')} className="header-login-btn">
+            🔑 <span className="theme-label">Intră în cont</span>
+          </button>
         )}
       </div>
     </header>
