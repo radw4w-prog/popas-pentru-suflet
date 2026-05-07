@@ -25,6 +25,7 @@ import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrayerPage from './pages/PrayerPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 import './styles/App.css';
 import './styles/Premium.css';
@@ -94,6 +95,13 @@ function App() {
                 <div data-theme={theme}><RegisterPage /></div>
               </PublicRoute>
             } />
+			<Route path="/notifications" element={
+  <ProtectedRoute>
+    <AppLayout theme={theme} toggleTheme={toggleTheme}>
+      <NotificationsPage />
+    </AppLayout>
+  </ProtectedRoute>
+} />
             <Route path="/auth/facebook/callback" element={
               <div data-theme={theme}><FacebookCallbackPage /></div>
             } />

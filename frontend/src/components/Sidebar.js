@@ -15,6 +15,7 @@ const Sidebar = ({ theme }) => {
     { path: '/devotional', icon: '🙏', label: 'Devoțional zilnic' },
 	// În publicItems sau userItems:
 { path: '/prayer', icon: '🙏', label: 'Cereri rugăciune' }
+{ path: '/notifications', icon: '🔔', label: 'Notificări' },
   ];
 
   const userItems = [
