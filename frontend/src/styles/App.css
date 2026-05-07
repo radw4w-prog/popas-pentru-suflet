@@ -1561,3 +1561,617 @@
   from { width: 100%; }
   to   { width: 0%; }
 }
+/* ═══════════════════════════════════════
+   JOURNEY PAGE
+═══════════════════════════════════════ */
+.jp-page {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.jp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 12px;
+}
+
+.jp-loading-icon { font-size: 3rem; }
+.jp-loading-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #aaa);
+}
+
+/* Hero */
+.jp-hero {
+  position: relative;
+  padding: 40px 20px 30px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.jp-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(108, 99, 255, 0.15) 0%,
+    rgba(255, 215, 0, 0.08) 50%,
+    rgba(108, 99, 255, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+.jp-hero-content { position: relative; z-index: 1; }
+
+.jp-hero-icon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.jp-hero-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary, #fff);
+  margin: 0 0 6px;
+}
+
+.jp-hero-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 16px;
+}
+
+.jp-nivel-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: 6px 16px;
+  margin-bottom: 20px;
+}
+
+.jp-nivel-hero-icon { font-size: 1.2rem; }
+.jp-nivel-hero-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.jp-streak-hero {
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 16px;
+  display: inline-block;
+  min-width: 200px;
+}
+
+.jp-streak-hero-num {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffd700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.jp-streak-hero-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 6px;
+}
+
+.jp-streak-hero-msg {
+  font-size: 0.82rem;
+  color: var(--text-primary, #fff);
+  font-style: italic;
+}
+
+/* Tabs */
+.jp-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+}
+
+.jp-tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-secondary, #aaa);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.jp-tab.activ {
+  background: var(--primary, #6c63ff);
+  border-color: var(--primary, #6c63ff);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Content */
+.jp-content {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Card */
+.jp-card {
+  background: var(--card-bg, #1a1a2e);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.jp-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.jp-card-link {
+  font-size: 0.78rem;
+  color: var(--primary, #6c63ff);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Streak row */
+.jp-streak-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.jp-streak-item {
+  flex: 1;
+  text-align: center;
+}
+
+.jp-streak-num {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary, #fff);
+  line-height: 1;
+}
+
+.jp-streak-num.jp-gold { color: #ffd700; }
+
+.jp-streak-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #aaa);
+  margin-top: 4px;
+}
+
+.jp-streak-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.08);
+}
+
+/* Week */
+.jp-week-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.jp-week-count {
+  font-size: 0.85rem;
+  color: var(--text-primary, #fff);
+  font-weight: 600;
+}
+
+.jp-week-pct {
+  font-size: 0.85rem;
+  color: #ffd700;
+  font-weight: 700;
+}
+
+.jp-week-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.jp-week-dot {
+  flex: 1;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: transparent;
+  transition: all 0.3s;
+}
+
+.jp-week-dot.activ {
+  background: linear-gradient(135deg, #ffd700, #f7c59f);
+  border-color: #ffd700;
+  color: #1a1a2e;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.3);
+}
+
+.jp-week-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.jp-week-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #f7c59f);
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+.jp-week-done {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: #4ade80;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Nivel */
+.jp-nivel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.jp-nivel-current {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.jp-nivel-icon-lg { font-size: 2rem; }
+
+.jp-nivel-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.jp-nivel-puncte {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.jp-nivel-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.jp-nivel-arrow-line {
+  width: 30px;
+  height: 2px;
+  background: rgba(255,255,255,0.2);
+}
+
+.jp-nivel-next-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.jp-nivel-next-name { font-size: 0.75rem; }
+
+.jp-nivel-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.jp-nivel-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6c63ff, #a78bfa);
+  border-radius: 8px;
+  transition: width 0.6s ease;
+}
+
+.jp-nivel-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.jp-nivel-sub.jp-gold { color: #ffd700; }
+
+/* Badges preview */
+.jp-badges-preview {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.jp-badge-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  flex: 1;
+  min-width: 70px;
+}
+
+.jp-badge-preview-icon { font-size: 1.6rem; }
+.jp-badge-preview-name {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #aaa);
+  text-align: center;
+}
+
+/* Badges tab */
+.jp-badges-progress-card {
+  background: var(--card-bg, #1a1a2e);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.jp-badges-progress-text {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.jp-badges-progress-num {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ffd700;
+}
+
+.jp-badges-progress-slash {
+  font-size: 1.5rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.jp-badges-progress-total {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.jp-badges-progress-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.jp-badges-progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.jp-badges-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #f7c59f);
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+/* Categorii */
+.jp-categorii {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.jp-cat-btn {
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-secondary, #aaa);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.jp-cat-btn.activ {
+  background: rgba(255,215,0,0.15);
+  border-color: rgba(255,215,0,0.4);
+  color: #ffd700;
+  font-weight: 600;
+}
+
+/* Badges section */
+.jp-badges-section { margin-bottom: 8px; }
+
+.jp-badges-section-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
+
+.jp-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.jp-badge-card {
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.jp-badge-deblocat {
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.25);
+}
+
+.jp-badge-locked {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.jp-badge-card-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at top,
+    rgba(255,215,0,0.06) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.jp-badge-card-icon { font-size: 2rem; }
+
+.jp-badge-locked-icon {
+  font-size: 1.5rem;
+  opacity: 0.4;
+}
+
+.jp-badge-card-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.jp-badge-locked-name {
+  color: var(--text-secondary, #aaa);
+  font-weight: 500;
+}
+
+.jp-badge-card-desc {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #aaa);
+  line-height: 1.3;
+}
+
+.jp-badge-card-data {
+  font-size: 0.65rem;
+  color: #ffd700;
+  margin-top: 2px;
+}
+
+/* Stats */
+.jp-stats-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jp-stat-card {
+  background: var(--card-bg, #1a1a2e);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.jp-stat-card-icon { font-size: 1.4rem; margin-bottom: 6px; }
+
+.jp-stat-card-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary, #fff);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.jp-stat-card-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 10px;
+}
+
+.jp-stat-card-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.jp-stat-card-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+.jp-fill-blue { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.jp-fill-purple { background: linear-gradient(90deg, #6c63ff, #a78bfa); }
+.jp-fill-gold { background: linear-gradient(90deg, #ffd700, #f7c59f); }
+.jp-fill-green { background: linear-gradient(90deg, #4ade80, #86efac); }
+
+.jp-stat-card-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #aaa);
+}
+
+/* Sumar */
+.jp-sumar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.jp-sumar-row:last-child { border-bottom: none; }
+
+.jp-sumar-val {
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .jp-badges-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .jp-streak-num { font-size: 1.4rem; }
+  .jp-streak-hero-num { font-size: 2.2rem; }
+}

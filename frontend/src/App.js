@@ -27,6 +27,7 @@ import RegisterPage from './pages/RegisterPage';
 import PrayerPage from './pages/PrayerPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AudioBiblePage from './pages/AudioBiblePage';
+import JourneyPage from './pages/JourneyPage';
 
 import './styles/App.css';
 import './styles/Premium.css';
@@ -109,6 +110,14 @@ function App() {
   <AppLayout theme={theme} toggleTheme={toggleTheme}>
     <AudioBiblePage />
   </AppLayout>
+} />
+
+<Route path="/journey" element={
+  <ProtectedRoute>
+    <AppLayout theme={theme} toggleTheme={toggleTheme}>
+      <JourneyPage />
+    </AppLayout>
+  </ProtectedRoute>
 } />
             <Route path="/auth/facebook/callback" element={
               <div data-theme={theme}><FacebookCallbackPage /></div>
