@@ -10,59 +10,79 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
   const [progress, setProgress] = useState(0);
   const [ttsMode, setTtsMode] = useState('loading');
   const [loadingVerse, setLoadingVerse] = useState(false);
-  const [error, setError] = useState('');
+  const [statusText, setStatusText] = useState('');
 
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
   const resumeTimerRef = useRef(null);
   const currentIndexRef = useRef(0);
   const playingRef = useRef(false);
+  const abortRef = useRef(false);
 
-  // Sync refs
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { playingRef.current = playing; }, [playing]);
 
-  // Verifică status TTS
+  // Inițializare audio element
   useEffect(() => {
-    const checkStatus = async () => {
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
+
+  // Verifică TTS provider
+  useEffect(() => {
+    const check = async () => {
       try {
         const r = await fetch(`${API_URL}/api/tts/status`);
         const data = await r.json();
-        setTtsMode(data.configured ? 'voicerss' : 'browser');
-        console.log('🎙️ TTS Provider:', data.provider);
+        if (data.configured) {
+          setTtsMode('voicerss');
+          setStatusText('🇷🇴 Voce română');
+        } else {
+          setTtsMode('browser');
+          setStatusText('🔤 Voce browser');
+        }
       } catch (e) {
         setTtsMode('browser');
+        setStatusText('🔤 Voce browser');
       }
     };
-    checkStatus();
+    check();
   }, []);
 
-  // Media Session setup
+  // Media Session
   const updateMediaSession = useCallback((index) => {
     if (!('mediaSession' in navigator)) return;
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: `${bookName} ${chapter}:${index + 1}`,
-      artist: 'Popas pentru Suflet',
-      album: `${bookName} — Capitol ${chapter}`,
-      artwork: [
-        { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-        { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
-      ]
-    });
-
-    navigator.mediaSession.playbackState = 'playing';
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: `${bookName} ${chapter}:${index + 1}`,
+        artist: 'Popas pentru Suflet',
+        album: `${bookName} — Capitol ${chapter}`,
+        artwork: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+        ]
+      });
+      navigator.mediaSession.playbackState = 'playing';
+    } catch (e) {}
   }, [bookName, chapter]);
 
   // ═══════════════════════════════════════
-  // VOICERSS TTS
+  // VOICERSS — voce română
   // ═══════════════════════════════════════
   const speakWithVoiceRSS = useCallback(async (index) => {
+    if (abortRef.current) return;
     if (!verses || index >= verses.length || index < 0) {
       setPlaying(false);
       playingRef.current = false;
       setProgress(100);
       setLoadingVerse(false);
+      setStatusText('✅ Capitol terminat');
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
       }
@@ -70,7 +90,7 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     }
 
     const verse = verses[index];
-    const text = verse.text || '';
+    const text = verse?.text || '';
 
     if (!text.trim()) {
       speakWithVoiceRSS(index + 1);
@@ -81,74 +101,96 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     currentIndexRef.current = index;
     setProgress(Math.round((index / verses.length) * 100));
     setLoadingVerse(true);
-    setError('');
+    setStatusText('⏳ Se generează...');
     updateMediaSession(index);
     onVerseChange?.(index);
 
     try {
       const token = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const response = await fetch(`${API_URL}/api/tts/speak`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
+        headers,
         body: JSON.stringify({
-          text,
+          text: text.trim(),
           referinta: `${bookName} ${chapter}:${index + 1}`,
           rate
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
       const data = await response.json();
+
+      if (abortRef.current) return;
 
       if (data.success && data.audio) {
         const audio = audioRef.current;
-
-        // Oprește audio anterior
         audio.pause();
-        audio.src = '';
 
-        audio.src = `data:audio/mp3;base64,${data.audio}`;
-        audio.playbackRate = getRateMultiplier();
+        const src = `data:audio/mp3;base64,${data.audio}`;
+        audio.src = src;
 
-        audio.onloadeddata = async () => {
-          setLoadingVerse(false);
-          try {
-            await audio.play();
-            setPlaying(true);
-            playingRef.current = true;
-          } catch (e) {
-            console.error('Audio play error:', e);
-            speakWithBrowser(index);
-          }
+        // Viteză
+        const rateMap = {
+          '-3': 0.5, '-2': 0.7, '-1': 0.85,
+          '0': 1, '1': 1.2, '2': 1.5, '3': 2
         };
+        audio.playbackRate = rateMap[String(rate)] || 1;
+
+        audio.oncanplaythrough = null;
+        audio.onended = null;
+        audio.onerror = null;
 
         audio.onended = () => {
-          if (playingRef.current) {
+          if (playingRef.current && !abortRef.current) {
             speakWithVoiceRSS(currentIndexRef.current + 1);
           }
         };
 
-        audio.onerror = () => {
-          console.warn('Audio element error, fallback to browser');
-          setLoadingVerse(false);
-          speakWithBrowser(index);
+        audio.onerror = (e) => {
+          console.error('Audio element error:', e);
+          if (!abortRef.current) {
+            setStatusText('⚠️ Eroare audio, încerc din nou...');
+            setTimeout(() => speakWithVoiceRSS(currentIndexRef.current), 1000);
+          }
         };
 
-      } else if (data.fallbackToBrowser) {
-        setLoadingVerse(false);
-        speakWithBrowser(index);
+        try {
+          await audio.play();
+          setLoadingVerse(false);
+          setPlaying(true);
+          playingRef.current = true;
+          setStatusText('🇷🇴 Voce română');
+        } catch (playError) {
+          console.error('Play error:', playError.message);
+          setLoadingVerse(false);
+
+          if (playError.name === 'NotAllowedError') {
+            setPlaying(false);
+            playingRef.current = false;
+            setStatusText('⚠️ Apasă play pentru a porni');
+          } else {
+            speakWithBrowser(index);
+          }
+        }
+
       } else {
+        console.warn('VoiceRSS fallback:', data.error);
         setLoadingVerse(false);
-        setError('Eroare TTS. Folosesc voce browser.');
         speakWithBrowser(index);
       }
 
     } catch (e) {
-      console.error('VoiceRSS fetch error:', e);
-      setLoadingVerse(false);
-      speakWithBrowser(index);
+      console.error('VoiceRSS fetch error:', e.message);
+      if (!abortRef.current) {
+        setLoadingVerse(false);
+        speakWithBrowser(index);
+      }
     }
   }, [verses, rate, bookName, chapter, updateMediaSession, onVerseChange]);
 
@@ -156,6 +198,7 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
   // BROWSER TTS — fallback
   // ═══════════════════════════════════════
   const speakWithBrowser = useCallback((index) => {
+    if (abortRef.current) return;
     if (!verses || index >= verses.length || index < 0) {
       setPlaying(false);
       playingRef.current = false;
@@ -167,51 +210,58 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     setLoadingVerse(false);
 
     const verse = verses[index];
-    const text = verse.text || '';
-
+    const text = verse?.text || '';
     if (!text.trim()) {
       speakWithBrowser(index + 1);
       return;
     }
 
+    const rateMap = {
+      '-3': 0.5, '-2': 0.7, '-1': 0.85,
+      '0': 1, '1': 1.2, '2': 1.5, '3': 2
+    };
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ro-RO';
-    utterance.rate = getBrowserRate();
+    utterance.rate = rateMap[String(rate)] || 1;
     utterance.pitch = 1;
     utterance.volume = 1;
 
     const voices = synthRef.current.getVoices();
     const roVoice = voices.find(v =>
-      v.lang.startsWith('ro') ||
-      v.name.toLowerCase().includes('ioana') ||
-      v.name.toLowerCase().includes('roman')
+      v.lang?.startsWith('ro') ||
+      v.name?.toLowerCase().includes('ioana') ||
+      v.name?.toLowerCase().includes('roman')
     );
     if (roVoice) utterance.voice = roVoice;
 
     utterance.onstart = () => {
+      if (abortRef.current) { synthRef.current.cancel(); return; }
       setCurrentIndex(index);
       currentIndexRef.current = index;
       setPlaying(true);
       playingRef.current = true;
       setProgress(Math.round((index / verses.length) * 100));
+      setStatusText('🔤 Voce browser');
       updateMediaSession(index);
       onVerseChange?.(index);
     };
 
     utterance.onend = () => {
-      if (playingRef.current) {
+      if (playingRef.current && !abortRef.current) {
         speakWithBrowser(currentIndexRef.current + 1);
       }
     };
 
     utterance.onerror = (e) => {
-      if (e.error !== 'canceled') {
+      if (e.error !== 'canceled' && !abortRef.current) {
         setTimeout(() => speakWithBrowser(currentIndexRef.current + 1), 500);
       }
     };
 
     synthRef.current.speak(utterance);
 
+    // Chrome bug fix
     clearInterval(resumeTimerRef.current);
     resumeTimerRef.current = setInterval(() => {
       if (synthRef.current.speaking && !synthRef.current.paused) {
@@ -221,21 +271,11 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     }, 10000);
   }, [verses, rate, updateMediaSession, onVerseChange]);
 
-  // Rate helpers
-  const getRateMultiplier = () => {
-    const rateMap = { '-3': 0.5, '-2': 0.7, '-1': 0.85, '0': 1, '1': 1.2, '2': 1.5, '3': 2 };
-    return rateMap[String(rate)] || 1;
-  };
-
-  const getBrowserRate = () => {
-    const rateMap = { '-3': 0.5, '-2': 0.7, '-1': 0.85, '0': 1, '1': 1.2, '2': 1.5, '3': 2 };
-    return rateMap[String(rate)] || 1;
-  };
-
   // ═══════════════════════════════════════
   // SPEAK — alege provider
   // ═══════════════════════════════════════
   const speakVerse = useCallback((index) => {
+    abortRef.current = false;
     if (ttsMode === 'voicerss') {
       speakWithVoiceRSS(index);
     } else {
@@ -243,33 +283,30 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     }
   }, [ttsMode, speakWithVoiceRSS, speakWithBrowser]);
 
-  // Expose global pentru click pe verset
+  // Expose global
   useEffect(() => {
     window.__audioBiblePlayFrom = (index) => {
-      audioRef.current.pause();
+      abortRef.current = true;
+      if (audioRef.current) audioRef.current.pause();
       synthRef.current.cancel();
       clearInterval(resumeTimerRef.current);
-      speakVerse(index);
+      setTimeout(() => {
+        abortRef.current = false;
+        speakVerse(index);
+      }, 100);
     };
     return () => { delete window.__audioBiblePlayFrom; };
   }, [speakVerse]);
 
-  // Media Session action handlers
+  // Media Session handlers
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
-
-    const handlers = {
-      play: () => handleResume(),
-      pause: () => handlePause(),
-      previoustrack: () => handlePrev(),
-      nexttrack: () => handleNext()
-    };
-
-    Object.entries(handlers).forEach(([action, handler]) => {
-      try {
-        navigator.mediaSession.setActionHandler(action, handler);
-      } catch (e) {}
-    });
+    try {
+      navigator.mediaSession.setActionHandler('play', () => handleResume());
+      navigator.mediaSession.setActionHandler('pause', () => handlePause());
+      navigator.mediaSession.setActionHandler('previoustrack', () => handlePrev());
+      navigator.mediaSession.setActionHandler('nexttrack', () => handleNext());
+    } catch (e) {}
   });
 
   // ═══════════════════════════════════════
@@ -280,26 +317,39 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
   }, [speakVerse]);
 
   const handlePause = useCallback(() => {
-    audioRef.current.pause();
+    abortRef.current = true;
+    if (audioRef.current) audioRef.current.pause();
     synthRef.current.pause();
     clearInterval(resumeTimerRef.current);
     setPlaying(false);
     playingRef.current = false;
     setLoadingVerse(false);
+    setStatusText('⏸ Pauză');
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = 'paused';
     }
   }, []);
 
   const handleResume = useCallback(() => {
-    if (ttsMode === 'voicerss' && audioRef.current.src) {
-      audioRef.current.play();
-      setPlaying(true);
-      playingRef.current = true;
+    abortRef.current = false;
+    if (ttsMode === 'voicerss' && audioRef.current?.src && audioRef.current.src !== window.location.href) {
+      audioRef.current.play()
+        .then(() => {
+          setPlaying(true);
+          playingRef.current = true;
+          setStatusText('🇷🇴 Voce română');
+        })
+        .catch(() => handlePlay());
     } else if (ttsMode === 'browser' && synthRef.current.paused) {
       synthRef.current.resume();
       setPlaying(true);
       playingRef.current = true;
+      resumeTimerRef.current = setInterval(() => {
+        if (synthRef.current.speaking && !synthRef.current.paused) {
+          synthRef.current.pause();
+          synthRef.current.resume();
+        }
+      }, 10000);
     } else {
       handlePlay();
     }
@@ -309,8 +359,11 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
   }, [ttsMode, handlePlay]);
 
   const handleStop = useCallback(() => {
-    audioRef.current.pause();
-    audioRef.current.src = '';
+    abortRef.current = true;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
     synthRef.current.cancel();
     clearInterval(resumeTimerRef.current);
     setPlaying(false);
@@ -319,7 +372,7 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     currentIndexRef.current = 0;
     setProgress(0);
     setLoadingVerse(false);
-    setError('');
+    setStatusText('');
     onVerseChange?.(0);
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = 'none';
@@ -327,50 +380,61 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
   }, [onVerseChange]);
 
   const handleNext = useCallback(() => {
-    audioRef.current.pause();
+    abortRef.current = true;
+    if (audioRef.current) audioRef.current.pause();
     synthRef.current.cancel();
     clearInterval(resumeTimerRef.current);
-    const next = Math.min(currentIndexRef.current + 1, verses.length - 1);
+    const next = Math.min(currentIndexRef.current + 1, (verses?.length || 1) - 1);
     setCurrentIndex(next);
     currentIndexRef.current = next;
-    if (playingRef.current) speakVerse(next);
+    setTimeout(() => {
+      if (playingRef.current) speakVerse(next);
+    }, 100);
   }, [verses, speakVerse]);
 
   const handlePrev = useCallback(() => {
-    audioRef.current.pause();
+    abortRef.current = true;
+    if (audioRef.current) audioRef.current.pause();
     synthRef.current.cancel();
     clearInterval(resumeTimerRef.current);
     const prev = Math.max(currentIndexRef.current - 1, 0);
     setCurrentIndex(prev);
     currentIndexRef.current = prev;
-    if (playingRef.current) speakVerse(prev);
+    setTimeout(() => {
+      if (playingRef.current) speakVerse(prev);
+    }, 100);
   }, [speakVerse]);
 
   const handleRateChange = useCallback((newRate) => {
     setRate(newRate);
-    if (ttsMode === 'voicerss') {
-      const rateMap = { '-3': 0.5, '-2': 0.7, '-1': 0.85, '0': 1, '1': 1.2, '2': 1.5, '3': 2 };
+    const rateMap = {
+      '-3': 0.5, '-2': 0.7, '-1': 0.85,
+      '0': 1, '1': 1.2, '2': 1.5, '3': 2
+    };
+    if (audioRef.current) {
       audioRef.current.playbackRate = rateMap[String(newRate)] || 1;
     }
-  }, [ttsMode]);
+  }, []);
 
-  // Cleanup
+  // Cleanup la unmount
   useEffect(() => {
-    const audio = audioRef.current;
     return () => {
-      audio.pause();
-      audio.src = '';
+      abortRef.current = true;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
       synthRef.current.cancel();
       clearInterval(resumeTimerRef.current);
       if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'none';
+        try { navigator.mediaSession.playbackState = 'none'; } catch (e) {}
       }
     };
   }, []);
 
   useEffect(() => {
     synthRef.current.getVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
+    if (typeof speechSynthesis !== 'undefined') {
       speechSynthesis.onvoiceschanged = () => synthRef.current.getVoices();
     }
   }, []);
@@ -391,7 +455,10 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
     <div className="audio-player">
       {/* Progress */}
       <div className="audio-progress-bar">
-        <div className="audio-progress-fill" style={{ width: `${progress}%` }} />
+        <div
+          className="audio-progress-fill"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       {/* Info */}
@@ -400,23 +467,19 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
           {loadingVerse ? '⏳' : '🔊'}{' '}
           {bookName} {chapter}:{currentIndex + 1}
           <span className="audio-tts-badge">
-            {ttsMode === 'voicerss' ? '🇷🇴 VoiceRSS' : ttsMode === 'browser' ? '🔤 Browser' : '⏳'}
+            {statusText || (ttsMode === 'voicerss' ? '🇷🇴 Română' : '🔤 Browser')}
           </span>
         </div>
         <div className="audio-verse-preview">
           {loadingVerse
             ? 'Se generează audio în română...'
-            : error
-              ? error
-              : (currentVerse?.text?.substring(0, 65) || '...')
-                + ((currentVerse?.text?.length || 0) > 65 ? '...' : '')
+            : currentVerse?.text?.substring(0, 65) + ((currentVerse?.text?.length || 0) > 65 ? '...' : '')
           }
         </div>
       </div>
 
       {/* Controls */}
       <div className="audio-controls">
-        {/* Viteză */}
         <div className="audio-speed">
           <select
             value={rate}
@@ -429,12 +492,11 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
           </select>
         </div>
 
-        {/* Main */}
         <div className="audio-main-controls">
           <button
             className="audio-btn"
             onClick={handlePrev}
-            disabled={currentIndex === 0 || loadingVerse}
+            disabled={currentIndex === 0}
             title="Versetul anterior"
           >
             ⏮
@@ -452,7 +514,7 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
             <button
               className="audio-btn audio-btn-main"
               onClick={loadingVerse ? undefined : handleResume}
-              disabled={loadingVerse}
+              disabled={loadingVerse || ttsMode === 'loading'}
               title="Redă"
             >
               {loadingVerse ? '⏳' : '▶️'}
@@ -462,26 +524,25 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
           <button
             className="audio-btn"
             onClick={handleNext}
-            disabled={currentIndex >= verses.length - 1 || loadingVerse}
+            disabled={currentIndex >= (verses?.length || 1) - 1}
             title="Versetul următor"
           >
             ⏭
           </button>
         </div>
 
-        {/* Right */}
         <div className="audio-right-controls">
           <button
             className="audio-btn-sm"
             onClick={handleStop}
-            title="Oprește și resetează"
+            title="Oprește"
           >
             ⏹
           </button>
           <button
             className="audio-btn-sm"
             onClick={() => { handleStop(); onClose?.(); }}
-            title="Închide player"
+            title="Închide"
           >
             ✕
           </button>
@@ -490,12 +551,7 @@ const AudioBiblePlayer = ({ verses, bookName, chapter, onClose, onVerseChange })
 
       {/* Counter */}
       <div className="audio-counter">
-        {currentIndex + 1} / {verses.length} versete
-        {ttsMode === 'voicerss' && (
-          <span style={{ marginLeft: '0.5rem', opacity: 0.6 }}>
-            • voce română
-          </span>
-        )}
+        {currentIndex + 1} / {verses?.length || 0} versete
       </div>
     </div>
   );
