@@ -26,6 +26,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrayerPage from './pages/PrayerPage';
 import NotificationsPage from './pages/NotificationsPage';
+import AudioBiblePage from './pages/AudioBiblePage';
 
 import './styles/App.css';
 import './styles/Premium.css';
@@ -102,6 +103,8 @@ function App() {
     </AppLayout>
   </ProtectedRoute>
 } />
+
+
 <Route path="/audio-bible" element={
   <AppLayout theme={theme} toggleTheme={toggleTheme}>
     <AudioBiblePage />
