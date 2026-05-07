@@ -64,7 +64,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/devotionals', require('./routes/devotionals'));
 app.use('/api/prayer', require('./routes/prayer'));
-
+app.use('/api/tts', require('./routes/tts'));
 
 // ═══════════════════════════════════════
 // SCHEDULER
