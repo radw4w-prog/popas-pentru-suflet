@@ -1,3 +1,4 @@
+// frontend/src/pages/DevotionalPage.js
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +7,7 @@ export default function DevotionalPage() {
   const [loading, setLoading] = useState(true);
   const [devotional, setDevotional] = useState(null);
   const [error, setError] = useState('');
+
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -18,6 +20,12 @@ export default function DevotionalPage() {
       setError('');
       const res = await api.get('/api/devotionals/today');
       setDevotional(res.data.data);
+
+      // Hook spiritual journey — marchează devoționalul ca văzut
+      if (isAuthenticated) {
+        api.post('/api/devotionals/viewed').catch(() => {});
+      }
+
     } catch (err) {
       setError(err.response?.data?.error || 'Nu am putut încărca devoționalul.');
     } finally {
@@ -46,26 +54,6 @@ export default function DevotionalPage() {
   }
 
   if (!devotional) return null;
-  
-  
-  const loadDevotional = async () => {
-  try {
-    setLoading(true);
-    setError('');
-    const res = await api.get('/api/devotionals/today');
-    setDevotional(res.data.data);
-
-    // Hook spiritual journey — marchează devoționalul ca văzut
-    if (isAuthenticated) {
-      api.post('/api/devotionals/viewed').catch(() => {});
-    }
-
-  } catch (err) {
-    setError(err.response?.data?.error || 'Nu am putut încărca devoționalul.');
-  } finally {
-    setLoading(false);
-  }
-};
 
   return (
     <div className="page-container">
@@ -78,7 +66,7 @@ export default function DevotionalPage() {
         <h1>{devotional.title}</h1>
 
         <div className="verse-box">
-          <p className="verse-text">“{devotional.verseText}”</p>
+          <p className="verse-text">"{devotional.verseText}"</p>
           <div className="verse-ref">— {devotional.verseReference}</div>
         </div>
 
@@ -108,7 +96,11 @@ export default function DevotionalPage() {
         </section>
 
         <div className="devotional-footer">
-          <small>Generat: {devotional.generatedBy === 'ai' ? 'AI + validare structură' : 'fallback local'}</small>
+          <small>
+            Generat: {devotional.generatedBy === 'ai'
+              ? 'AI + validare structură'
+              : 'fallback local'}
+          </small>
         </div>
       </div>
     </div>
