@@ -81,4 +81,17 @@ router.post('/generate/manual', async (req, res) => {
   }
 });
 
+const { protect } = require('../middleware/auth');
+const { markDailyActivity } = require('../utils/spiritualJourneyService');
+
+// POST /api/devotionals/viewed — marchează devoționalul ca văzut
+router.post('/viewed', protect, async (req, res) => {
+  try {
+    markDailyActivity(req.user._id, 'devotional', { devotionaleParcurse: 1 }).catch(console.error);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
 module.exports = router;

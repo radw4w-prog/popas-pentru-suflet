@@ -400,6 +400,9 @@ router.post('/mark', protect, async (req, res) => {
 
       // Verifică milestone în background
       checkMilestoneAfterMark(req.user._id, totalCitite).catch(console.error);
+	  // Hook spiritual journey
+const { markDailyActivity } = require('../utils/spiritualJourneyService');
+markDailyActivity(req.user._id, 'citire', { capitoleCitite: 1 }).catch(console.error);
 
       res.json({
         success: true,

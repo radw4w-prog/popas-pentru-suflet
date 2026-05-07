@@ -217,6 +217,9 @@ router.post('/:id/pray', optionalAuth, async (req, res) => {
         cerere.rugaciuniUseri.push(req.user._id);
         cerere.rugaciuni += 1;
         euMAmRugat = true;
+		// Hook spiritual journey
+const { markDailyActivity } = require('../utils/spiritualJourneyService');
+markDailyActivity(req.user._id, 'rugaciune', { rugaciuniInteractionate: 1 }).catch(console.error);
       } else {
         cerere.rugaciuniUseri.splice(idx, 1);
         cerere.rugaciuni = Math.max(0, cerere.rugaciuni - 1);

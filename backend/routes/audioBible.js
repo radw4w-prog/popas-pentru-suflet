@@ -82,6 +82,12 @@ router.post('/progress', protect, async (req, res) => {
       { upsert: true, new: true }
     );
 
+    // Hook spiritual journey — doar când capitolul e complet
+    if (complet) {
+      const { markDailyActivity } = require('../utils/spiritualJourneyService');
+      markDailyActivity(req.user._id, 'audio', { capitoleAscultate: 1 }).catch(console.error);
+    }
+
     res.json({ success: true, progress });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
