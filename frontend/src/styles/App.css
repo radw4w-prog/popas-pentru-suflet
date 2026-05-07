@@ -1138,3 +1138,407 @@
   font-size: 0.8rem;
   color: #ff6b35;
 }
+/* ═══════════════════════════════════════
+   SPIRITUAL JOURNEY CARD
+═══════════════════════════════════════ */
+.sj-card {
+  background: var(--card-bg, #1a1a2e);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 20px;
+  padding: 20px;
+  margin: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+
+.sj-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f7c59f, #ffd700, #f7c59f);
+  border-radius: 20px 20px 0 0;
+}
+
+/* Header */
+.sj-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sj-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sj-header-icon {
+  font-size: 1.6rem;
+}
+
+.sj-header-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.sj-header-sub {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.sj-nivel-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.sj-nivel-icon { font-size: 1rem; }
+.sj-nivel-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+/* Streak */
+.sj-streak-row {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  gap: 16px;
+}
+
+.sj-streak-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.sj-streak-flame { font-size: 2rem; }
+
+.sj-streak-num {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffd700;
+  line-height: 1;
+}
+
+.sj-streak-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #aaa);
+  margin-top: 2px;
+}
+
+.sj-streak-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.1);
+}
+
+.sj-streak-max {
+  text-align: center;
+}
+
+.sj-streak-max-num {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.sj-streak-max-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.sj-streak-msg {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #aaa);
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+
+/* Săptămână */
+.sj-week-section {
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.sj-week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sj-week-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.sj-week-count {
+  font-size: 0.78rem;
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.sj-week-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sj-week-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.1);
+  transition: all 0.3s;
+}
+
+.sj-week-dot.activ {
+  background: linear-gradient(135deg, #ffd700, #f7c59f);
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+}
+
+.sj-week-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sj-week-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #f7c59f);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* Nivel */
+.sj-nivel-section {
+  margin-bottom: 14px;
+}
+
+.sj-nivel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sj-nivel-current {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.sj-nivel-next {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.sj-nivel-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.sj-nivel-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6c63ff, #a78bfa);
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+.sj-nivel-puncte {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.sj-nivel-puncte-next {
+  color: #a78bfa;
+}
+
+/* Stats */
+.sj-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sj-stat-item {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.sj-stat-icon { font-size: 1.1rem; }
+
+.sj-stat-num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.sj-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #aaa);
+  text-align: center;
+}
+
+/* Badges */
+.sj-badges-section {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 14px;
+  margin-bottom: 14px;
+}
+
+.sj-badges-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 10px;
+}
+
+.sj-badges-count {
+  font-size: 0.75rem;
+  color: #ffd700;
+  background: rgba(255,215,0,0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sj-badges-row {
+  display: flex;
+  gap: 10px;
+}
+
+.sj-badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 12px;
+  padding: 8px 12px;
+  flex: 1;
+}
+
+.sj-badge-icon { font-size: 1.4rem; }
+
+.sj-badge-name {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #aaa);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Footer */
+.sj-footer {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 10px;
+  text-align: center;
+}
+
+.sj-footer-total {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #aaa);
+}
+
+/* Badge notificare */
+.sj-badge-notif {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  cursor: pointer;
+  animation: sjNotifIn 0.4s ease;
+}
+
+@keyframes sjNotifIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.sj-badge-notif-inner {
+  background: linear-gradient(135deg, #1a1a2e, #2d2d4e);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 16px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(255,215,0,0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.sj-badge-notif-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(255,215,0,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sj-badge-notif-icon { font-size: 2rem; }
+
+.sj-badge-notif-title {
+  font-size: 0.7rem;
+  color: #ffd700;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sj-badge-notif-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sj-badge-notif-desc {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .sj-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sj-week-dot {
+    width: 22px;
+    height: 22px;
+  }
+}

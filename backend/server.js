@@ -66,6 +66,7 @@ app.use('/api/devotionals', require('./routes/devotionals'));
 app.use('/api/prayer', require('./routes/prayer'));
 app.use('/api/tts', require('./routes/tts'));
 app.use('/api/audio-bible', require('./routes/audioBible'));
+app.use('/api/journey', require('./routes/spiritualJourney'));
 
 // ═══════════════════════════════════════
 // SCHEDULER

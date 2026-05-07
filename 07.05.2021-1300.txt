@@ -316,3 +316,29 @@ test complet
 După asta:
 
 🎉 declari versiunea 1.0
+
+
+am adaugat inclusiv separat biblia audio
+backend/models/AudioProgress.js
+backend/routes/audioBible.js
+frontend/src/pages/AudioBiblePage.js
+
+✅ Biblia audio completă în română (66 cărți)
+✅ Voce profesională (nu TTS)
+✅ Stream direct - nu stochezi nimic
+✅ Selectare carte → capitole → player
+✅ 🟢 Verde = complet ascultat
+✅ 🟡 Portocaliu = în progres
+✅ ⚪ Normal = neascultat
+✅ Progress bar per carte (%)
+✅ Reia de unde ai rămas (la secundă)
+✅ Salvare automată la fiecare 10 sec
+✅ +15 / -15 secunde skip
+✅ Viteză: 0.75x / 1x / 1.25x / 1.5x / 2x
+✅ Auto next capitol la final
+✅ Lock screen controls (Media Session)
+✅ Background play Android/iOS
+✅ Statistici: timp ascultat, capitole
+✅ Buton Continuă de unde ai rămas
+✅ Responsive desktop + mobile
+✅ Cost: 0 lei

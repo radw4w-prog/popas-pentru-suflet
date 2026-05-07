@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SpiritualJourneyCard from '../components/SpiritualJourneyCard';
 
 const API = process.env.REACT_APP_API_URL || '';
 
@@ -127,6 +128,11 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
+
+{/* ═══ CĂLĂTORIA SPIRITUALĂ ═══ */}
+{isAuthenticated && <SpiritualJourneyCard />}
+
+
 
       {/* ═══ GÂNDUL ZILEI ═══ */}
       {gandZilei && (
