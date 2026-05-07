@@ -38,13 +38,12 @@ const Header = ({ theme, toggleTheme }) => {
     }
   };
 
-  // Close menus on outside click
   useEffect(() => {
     const handleClick = (e) => {
-      // Sidebar
       const sidebar = document.querySelector('.sidebar');
       const overlay = document.querySelector('.sidebar-overlay');
       const btn = document.querySelector('.menu-btn');
+
       if (sidebar && sidebar.classList.contains('open')) {
         if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
           sidebar.classList.remove('open');
@@ -53,15 +52,8 @@ const Header = ({ theme, toggleTheme }) => {
         }
       }
 
-      // User menu
-      if (!e.target.closest('.user-menu-wrapper')) {
-        setUserMenuOpen(false);
-      }
-
-      // Font menu
-      if (!e.target.closest('.font-menu-wrapper')) {
-        setFontMenuOpen(false);
-      }
+      if (!e.target.closest('.user-menu-wrapper')) setUserMenuOpen(false);
+      if (!e.target.closest('.font-menu-wrapper')) setFontMenuOpen(false);
     };
 
     document.addEventListener('mousedown', handleClick);
@@ -72,7 +64,6 @@ const Header = ({ theme, toggleTheme }) => {
     };
   }, []);
 
-  // Close sidebar on route change (mobile)
   useEffect(() => {
     if (isMobile) {
       const sidebar = document.querySelector('.sidebar');
@@ -83,29 +74,68 @@ const Header = ({ theme, toggleTheme }) => {
         if (overlay) overlay.style.display = 'none';
       }
     }
-    // Close all dropdowns on route change
     setUserMenuOpen(false);
     setFontMenuOpen(false);
   }, [location.pathname, isMobile]);
 
   const pageTitles = {
-    '/dashboard': { title: 'Popas pentru Suflet', subtitle: 'verset de încurajare, rugăciune și pași zilnici cu Dumnezeu' },
-    '/devotional': { title: 'Devoțional zilnic', subtitle: 'meditație, rugăciune și aplicație practică' },
-    '/generate': { title: 'Creator Creștin', subtitle: 'imagini și texte inspiraționale pentru postări' },
-    '/bookmarks': { title: 'Semnele mele', subtitle: 'versete salvate, evidențiate și cu notițe personale' },
-    '/prayer': { title: 'Cereri de rugăciune', subtitle: 'comunitate de rugăciune și susținere' },
-    '/schedule': { title: 'Programări Facebook', subtitle: 'publicare organizată și consecventă' },
-    '/history': { title: 'Istoric Publicări', subtitle: 'urmărește postările create și distribuite' },
-    '/verses': { title: 'Biblia Cornilescu', subtitle: '31.102 versete pentru citire, căutare și meditație' },
-    '/reading': { title: 'Plan de citire', subtitle: 'drumul tău zilnic prin Cuvântul lui Dumnezeu' },
-    '/settings': { title: 'Setări și conexiuni', subtitle: 'cont, notificări și integrări' },
-    '/admin': { title: 'Administrare', subtitle: 'utilizatori, conținut și control complet' },
-    '/analytics': { title: 'Statistici Facebook', subtitle: 'reach, engagement, creștere și top postări' },
+    '/dashboard': {
+      title: 'Popas pentru Suflet',
+      subtitle: 'Biblia zilnică, rugăciune și inspirație creștină'
+    },
+    '/devotional': {
+      title: 'Devoțional zilnic',
+      subtitle: 'Meditație biblică, rugăciune și gânduri de credință'
+    },
+    '/generate': {
+      title: 'Creator Conținut',
+      subtitle: 'Generează postări creștine cu AI pentru social media'
+    },
+    '/bookmarks': {
+      title: 'Semnele mele',
+      subtitle: 'Versete salvate, evidențiate și notițe personale'
+    },
+    '/prayer': {
+      title: 'Cereri de rugăciune',
+      subtitle: 'Comunitate de rugăciune și susținere spirituală'
+    },
+    '/schedule': {
+      title: 'Programări',
+      subtitle: 'Planifică publicarea postărilor pe Facebook'
+    },
+    '/history': {
+      title: 'Istoric publicări',
+      subtitle: 'Postările tale create și distribuite'
+    },
+    '/verses': {
+      title: 'Biblia Cornilescu',
+      subtitle: '31.102 versete — citește, caută și meditează zilnic'
+    },
+    '/reading': {
+      title: 'Plan de citire',
+      subtitle: 'Parcurge Biblia zilnic, la ritmul tău'
+    },
+    '/settings': {
+      title: 'Setări',
+      subtitle: 'Cont, notificări și integrări'
+    },
+    '/admin': {
+      title: 'Administrare',
+      subtitle: 'Utilizatori, conținut și control complet'
+    },
+    '/analytics': {
+      title: 'Statistici Facebook',
+      subtitle: 'Reach, engagement și performanța postărilor'
+    },
+    '/notifications': {
+      title: 'Notificări',
+      subtitle: 'Toate notificările și alertele tale'
+    }
   };
 
   const current = pageTitles[location.pathname] || {
     title: 'Popas pentru Suflet',
-    subtitle: 'spațiu de liniște, credință și inspirație'
+    subtitle: 'Biblia online, rugăciuni și inspirație creștină zilnică'
   };
 
   const handleLogout = () => {
@@ -125,37 +155,61 @@ const Header = ({ theme, toggleTheme }) => {
     { key: 'large', label: 'Mare', size: '17px' },
   ];
 
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Dimineață binecuvântată';
+    if (h < 18) return 'Dumnezeu să te binecuvânteze';
+    return 'Seară liniștită';
+  };
+
   return (
-    <div className="header">
+    <header className="header" role="banner">
       {/* STÂNGA */}
       <div className="header-left">
         <button
           className="menu-btn"
           onClick={toggleMenu}
-          aria-label="Meniu"
+          aria-label="Deschide meniu"
         >
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        <div className="header-info">
-          <h1 className="header-title">{current.title}</h1>
-          <div className="header-subtext">{current.subtitle}</div>
+        <div
+          className="header-brand"
+          onClick={() => navigate('/dashboard')}
+          role="link"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && navigate('/dashboard')}
+          title="Pagina principală — Popas pentru Suflet"
+        >
+          <span className="header-brand-icon">🕊️</span>
+          <div className="header-brand-text">
+            <h1 className="header-title">{current.title}</h1>
+            <p className="header-subtitle">{current.subtitle}</p>
+          </div>
         </div>
       </div>
 
       {/* DREAPTA */}
       <div className="header-actions">
 
-        {/* FONT SIZE - doar desktop */}
+        {/* Greeting - doar desktop */}
+        {!isMobile && isAuthenticated && (
+          <div className="header-greeting">
+            {greeting()}, <strong>{user?.nume?.split(' ')[0]}</strong>
+          </div>
+        )}
+
+        {/* Font Size - doar desktop */}
         {!isMobile && (
           <div className="font-menu-wrapper">
             <button
               onClick={() => setFontMenuOpen(!fontMenuOpen)}
               className="header-action-btn"
               title="Mărime text"
+              aria-label="Schimbă mărimea textului"
             >
-              <span>Aa</span>
-              <span className="header-action-arrow">▼</span>
+              Aa <span className="header-arrow">▼</span>
             </button>
 
             {fontMenuOpen && (
@@ -168,7 +222,7 @@ const Header = ({ theme, toggleTheme }) => {
                     className={`header-dropdown-option ${fontSize === opt.key ? 'active' : ''}`}
                   >
                     <span style={{ fontSize: opt.size, fontWeight: 600 }}>{opt.label}</span>
-                    <span style={{ fontSize: opt.size, opacity: 0.6 }}>Abc</span>
+                    <span style={{ fontSize: opt.size, opacity: 0.5 }}>Abc</span>
                   </button>
                 ))}
               </div>
@@ -176,36 +230,38 @@ const Header = ({ theme, toggleTheme }) => {
           </div>
         )}
 
-        {/* THEME */}
+        {/* Theme */}
         <button
           onClick={toggleTheme}
-          className="header-action-btn header-theme-btn"
-          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          className="header-action-btn"
+          title={theme === 'dark' ? 'Mod luminos' : 'Mod întunecat'}
+          aria-label={theme === 'dark' ? 'Comută la modul luminos' : 'Comută la modul întunecat'}
           style={{
             background: theme === 'dark'
-              ? 'linear-gradient(135deg, rgba(244,208,63,0.15), rgba(244,208,63,0.05))'
-              : 'linear-gradient(135deg, rgba(30,30,60,0.15), rgba(30,30,60,0.05))',
-            borderColor: theme === 'dark' ? 'rgba(244,208,63,0.3)' : 'rgba(30,30,60,0.2)'
+              ? 'linear-gradient(135deg, rgba(244,208,63,0.12), rgba(244,208,63,0.04))'
+              : 'linear-gradient(135deg, rgba(30,30,60,0.1), rgba(30,30,60,0.04))',
+            borderColor: theme === 'dark' ? 'rgba(244,208,63,0.25)' : 'rgba(30,30,60,0.15)'
           }}
         >
           {theme === 'dark' ? '☀️' : '🌙'}
           <span className="theme-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
         </button>
 
-        {/* CEAS - doar desktop */}
+        {/* Ceas - doar desktop */}
         <div className="header-time">
           🕐 {time.toLocaleTimeString('ro-RO')}
         </div>
 
-        {/* NOTIFICĂRI */}
+        {/* Notificări */}
         {isAuthenticated && <NotificationBell />}
 
-        {/* USER MENU */}
+        {/* User Menu */}
         {isAuthenticated ? (
           <div className="user-menu-wrapper">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="header-user-btn"
+              aria-label="Meniu utilizator"
             >
               <div
                 className="header-user-avatar"
@@ -216,27 +272,24 @@ const Header = ({ theme, toggleTheme }) => {
                 }}
               >
                 {user?.avatar ? (
-                  <img src={user.avatar} alt="" className="header-user-avatar-img" />
+                  <img src={user.avatar} alt={user?.nume} className="header-user-avatar-img" />
                 ) : (
                   getInitiale(user?.nume)
                 )}
               </div>
-
               <span className="user-name">{user?.nume}</span>
-
               {isAdmin && <span className="admin-badge">ADMIN</span>}
-
-              <span className="header-action-arrow">
-                {userMenuOpen ? '▲' : '▼'}
-              </span>
+              <span className="header-arrow">{userMenuOpen ? '▲' : '▼'}</span>
             </button>
 
             {userMenuOpen && (
               <div className="header-user-dropdown">
-                {/* User info */}
                 <div className="header-dropdown-user-info">
                   <div className="header-dropdown-user-name">{user?.nume}</div>
                   <div className="header-dropdown-user-email">{user?.email}</div>
+                  {isAdmin && (
+                    <div className="header-dropdown-user-role">👑 Administrator</div>
+                  )}
                 </div>
 
                 {isAdmin && (
@@ -249,13 +302,20 @@ const Header = ({ theme, toggleTheme }) => {
                 )}
 
                 <button
+                  onClick={() => { navigate('/notifications'); setUserMenuOpen(false); }}
+                  className="header-dropdown-item"
+                >
+                  🔔 Notificări
+                </button>
+
+                <button
                   onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
                   className="header-dropdown-item"
                 >
                   ⚙️ Setări cont
                 </button>
 
-                {/* Font size pe mobile - în user dropdown */}
+                {/* Font size pe mobil */}
                 {isMobile && (
                   <>
                     <div className="header-dropdown-separator" />
@@ -275,6 +335,7 @@ const Header = ({ theme, toggleTheme }) => {
                 )}
 
                 <div className="header-dropdown-separator" />
+
                 <button
                   onClick={handleLogout}
                   className="header-dropdown-item logout"
@@ -285,15 +346,17 @@ const Header = ({ theme, toggleTheme }) => {
             )}
           </div>
         ) : (
-          <button
-            onClick={() => navigate('/login')}
-            className="header-login-btn"
-          >
-            🔑 <span className="theme-label">Login</span>
-          </button>
+          <div className="header-auth-buttons">
+            <button
+              onClick={() => navigate('/login')}
+              className="header-login-btn"
+            >
+              🔑 <span className="theme-label">Intră în cont</span>
+            </button>
+          </div>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 
