@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 const API = process.env.REACT_APP_API_URL || '';
+const BADGES_KEY = 'sj_badges_cunoscute';
 
 const SpiritualJourneyCard = () => {
   const [profil, setProfil] = useState(null);
@@ -19,7 +20,26 @@ const SpiritualJourneyCard = () => {
         headers: getHeaders()
       });
       const data = await r.json();
-      if (data.success) setProfil(data);
+      if (!data.success) return;
+
+      // ── Detectează badge-uri noi ──
+      const badgesCunoscute = JSON.parse(
+        localStorage.getItem(BADGES_KEY) || '[]'
+      );
+
+      const badgesDeblocateIds = (data.badges?.deblocate || []).map(b => b.id);
+
+      const badgeNouGasit = (data.badges?.deblocate || []).find(
+        b => !badgesCunoscute.includes(b.id)
+      );
+
+      if (badgeNouGasit) {
+        setBadgeNou(badgeNouGasit);
+        // Salvează toate badge-urile cunoscute acum
+        localStorage.setItem(BADGES_KEY, JSON.stringify(badgesDeblocateIds));
+      }
+
+      setProfil(data);
     } catch (e) {}
     finally { setLoading(false); }
   }, []);
@@ -28,18 +48,21 @@ const SpiritualJourneyCard = () => {
     loadProfil();
   }, [loadProfil]);
 
+  // Auto-dismiss notificare după 5 secunde
+  useEffect(() => {
+    if (!badgeNou) return;
+    const timer = setTimeout(() => setBadgeNou(null), 5000);
+    return () => clearTimeout(timer);
+  }, [badgeNou]);
+
   if (loading) return null;
   if (!profil) return null;
 
   const { streak, nivel, saptamana, stats, badges } = profil;
 
-  // Ultimele 3 badge-uri deblocate
   const ultimeleBadges = badges.deblocate.slice(-3).reverse();
-
-  // Zile săptămână vizuale
   const zileVizuale = Array.from({ length: 7 }, (_, i) => i < saptamana.zileActive);
 
-  // Mesaj streak
   const getMesajStreak = (zile) => {
     if (zile === 0) return 'Începe azi călătoria ta spirituală.';
     if (zile === 1) return 'Ai făcut primul pas. Continuă!';
@@ -62,7 +85,9 @@ const SpiritualJourneyCard = () => {
               <div className="sj-badge-notif-name">{badgeNou.nume}</div>
               <div className="sj-badge-notif-desc">{badgeNou.descriere}</div>
             </div>
+            <div className="sj-badge-notif-close">✕</div>
           </div>
+          <div className="sj-badge-notif-timer" />
         </div>
       )}
 

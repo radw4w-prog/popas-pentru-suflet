@@ -1542,3 +1542,22 @@
     height: 22px;
   }
 }
+.sj-badge-notif-close {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  padding: 4px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.sj-badge-notif-timer {
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #f7c59f);
+  border-radius: 0 0 16px 16px;
+  animation: sjTimer 5s linear forwards;
+}
+
+@keyframes sjTimer {
+  from { width: 100%; }
+  to   { width: 0%; }
+}

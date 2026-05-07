@@ -119,6 +119,78 @@ text
 Recomandarea mea clară
 text
 
-ACUM:     🔊 Audio Biblie TTS
-DUPĂ:     🏆 Gamification
+ACUM:     🔊 Audio Biblie TTS - adaugat
+DUPĂ:     🏆 Gamification - adaugat
 APOI:     📔 Jurnal Spiritual
+
+
+Ce ai implementat până acum
+✅ Infrastructură completă
+Frontend Vercel, Backend Render, MongoDB Atlas
+PWA instalabil, cost 0
+✅ Auth & Users
+Login/Register, Facebook Login, roluri admin/user
+✅ Biblia
+Cornilescu complet 31.102 versete
+Navigator, Red Letter, highlights, bookmarks, notițe
+✅ Zona spirituală
+Plan citire, devoțional zilnic
+Cereri de rugăciune
+Semnele mele
+✅ Audio Biblie
+66 cărți complete
+Auto next capitol + auto next carte
+Lock screen controls
+Progres salvat la secundă
+Volum slider + boost
+✅ AI & Social Media
+Generator conținut Groq + Gemini fallback
+Publicare + programare Facebook
+Analytics Facebook
+✅ Spiritual Journey (tocmai implementat)
+🔥 Streak zilnic
+👑 Record personal streak
+🎯 Obiectiv săptămânal
+🌱 Niveluri: Sămânță → Umblare credincioasă
+🏆 17 badge-uri cu tematică creștină
+📊 Statistici: citire, audio, devoțional, rugăciune
+Hook-uri în toate rutele active
+Card premium în dashboard
+Ce mai recomand
+🔴 Prioritate mare — finalizare
+1. Pagină dedicată /journey
+
+toate badge-urile (deblocate + locked)
+istoric milestone-uri
+grafic activitate ultimele 30 zile
+share progres
+2. Notificare la badge nou
+
+acum badgeNou state există în card dar nu e declanșat
+trebuie conectat: când /api/journey/profil returnează badge nou → afișează notificarea
+3. Jurnal Spiritual
+
+următorul feature planificat de tine
+🟡 Prioritate medie
+4. Push Notifications
+
+reminder zilnic să citești
+„Nu ai citit azi — streakul tău e în pericol!"
+5. Share devoțional
+
+generează imagine din devoționalul zilei
+share direct Facebook/WhatsApp
+6. Pagină profil utilizator
+
+streak, nivel, badge-uri
+statistici personale
+editare profil
+🟢 Prioritate mică
+7. Newsletter zilnic
+
+devoționalul pe email
+gratis cu Resend
+8. Statistici admin
+
+câți useri activi zilnic
+cele mai citite cărți
