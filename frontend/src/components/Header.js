@@ -43,9 +43,6 @@ const Header = ({ theme, toggleTheme }) => {
     }
   };
 
-  
-
-  // Închide la schimbare pagină
   useEffect(() => {
     if (isMobile) {
       const sidebar = document.querySelector('.sidebar');
@@ -260,54 +257,71 @@ const Header = ({ theme, toggleTheme }) => {
         {isAuthenticated && <NotificationBell />}
 
         {isAuthenticated ? (
-  <div className="user-menu-wrapper">
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        setUserMenuOpen(prev => !prev);
-        setFontMenuOpen(false);
-      }}
-      className="header-user-btn"
-    >
-      <div
-        className="header-user-avatar"
-        style={{
-          background: isAdmin
-            ? 'linear-gradient(135deg, #f4d03f, #e67e22)'
-            : 'linear-gradient(135deg, #6366f1, #8b5cf6)'
-        }}
-      >
-        {user?.avatar ? (
-          <img src={user.avatar} alt={user?.nume} className="header-user-avatar-img" />
-        ) : (
-          getInitiale(user?.nume)
-        )}
-      </div>
-      <span className="user-name">{user?.nume}</span>
-      {isAdmin && <span className="admin-badge">ADMIN</span>}
-      <span className="header-arrow">{userMenuOpen ? '▲' : '▼'}</span>
-    </button>
+          <div className="user-menu-wrapper">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setUserMenuOpen(prev => !prev);
+                setFontMenuOpen(false);
+              }}
+              className="header-user-btn"
+            >
+              <div
+                className="header-user-avatar"
+                style={{
+                  background: isAdmin
+                    ? 'linear-gradient(135deg, #f4d03f, #e67e22)'
+                    : 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                }}
+              >
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user?.nume} className="header-user-avatar-img" />
+                ) : (
+                  getInitiale(user?.nume)
+                )}
+              </div>
+              <span className="user-name">{user?.nume}</span>
+              {isAdmin && <span className="admin-badge">ADMIN</span>}
+              <span className="header-arrow">{userMenuOpen ? '▲' : '▼'}</span>
+            </button>
 
-    {userMenuOpen && (
-  <>
-    <div
-      style={{
-        position: 'fixed',
-        top: 60,
-        right: 10,
-        width: 250,
-        background: 'red',
-        color: 'white',
-        padding: 20,
-        zIndex: 99999,
-        fontSize: 20
-      }}
-    >
-      MENIU DESCHIS
-    </div>
-  </>
-)}
+            {/* ═══ TEST DEBUG ═══ */}
+            {userMenuOpen && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 60,
+                  right: 10,
+                  width: 250,
+                  background: 'red',
+                  color: 'white',
+                  padding: 20,
+                  zIndex: 99999,
+                  fontSize: 20,
+                  borderRadius: 12
+                }}
+                onClick={() => setUserMenuOpen(false)}
+              >
+                MENIU DESCHIS ✓
+                <div style={{ fontSize: 14, marginTop: 8 }}>
+                  Apasă pentru a închide
+                </div>
+              </div>
+            )}
+
+          </div>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/login');
+            }}
+            className="header-login-btn"
+          >
+            🔑 <span className="theme-label">Intră în cont</span>
+          </button>
+        )}
       </div>
     </header>
   );
