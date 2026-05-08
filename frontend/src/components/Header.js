@@ -220,10 +220,14 @@ const Header = ({ theme, toggleTheme }) => {
         {!isMobile && (
           <div className="font-menu-wrapper">
             <button
-              onClick={() => setFontMenuOpen(!fontMenuOpen)}
-              className="header-action-btn"
-              title="Mărime text"
-            >
+  onClick={(e) => {
+    e.stopPropagation();
+    setFontMenuOpen(!fontMenuOpen);
+    setUserMenuOpen(false);
+  }}
+  className="header-action-btn"
+  title="Mărime text"
+>
               Aa <span className="header-arrow">▼</span>
             </button>
 
@@ -268,10 +272,14 @@ const Header = ({ theme, toggleTheme }) => {
 
         {isAuthenticated ? (
           <div className="user-menu-wrapper">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="header-user-btn"
-            >
+           <button
+  onClick={(e) => {
+    e.stopPropagation();
+    setUserMenuOpen(!userMenuOpen);
+    setFontMenuOpen(false);
+  }}
+  className="header-user-btn"
+>
               <div
                 className="header-user-avatar"
                 style={{
