@@ -7,18 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const API = process.env.REACT_APP_API_URL || '';
 
 
-const DEFAULT_TEMPLATES = [
-  { id: 'v_apus1', name: 'Apus dramatic', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 'v_munte1', name: 'Munte maiestuos', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
-  { id: 'v_padure1', name: 'Pădure luminoasă', url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=500&fit=crop&q=60', categorie: 'padure' },
-  { id: 'v_mare1', name: 'Mare liniștită', url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=500&fit=crop&q=60', categorie: 'apa' },
-  { id: 'v_cer1', name: 'Cer înstelat', url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
-  { id: 'v_sp1', name: 'Cruce la apus', url: 'https://images.unsplash.com/photo-1445445290350-18a3b86e0b5a?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1445445290350-18a3b86e0b5a?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 'v_sp2', name: 'Biblie deschisă', url: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 'v_min1', name: 'Abstract dark', url: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
-  { id: 'v_flori1', name: 'Câmp cu flori', url: 'https://images.unsplash.com/photo-1490750967868-88df5691cc5e?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1490750967868-88df5691cc5e?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
-  { id: 'v_dim1', name: 'Dimineață de aur', url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1080&h=1350&fit=crop&q=80', thumbnail: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&h=500&fit=crop&q=60', categorie: 'dimineata' },
-];
+import { DEFAULT_TEMPLATES } from '../data/templates';
 
 const CATEGORII = [
   { id: 'all', label: '📋 Toate' },
