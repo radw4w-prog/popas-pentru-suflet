@@ -23,6 +23,8 @@ const DevotionalShare = ({ devotional }) => {
   const [templateCurent, setTemplateCurent] = useState(null);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [categorieFiltre, setCategorieFiltre] = useState('all');
+  const fileInputRef = useRef(null);
+const [customTemplate, setCustomTemplate] = useState(null);
 
   // Stiluri text — identice cu GeneratePage
   const [stilText, setStilText] = useState({
@@ -373,6 +375,30 @@ const DevotionalShare = ({ devotional }) => {
     setShowTemplateSelector(false);
   };
 
+
+const handleUploadTemplate = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return;
+
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const tpl = {
+      id: 'custom_' + Date.now(),
+      name: file.name.split('.')[0] || 'Custom',
+      url: reader.result,
+      thumbnail: reader.result,
+      categorie: 'custom',
+      custom: true
+    };
+    setCustomTemplate(tpl);
+    setTemplateCurent(tpl);
+    setImagineGenerata(null);
+    setShowTemplateSelector(false);
+  };
+  reader.readAsDataURL(file);
+};
+
   // ═══════════════════════════════════════
   // SHARE ACTIONS
   // ═══════════════════════════════════════
@@ -622,6 +648,21 @@ const DevotionalShare = ({ devotional }) => {
             {showTemplateSelector && (
               <div className="ds-tpl-selector">
                 <div className="ds-tpl-selector-header">
+				{/* Upload custom */}
+<input
+  type="file"
+  ref={fileInputRef}
+  accept="image/*"
+  onChange={handleUploadTemplate}
+  style={{ display: 'none' }}
+/>
+<button
+  className="ds-gen-btn ds-gen-btn-sec"
+  style={{ width: '100%', marginBottom: 10 }}
+  onClick={() => fileInputRef.current?.click()}
+>
+  ⬆️ Încarcă propria imagine
+</button>
                   <span className="ds-tpl-selector-title">🖼️ Alege fundalul</span>
                   <button
                     className="ds-tpl-selector-close"

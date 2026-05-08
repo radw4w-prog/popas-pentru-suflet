@@ -149,13 +149,7 @@ export default function DevotionalPage() {
 
         </div>
 
-       {/* ═══ SHARE BOTTOM — al doilea buton jos ═══ */}
-        /*<div className="dev-share-bottom">
-          <div className="dev-share-bottom-label">
-            🕊️ Distribuie acest devoțional cu prietenii tăi
-          </div>
-          <DevotionalShare devotional={devotional} />
-        </div>*/
+       
 
         {/* ═══ FOOTER ═══ */}
         <div className="dev-footer">
