@@ -631,6 +631,15 @@
     z-index: 20000 !important;
   }
 }
+.header-user-dropdown-portal {
+  min-width: 220px;
+  max-width: min(88vw, 260px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.45rem;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
 
 @media (max-width: 380px) {
   .header-title {

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import { FontSizeContext } from '../App';
+import { createPortal } from 'react-dom';
 
 const Header = ({ theme, toggleTheme }) => {
   const location = useLocation();
@@ -157,6 +158,104 @@ const Header = ({ theme, toggleTheme }) => {
     if (h < 18) return 'Dumnezeu să te binecuvânteze';
     return 'Seară liniștită';
   };
+  
+  
+  
+  const renderUserDropdown = () => {
+  if (!userMenuOpen) return null;
+
+  return createPortal(
+    <>
+      <div
+        onClick={() => setUserMenuOpen(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 19998,
+          background: 'transparent'
+        }}
+      />
+      <div
+        className="header-user-dropdown header-user-dropdown-portal"
+        style={{
+          position: 'fixed',
+          top: isMobile ? 58 : 64,
+          right: isMobile ? 10 : 16,
+          zIndex: 19999
+        }}
+      >
+        <div className="header-dropdown-user-info">
+          <div className="header-dropdown-user-name">{user?.nume}</div>
+          <div className="header-dropdown-user-email">{user?.email}</div>
+          {isAdmin && (
+            <div className="header-dropdown-user-role">👑 Administrator</div>
+          )}
+        </div>
+
+        {isAdmin && (
+          <button
+            onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
+            className="header-dropdown-item"
+          >
+            🛡️ Admin Panel
+          </button>
+        )}
+
+        <button
+          onClick={() => { navigate('/profile'); setUserMenuOpen(false); }}
+          className="header-dropdown-item"
+        >
+          👤 Profilul meu
+        </button>
+
+        <button
+          onClick={() => { navigate('/journey'); setUserMenuOpen(false); }}
+          className="header-dropdown-item"
+        >
+          🕊️ Călătoria spirituală
+        </button>
+
+        <button
+          onClick={() => { navigate('/journal'); setUserMenuOpen(false); }}
+          className="header-dropdown-item"
+        >
+          📔 Jurnal spiritual
+        </button>
+
+        <button
+          onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
+          className="header-dropdown-item"
+        >
+          ⚙️ Setări cont
+        </button>
+
+        {isMobile && (
+          <>
+            <div className="header-dropdown-separator" />
+            <div className="header-dropdown-label">Mărime text</div>
+            {fontSizeOptions.map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => { setFontSize(opt.key); setUserMenuOpen(false); }}
+                className={`header-dropdown-item ${fontSize === opt.key ? 'font-active' : ''}`}
+              >
+                <span style={{ fontSize: opt.size }}>Aa</span>
+                <span>{opt.label}</span>
+                {fontSize === opt.key && <span style={{ marginLeft: 'auto' }}>✓</span>}
+              </button>
+            ))}
+          </>
+        )}
+
+        <div className="header-dropdown-separator" />
+        <button onClick={handleLogout} className="header-dropdown-item logout">
+          🚪 Deconectare
+        </button>
+      </div>
+    </>,
+    document.body
+  );
+};
 
   return (
     <header className="header" role="banner">
@@ -286,29 +385,7 @@ const Header = ({ theme, toggleTheme }) => {
               <span className="header-arrow">{userMenuOpen ? '▲' : '▼'}</span>
             </button>
 
-            {/* ═══ TEST DEBUG ═══ */}
-            {userMenuOpen && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: 60,
-                  right: 10,
-                  width: 250,
-                  background: 'red',
-                  color: 'white',
-                  padding: 20,
-                  zIndex: 99999,
-                  fontSize: 20,
-                  borderRadius: 12
-                }}
-                onClick={() => setUserMenuOpen(false)}
-              >
-                MENIU DESCHIS ✓
-                <div style={{ fontSize: 14, marginTop: 8 }}>
-                  Apasă pentru a închide
-                </div>
-              </div>
-            )}
+           {isAuthenticated && renderUserDropdown()}
 
           </div>
         ) : (
