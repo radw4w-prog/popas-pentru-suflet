@@ -131,6 +131,18 @@ const Header = ({ theme, toggleTheme }) => {
       title: 'Statistici Facebook',
       subtitle: 'Reach, engagement și performanța postărilor'
     },
+	'/profile': {
+  title: 'Profilul meu',
+  subtitle: 'Contul tău, statistici și repere spirituale'
+},
+'/journey': {
+  title: 'Călătoria spirituală',
+  subtitle: 'Streak, badge-uri și progres spiritual'
+},
+'/journal': {
+  title: 'Jurnal Spiritual',
+  subtitle: 'Gânduri, rugăciuni și pași cu Dumnezeu'
+},
     '/notifications': {
       title: 'Notificări',
       subtitle: 'Toate notificările și alertele tale'
@@ -285,20 +297,27 @@ const Header = ({ theme, toggleTheme }) => {
                 </div>
 
                 {isAdmin && (
-                  <button
-                    onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
-                    className="header-dropdown-item"
-                  >
-                    🛡️ Admin Panel
-                  </button>
-                )}
+  <button
+    onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
+    className="header-dropdown-item"
+  >
+    🛡️ Admin Panel
+  </button>
+)}
 
-                <button
-                  onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
-                  className="header-dropdown-item"
-                >
-                  ⚙️ Setări cont
-                </button>
+<button
+  onClick={() => { navigate('/profile'); setUserMenuOpen(false); }}
+  className="header-dropdown-item"
+>
+  👤 Profilul meu
+</button>
+
+<button
+  onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
+  className="header-dropdown-item"
+>
+  ⚙️ Setări cont
+</button>
 
                 {isMobile && (
                   <>
