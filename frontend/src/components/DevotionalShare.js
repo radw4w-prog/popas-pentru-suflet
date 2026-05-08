@@ -5,36 +5,15 @@ import { DEFAULT_TEMPLATES, CATEGORII_TEMPLATES } from '../data/templates';
 const APP_URL = 'https://popas-pentru-suflet.vercel.app';
 const APP_NAME = 'Popas pentru Suflet';
 
-// Alege un template aleatoriu
-const templateAleatoriu = () => {
-  return DEFAULT_TEMPLATES[Math.floor(Math.random() * DEFAULT_TEMPLATES.length)];
-};
+const FONTURI = [
+  { group: 'Elegante', opts: ['Playfair Display', 'Cinzel', 'Cormorant Garamond', 'EB Garamond', 'Libre Baskerville'] },
+  { group: 'Romantice', opts: ['Great Vibes', 'Dancing Script'] },
+  { group: 'Clasice', opts: ['Lora', 'Merriweather', 'Georgia', 'Times New Roman'] },
+  { group: 'Moderne', opts: ['Inter', 'Arial'] },
+];
 
-// Wrap text helper
-const wrapText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 10) => {
-  const words = text.split(' ');
-  const lines = [];
-  let currentLine = '';
-
-  for (let n = 0; n < words.length; n++) {
-    const testLine = currentLine + words[n] + ' ';
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      lines.push(currentLine.trim());
-      currentLine = words[n] + ' ';
-      if (lines.length >= maxLines) break;
-    } else {
-      currentLine = testLine;
-    }
-  }
-  if (lines.length < maxLines) lines.push(currentLine.trim());
-
-  lines.forEach((line, i) => {
-    ctx.fillText(line, x, y + i * lineHeight);
-  });
-
-  return y + lines.length * lineHeight;
-};
+const templateAleatoriu = () =>
+  DEFAULT_TEMPLATES[Math.floor(Math.random() * DEFAULT_TEMPLATES.length)];
 
 const DevotionalShare = ({ devotional }) => {
   const [imagineGenerata, setImagineGenerata] = useState(null);
@@ -45,10 +24,17 @@ const DevotionalShare = ({ devotional }) => {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [categorieFiltre, setCategorieFiltre] = useState('all');
 
-  const loadedLogoRef = useRef(null);
-  const loadedImgRef = useRef(null);
+  // Stiluri text — identice cu GeneratePage
+  const [stilText, setStilText] = useState({
+    fontSize: 28,
+    culoare: '#FFFFFF',
+    pozitie: 'center',
+    umbra: true,
+    font: 'Playfair Display'
+  });
 
-  // Preload logo
+  const loadedLogoRef = useRef(null);
+
   useEffect(() => {
     const logo = new Image();
     logo.crossOrigin = 'anonymous';
@@ -57,7 +43,6 @@ const DevotionalShare = ({ devotional }) => {
     logo.onerror = () => { loadedLogoRef.current = null; };
   }, []);
 
-  // Init template aleatoriu
   useEffect(() => {
     setTemplateCurent(templateAleatoriu());
   }, []);
@@ -65,13 +50,13 @@ const DevotionalShare = ({ devotional }) => {
   if (!devotional) return null;
 
   // ═══════════════════════════════════════
-  // GENERARE IMAGINE PE CANVAS
+  // GENERARE IMAGINE
   // ═══════════════════════════════════════
-  const genereazaImagine = useCallback(async (template = null) => {
+  const genereazaImagine = useCallback(async (tplOverride = null) => {
     setGenerand(true);
     setImagineGenerata(null);
 
-    const tpl = template || templateCurent || templateAleatoriu();
+    const tpl = tplOverride || templateCurent || templateAleatoriu();
 
     return new Promise((resolve) => {
       const img = new Image();
@@ -87,30 +72,25 @@ const DevotionalShare = ({ devotional }) => {
           canvas.height = H;
           const ctx = canvas.getContext('2d');
 
-          // ── Cover crop imagine ──
+          // Cover crop
           const imgR = img.width / img.height;
           const canR = W / H;
           let sx = 0, sy = 0, sw = img.width, sh = img.height;
-          if (imgR > canR) {
-            sw = img.height * canR;
-            sx = (img.width - sw) / 2;
-          } else {
-            sh = img.width / canR;
-            sy = (img.height - sh) / 2;
-          }
+          if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
+          else { sh = img.width / canR; sy = (img.height - sh) / 2; }
           ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 
-          // ── Gradient overlay ──
+          // Gradient overlay
           const grad = ctx.createLinearGradient(0, 0, 0, H);
-          grad.addColorStop(0, 'rgba(0,0,0,0.15)');
-          grad.addColorStop(0.2, 'rgba(0,0,0,0.35)');
-          grad.addColorStop(0.5, 'rgba(0,0,0,0.55)');
-          grad.addColorStop(0.75, 'rgba(0,0,0,0.72)');
+          grad.addColorStop(0, 'rgba(0,0,0,0.05)');
+          grad.addColorStop(0.25, 'rgba(0,0,0,0.25)');
+          grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+          grad.addColorStop(0.75, 'rgba(0,0,0,0.68)');
           grad.addColorStop(1, 'rgba(0,0,0,0.85)');
           ctx.fillStyle = grad;
           ctx.fillRect(0, 0, W, H);
 
-          // ── Watermark repetat pe fundal ──
+          // Watermark repetat pe fundal
           ctx.save();
           ctx.globalAlpha = 0.04;
           ctx.font = '700 28px Inter, Arial, sans-serif';
@@ -127,208 +107,175 @@ const DevotionalShare = ({ devotional }) => {
           }
           ctx.restore();
 
-          // ── Titlu devoțional ──
-          const titlu = devotional.title || '';
-          ctx.font = '600 36px Inter, Arial, sans-serif';
-          ctx.fillStyle = 'rgba(212,175,55,0.95)';
-          ctx.textAlign = 'center';
-          ctx.shadowColor = 'rgba(0,0,0,0.8)';
-          ctx.shadowBlur = 15;
-          ctx.shadowOffsetX = 1;
-          ctx.shadowOffsetY = 2;
+          const sc = 1;
+          const fz = Math.round(stilText.fontSize * 2 * sc);
+          const lh = fz * 1.5;
+          const maxW = W * 0.82;
 
-          // Wrap titlu
-          const titluLines = [];
-          const titluWords = titlu.split(' ');
-          let titluLine = '';
-          for (const word of titluWords) {
-            const test = titluLine + word + ' ';
-            if (ctx.measureText(test).width > 900 && titluLine) {
-              titluLines.push(titluLine.trim());
-              titluLine = word + ' ';
-              if (titluLines.length >= 2) break;
-            } else {
-              titluLine = test;
+          // Setup shadow
+          const setShadow = (blur = 20) => {
+            if (stilText.umbra) {
+              ctx.shadowColor = 'rgba(0,0,0,0.9)';
+              ctx.shadowBlur = blur;
+              ctx.shadowOffsetX = 2;
+              ctx.shadowOffsetY = 3;
             }
-          }
-          titluLines.push(titluLine.trim());
+          };
 
-          let currentY = 110;
-          titluLines.forEach(line => {
-            ctx.fillText(line, W / 2, currentY);
-            currentY += 46;
-          });
+          const clearShadow = () => {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+          };
 
-          // ── Separator auriu ──
-          ctx.shadowBlur = 0;
-          const sepGrad = ctx.createLinearGradient(
-            W / 2 - 200, 0, W / 2 + 200, 0
-          );
-          sepGrad.addColorStop(0, 'transparent');
-          sepGrad.addColorStop(0.3, 'rgba(212,175,55,0.8)');
-          sepGrad.addColorStop(0.7, 'rgba(212,175,55,0.8)');
-          sepGrad.addColorStop(1, 'transparent');
-          ctx.strokeStyle = sepGrad;
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(W / 2 - 200, currentY + 10);
-          ctx.lineTo(W / 2 + 200, currentY + 10);
-          ctx.stroke();
+          // Word wrap helper
+          const getLines = (text, maxWidth, maxL = 8) => {
+            const words = text.split(' ');
+            const lines = [];
+            let cur = '';
+            for (const w of words) {
+              const t = cur + w + ' ';
+              if (ctx.measureText(t).width > maxWidth && cur) {
+                lines.push(cur.trim());
+                cur = w + ' ';
+                if (lines.length >= maxL - 1) break;
+              } else { cur = t; }
+            }
+            lines.push(cur.trim());
+            return lines.slice(0, maxL);
+          };
 
-          currentY += 40;
-
-          // ── Ghilimele decorative ──
-          ctx.save();
-          ctx.globalAlpha = 0.12;
-          ctx.font = 'bold 160px Georgia, serif';
+          // ── TITLU DEVOȚIONAL ──
+          ctx.font = `600 ${Math.round(fz * 0.6)}px Inter, Arial, sans-serif`;
           ctx.fillStyle = '#D4AF37';
-          ctx.textAlign = 'left';
-          ctx.fillText('\u201C', 50, currentY + 80);
-          ctx.restore();
-
-          // ── Text verset ──
-          const versetText = devotional.verseText || '';
-          ctx.font = 'italic 44px \'Playfair Display\', Georgia, serif';
-          ctx.fillStyle = '#FFFFFF';
           ctx.textAlign = 'center';
-          ctx.shadowColor = 'rgba(0,0,0,0.9)';
-          ctx.shadowBlur = 20;
-          ctx.shadowOffsetX = 2;
-          ctx.shadowOffsetY = 3;
+          setShadow(15);
 
-          const versetFinal = `\u201C${versetText}\u201D`;
-          const versetWords = versetFinal.split(' ');
-          const versetLines = [];
-          let versetLine = '';
+          const titluLines = getLines(devotional.title || '', maxW, 2);
+          const titluStartY = 100;
+          titluLines.forEach((line, i) => {
+            ctx.fillText(line, W / 2, titluStartY + i * Math.round(fz * 0.7));
+          });
+          const afterTitlu = titluStartY + titluLines.length * Math.round(fz * 0.7) + 20;
 
-          for (const word of versetWords) {
-            const test = versetLine + word + ' ';
-            if (ctx.measureText(test).width > 900 && versetLine) {
-              versetLines.push(versetLine.trim());
-              versetLine = word + ' ';
-              if (versetLines.length >= 7) break;
-            } else {
-              versetLine = test;
-            }
+          // Separator auriu sub titlu
+          clearShadow();
+          const drawSeparator = (y, width = 160, opacity = 0.5) => {
+            const sg = ctx.createLinearGradient(W / 2 - width, 0, W / 2 + width, 0);
+            sg.addColorStop(0, 'transparent');
+            sg.addColorStop(0.3, `rgba(212,175,55,${opacity})`);
+            sg.addColorStop(0.7, `rgba(212,175,55,${opacity})`);
+            sg.addColorStop(1, 'transparent');
+            ctx.strokeStyle = sg;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(W / 2 - width, y);
+            ctx.lineTo(W / 2 + width, y);
+            ctx.stroke();
+          };
+
+          drawSeparator(afterTitlu);
+
+          // ── VERSET ──
+          ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+          ctx.fillStyle = stilText.culoare;
+          ctx.textAlign = 'center';
+          setShadow(25);
+
+          const versetText = `\u201C${devotional.verseText || ''}\u201D`;
+          const versetLines = getLines(versetText, maxW, 7);
+          const versetH = versetLines.length * lh;
+
+          let versetStartY;
+          if (stilText.pozitie === 'top') {
+            versetStartY = afterTitlu + 60;
+          } else if (stilText.pozitie === 'bottom') {
+            versetStartY = H - versetH - 340;
+          } else {
+            versetStartY = Math.max(afterTitlu + 60, (H - versetH) / 2 - 80);
           }
-          versetLines.push(versetLine.trim());
-
-          const versetLH = 66;
-          const versetH = versetLines.length * versetLH;
-
-          // Centrare verticală a versetului (zona 250 - 750)
-          const versetStartY = Math.max(currentY, 300 - versetH / 2);
 
           // Linie decorativă sus verset
-          ctx.shadowBlur = 0;
-          ctx.strokeStyle = 'rgba(212,175,55,0.5)';
+          clearShadow();
+          const lineW = 80;
+          ctx.strokeStyle = 'rgba(212,175,55,0.45)';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
-          ctx.moveTo(W / 2 - 80, versetStartY - 25);
-          ctx.lineTo(W / 2 + 80, versetStartY - 25);
+          ctx.moveTo(W / 2 - lineW, versetStartY - 28);
+          ctx.lineTo(W / 2 + lineW, versetStartY - 28);
           ctx.stroke();
 
-          // Desenează versetul
-          ctx.shadowColor = 'rgba(0,0,0,0.9)';
-          ctx.shadowBlur = 20;
+          // Ghilimele decorative
+          ctx.save();
+          ctx.globalAlpha = 0.1;
+          ctx.font = 'bold 140px Georgia, serif';
+          ctx.fillStyle = '#D4AF37';
+          ctx.textAlign = 'left';
+          ctx.fillText('\u201C', 45, versetStartY + 60);
+          ctx.restore();
+
+          // Text verset
+          setShadow(25);
+          ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+          ctx.fillStyle = stilText.culoare;
+          ctx.textAlign = 'center';
           versetLines.forEach((line, i) => {
-            ctx.fillText(line, W / 2, versetStartY + i * versetLH);
+            ctx.fillText(line, W / 2, versetStartY + i * lh);
           });
 
           const afterVerset = versetStartY + versetH;
 
           // Linie decorativă jos verset
-          ctx.shadowBlur = 0;
+          clearShadow();
           ctx.beginPath();
-          ctx.moveTo(W / 2 - 80, afterVerset + 15);
-          ctx.lineTo(W / 2 + 80, afterVerset + 15);
+          ctx.moveTo(W / 2 - lineW, afterVerset + 14);
+          ctx.lineTo(W / 2 + lineW, afterVerset + 14);
           ctx.stroke();
 
-          // ── Referința ──
-          ctx.font = 'bold 36px \'Playfair Display\', Georgia, serif';
+          // ── REFERINȚA ──
+          setShadow(12);
+          ctx.font = `bold ${Math.round(fz * 0.48)}px '${stilText.font}', Georgia, serif`;
           ctx.fillStyle = '#D4AF37';
           ctx.textAlign = 'center';
-          ctx.shadowColor = 'rgba(0,0,0,0.9)';
-          ctx.shadowBlur = 15;
-          ctx.fillText(
-            `\u2014 ${devotional.verseReference}`,
-            W / 2,
-            afterVerset + 65
-          );
+          ctx.fillText(`\u2014 ${devotional.verseReference}`, W / 2, afterVerset + 55);
 
-          // ── Gândul zilei ──
-          const gandText = devotional.thoughtOfTheDay || '';
-          if (gandText) {
-            const gandY = afterVerset + 120;
+          // ── GÂNDUL ZILEI ──
+          const gandY = afterVerset + 110;
+          clearShadow();
 
-            // Separator
-            ctx.shadowBlur = 0;
-            const gandSepGrad = ctx.createLinearGradient(
-              W / 2 - 150, 0, W / 2 + 150, 0
-            );
-            gandSepGrad.addColorStop(0, 'transparent');
-            gandSepGrad.addColorStop(0.5, 'rgba(167,139,250,0.5)');
-            gandSepGrad.addColorStop(1, 'transparent');
-            ctx.strokeStyle = gandSepGrad;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(W / 2 - 150, gandY);
-            ctx.lineTo(W / 2 + 150, gandY);
-            ctx.stroke();
+          drawSeparator(gandY, 130, 0.35);
 
-            // Label
-            ctx.font = '500 26px Inter, Arial, sans-serif';
-            ctx.fillStyle = 'rgba(167,139,250,0.9)';
-            ctx.textAlign = 'center';
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 10;
-            ctx.fillText('✦ Gândul zilei ✦', W / 2, gandY + 35);
+          ctx.font = `500 ${Math.round(fz * 0.38)}px Inter, Arial, sans-serif`;
+          ctx.fillStyle = 'rgba(167,139,250,0.9)';
+          ctx.textAlign = 'center';
+          setShadow(10);
+          ctx.fillText('✦ Gândul zilei ✦', W / 2, gandY + 34);
 
-            // Text gând
-            ctx.font = 'italic 30px Georgia, serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.88)';
+          ctx.font = `italic ${Math.round(fz * 0.43)}px Georgia, serif`;
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          setShadow(12);
 
-            const gandWords = gandText.split(' ');
-            const gandLines = [];
-            let gandLine = '';
+          const gandLines = getLines(devotional.thoughtOfTheDay || '', maxW, 4);
+          gandLines.forEach((line, i) => {
+            ctx.fillText(line, W / 2, gandY + 75 + i * Math.round(fz * 0.56));
+          });
 
-            for (const word of gandWords) {
-              const test = gandLine + word + ' ';
-              if (ctx.measureText(test).width > 880 && gandLine) {
-                gandLines.push(gandLine.trim());
-                gandLine = word + ' ';
-                if (gandLines.length >= 4) break;
-              } else {
-                gandLine = test;
-              }
-            }
-            gandLines.push(gandLine.trim());
-
-            gandLines.forEach((line, i) => {
-              ctx.fillText(line, W / 2, gandY + 80 + i * 44);
-            });
-          }
-
-          // ── WATERMARK / BRANDING ──
-          ctx.shadowBlur = 0;
-          ctx.shadowColor = 'transparent';
+          // ── WATERMARK LOGO ──
+          clearShadow();
 
           const logo = loadedLogoRef.current;
           const wmY = H - 160;
 
           if (logo) {
-            const logoH = 70;
-            const logoW = 70;
+            const logoH = 72;
+            const logoW = 72;
             const logoX = W / 2 - logoW / 2;
             const logoY = wmY;
 
-            // Glow
             ctx.save();
             ctx.globalAlpha = 0.15;
-            const glowGrad = ctx.createRadialGradient(
-              W / 2, logoY + logoH / 2, logoH / 2,
-              W / 2, logoY + logoH / 2, logoH / 2 + 30
-            );
+            const glowGrad = ctx.createRadialGradient(W / 2, logoY + logoH / 2, logoH / 2, W / 2, logoY + logoH / 2, logoH / 2 + 30);
             glowGrad.addColorStop(0, 'rgba(212,175,55,0.4)');
             glowGrad.addColorStop(1, 'rgba(212,175,55,0)');
             ctx.beginPath();
@@ -337,7 +284,6 @@ const DevotionalShare = ({ devotional }) => {
             ctx.fill();
             ctx.restore();
 
-            // Cerc exterior
             ctx.beginPath();
             ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 5, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -346,7 +292,6 @@ const DevotionalShare = ({ devotional }) => {
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // Logo circular
             ctx.save();
             ctx.beginPath();
             ctx.arc(W / 2, logoY + logoH / 2, logoH / 2, 0, Math.PI * 2);
@@ -354,14 +299,12 @@ const DevotionalShare = ({ devotional }) => {
             ctx.drawImage(logo, logoX, logoY, logoW, logoH);
             ctx.restore();
 
-            // Text sub logo
-            ctx.globalAlpha = 0.8;
+            ctx.globalAlpha = 0.75;
             ctx.font = '600 24px Inter, Arial, sans-serif';
             ctx.fillStyle = '#FFFFFF';
             ctx.textAlign = 'center';
             ctx.fillText(APP_NAME, W / 2, logoY + logoH + 32);
 
-            // Linie decorativă
             ctx.globalAlpha = 0.3;
             ctx.strokeStyle = '#D4AF37';
             ctx.lineWidth = 1;
@@ -370,23 +313,21 @@ const DevotionalShare = ({ devotional }) => {
             ctx.lineTo(W / 2 + 100, logoY + logoH + 44);
             ctx.stroke();
 
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 1;
           } else {
-            // Fallback fără logo
-            ctx.globalAlpha = 0.7;
+            ctx.globalAlpha = 0.65;
             ctx.font = '700 28px Inter, Arial, sans-serif';
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
             ctx.textAlign = 'center';
-            ctx.fillText(`🕊️ ${APP_NAME}`, W / 2, H - 60);
-            ctx.globalAlpha = 1.0;
+            ctx.fillText(`🕊️ ${APP_NAME}`, W / 2, H - 55);
+            ctx.globalAlpha = 1;
           }
 
-          // ── Colțuri anti-decupare ──
+          // Colțuri anti-decupare
           ctx.save();
-          ctx.globalAlpha = 0.06;
+          ctx.globalAlpha = 0.05;
           ctx.font = '600 16px Inter, Arial, sans-serif';
           ctx.fillStyle = '#FFFFFF';
-
           ctx.textAlign = 'left';
           ctx.fillText('popaspentrusuflet.ro', 15, 25);
           ctx.textAlign = 'right';
@@ -397,33 +338,32 @@ const DevotionalShare = ({ devotional }) => {
           ctx.fillText('popaspentrusuflet.ro', W - 15, H - 12);
           ctx.restore();
 
-          // ── Salvare ──
           const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
           setImagineGenerata(dataUrl);
           setGenerand(false);
           resolve(dataUrl);
 
         } catch (e) {
-          console.error('Eroare generare imagine devotional:', e);
+          console.error('Eroare canvas:', e);
           setGenerand(false);
           resolve(null);
         }
       };
 
       img.onerror = () => {
-        console.error('Eroare încărcare imagine template');
+        console.error('Eroare imagine template');
         setGenerand(false);
         resolve(null);
       };
     });
-  }, [devotional, templateCurent]);
+  }, [devotional, templateCurent, stilText]);
 
   // ═══════════════════════════════════════
-  // SCHIMBARE TEMPLATE
+  // HELPERS TEMPLATE
   // ═══════════════════════════════════════
   const handleAltTemplate = () => {
-    const altTemplate = templateAleatoriu();
-    setTemplateCurent(altTemplate);
+    const alt = templateAleatoriu();
+    setTemplateCurent(alt);
     setImagineGenerata(null);
   };
 
@@ -434,11 +374,12 @@ const DevotionalShare = ({ devotional }) => {
   };
 
   // ═══════════════════════════════════════
-  // SHARE NATIV
+  // SHARE ACTIONS
   // ═══════════════════════════════════════
-  const handleShareNativ = async () => {
-    const text = `🕊️ ${devotional.title}\n\n„${devotional.verseText}"\n— ${devotional.verseReference}\n\n✦ ${devotional.thoughtOfTheDay}\n\n📖 ${APP_URL}/devotional`;
+  const getShareText = () =>
+    `🕊️ ${devotional.title}\n\n„${devotional.verseText}"\n— ${devotional.verseReference}\n\n✦ ${devotional.thoughtOfTheDay}\n\n📖 ${APP_URL}/devotional`;
 
+  const handleShareNativ = async () => {
     if (navigator.share) {
       try {
         let imagine = imagineGenerata;
@@ -447,60 +388,36 @@ const DevotionalShare = ({ devotional }) => {
         if (imagine) {
           try {
             const blob = await fetch(imagine).then(r => r.blob());
-            const file = new File(
-              [blob],
-              `devotional-${new Date().toISOString().split('T')[0]}.jpg`,
-              { type: 'image/jpeg' }
-            );
-
+            const file = new File([blob], `devotional-${new Date().toISOString().split('T')[0]}.jpg`, { type: 'image/jpeg' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                title: devotional.title,
-                text,
-                files: [file]
-              });
+              await navigator.share({ title: devotional.title, text: getShareText(), files: [file] });
               return;
             }
           } catch (e) {}
         }
 
-        await navigator.share({
-          title: devotional.title,
-          text,
-          url: `${APP_URL}/devotional`
-        });
-
+        await navigator.share({ title: devotional.title, text: getShareText(), url: `${APP_URL}/devotional` });
       } catch (e) {
-        if (e.name !== 'AbortError') {
-          handleCopyText();
-        }
+        if (e.name !== 'AbortError') handleCopyText();
       }
     } else {
       handleCopyText();
     }
   };
 
-  // ═══════════════════════════════════════
-  // DOWNLOAD
-  // ═══════════════════════════════════════
   const handleDownload = async () => {
     let imagine = imagineGenerata;
     if (!imagine) imagine = await genereazaImagine();
     if (!imagine) return;
-
     const link = document.createElement('a');
     link.download = `devotional-popas-suflet-${new Date().toISOString().split('T')[0]}.jpg`;
     link.href = imagine;
     link.click();
   };
 
-  // ═══════════════════════════════════════
-  // COPY
-  // ═══════════════════════════════════════
   const handleCopyText = async () => {
-    const text = `🕊️ ${devotional.title}\n\n„${devotional.verseText}"\n— ${devotional.verseReference}\n\n✦ ${devotional.thoughtOfTheDay}\n\n📖 ${APP_URL}/devotional`;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(getShareText());
       setCopied('text');
       setTimeout(() => setCopied(''), 2500);
     } catch (e) {}
@@ -514,31 +431,18 @@ const DevotionalShare = ({ devotional }) => {
     } catch (e) {}
   };
 
-  // ═══════════════════════════════════════
-  // WHATSAPP
-  // ═══════════════════════════════════════
   const handleWhatsApp = () => {
     const text = encodeURIComponent(
-      `🕊️ *${devotional.title}*\n\n_„${devotional.verseText}"_\n— ${devotional.verseReference}\n\n✦ _${devotional.thoughtOfTheDay}_\n\n📖 Citește mai mult: ${APP_URL}/devotional`
+      `🕊️ *${devotional.title}*\n\n_„${devotional.verseText}"_\n— ${devotional.verseReference}\n\n✦ _${devotional.thoughtOfTheDay}_\n\n📖 ${APP_URL}/devotional`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
-  // ═══════════════════════════════════════
-  // FACEBOOK
-  // ═══════════════════════════════════════
   const handleFacebook = () => {
     const url = encodeURIComponent(`${APP_URL}/devotional`);
-    window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-      '_blank',
-      'width=600,height=400'
-    );
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
   };
 
-  // ═══════════════════════════════════════
-  // TEMPLATE FILTRATE
-  // ═══════════════════════════════════════
   const templatesFiltrate = categorieFiltre === 'all'
     ? DEFAULT_TEMPLATES
     : DEFAULT_TEMPLATES.filter(t => t.categorie === categorieFiltre);
@@ -549,7 +453,7 @@ const DevotionalShare = ({ devotional }) => {
   return (
     <div className="ds-wrap">
 
-      {/* Buton principal */}
+      {/* ═══ BUTON PRINCIPAL ═══ */}
       <button
         className="ds-main-btn"
         onClick={() => setShareOpen(prev => !prev)}
@@ -562,6 +466,94 @@ const DevotionalShare = ({ devotional }) => {
       {shareOpen && (
         <div className="ds-panel">
 
+          {/* ═══ CONTROALE STIL TEXT ═══ */}
+          <div className="ds-stil-section">
+            <div className="ds-stil-title">🎨 Personalizează imaginea</div>
+
+            <div className="ds-stil-grid">
+              {/* Font size */}
+              <div className="ds-stil-item">
+                <label className="ds-stil-label">
+                  Mărime text: {stilText.fontSize}px
+                </label>
+                <input
+                  type="range"
+                  min="16"
+                  max="44"
+                  step="2"
+                  value={stilText.fontSize}
+                  onChange={e => {
+                    setStilText(p => ({ ...p, fontSize: +e.target.value }));
+                    setImagineGenerata(null);
+                  }}
+                  className="ds-slider"
+                />
+              </div>
+
+              {/* Poziție */}
+              <div className="ds-stil-item">
+                <label className="ds-stil-label">Poziție text</label>
+                <div className="ds-pozitie-btns">
+                  {[
+                    { id: 'top', label: '⬆ Sus' },
+                    { id: 'center', label: '↕ Centru' },
+                    { id: 'bottom', label: '⬇ Jos' }
+                  ].map(p => (
+                    <button
+                      key={p.id}
+                      className={`ds-pozitie-btn ${stilText.pozitie === p.id ? 'activ' : ''}`}
+                      onClick={() => {
+                        setStilText(prev => ({ ...prev, pozitie: p.id }));
+                        setImagineGenerata(null);
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font */}
+              <div className="ds-stil-item">
+                <label className="ds-stil-label">Font</label>
+                <select
+                  className="ds-select"
+                  value={stilText.font}
+                  onChange={e => {
+                    setStilText(p => ({ ...p, font: e.target.value }));
+                    setImagineGenerata(null);
+                  }}
+                >
+                  {FONTURI.map(g => (
+                    <optgroup key={g.group} label={g.group}>
+                      {g.opts.map(o => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              {/* Culoare */}
+              <div className="ds-stil-item">
+                <label className="ds-stil-label">Culoare text</label>
+                <div className="ds-culori">
+                  {['#FFFFFF', '#F4D03F', '#FFE4E1', '#E8F5E9', '#E3F2FD', '#000000'].map(c => (
+                    <div
+                      key={c}
+                      className={`ds-culoare-dot ${stilText.culoare === c ? 'activ' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => {
+                        setStilText(p => ({ ...p, culoare: c }));
+                        setImagineGenerata(null);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* ═══ PREVIEW IMAGINE ═══ */}
           <div className="ds-preview-section">
             {imagineGenerata ? (
@@ -572,44 +564,32 @@ const DevotionalShare = ({ devotional }) => {
                   className="ds-preview-img"
                 />
                 <div className="ds-preview-actions">
-                  <button
-                    className="ds-preview-btn"
-                    onClick={() => {
-                      setImagineGenerata(null);
-                      genereazaImagine();
-                    }}
-                  >
+                  <button className="ds-preview-btn" onClick={() => { setImagineGenerata(null); genereazaImagine(); }}>
                     🔄 Regenerează
                   </button>
-                  <button
-                    className="ds-preview-btn"
-                    onClick={handleAltTemplate}
-                  >
+                  <button className="ds-preview-btn" onClick={handleAltTemplate}>
                     🎲 Alt template
                   </button>
                   <button
-                    className="ds-preview-btn ds-preview-btn-active"
+                    className={`ds-preview-btn ${showTemplateSelector ? 'ds-preview-btn-active' : ''}`}
                     onClick={() => setShowTemplateSelector(prev => !prev)}
                   >
-                    🖼️ {showTemplateSelector ? 'Închide' : 'Alege template'}
+                    🖼️ {showTemplateSelector ? 'Închide' : 'Alege'}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="ds-preview-placeholder">
                 {templateCurent && (
-                  <div className="ds-template-preview-thumb">
+                  <div className="ds-template-thumb-wrap">
                     <img
                       src={templateCurent.thumbnail}
                       alt={templateCurent.name}
                       className="ds-template-thumb-img"
                     />
-                    <div className="ds-template-thumb-overlay">
-                      <span>{templateCurent.name}</span>
-                    </div>
+                    <div className="ds-template-thumb-label">{templateCurent.name}</div>
                   </div>
                 )}
-                <div className="ds-preview-icon">🖼️</div>
                 <p className="ds-preview-text">
                   Generează o imagine premium cu devoționalul de azi
                 </p>
@@ -622,7 +602,7 @@ const DevotionalShare = ({ devotional }) => {
                     {generand ? '⏳ Se generează...' : '✨ Generează imagine'}
                   </button>
                   <button
-                    className="ds-gen-btn ds-gen-btn-secondary"
+                    className="ds-gen-btn ds-gen-btn-sec"
                     onClick={handleAltTemplate}
                     disabled={generand}
                   >
@@ -630,30 +610,26 @@ const DevotionalShare = ({ devotional }) => {
                   </button>
                 </div>
                 <button
-                  className="ds-choose-template-btn"
+                  className="ds-choose-btn"
                   onClick={() => setShowTemplateSelector(prev => !prev)}
                 >
-                  🖼️ {showTemplateSelector ? 'Ascunde galerie' : 'Alege template din galerie'}
+                  🖼️ {showTemplateSelector ? 'Ascunde galerie' : 'Alege din galerie'}
                 </button>
               </div>
             )}
 
             {/* ═══ SELECTOR TEMPLATE ═══ */}
             {showTemplateSelector && (
-              <div className="ds-template-selector">
-                <div className="ds-template-selector-header">
-                  <span className="ds-template-selector-title">
-                    🖼️ Alege fundalul
-                  </span>
+              <div className="ds-tpl-selector">
+                <div className="ds-tpl-selector-header">
+                  <span className="ds-tpl-selector-title">🖼️ Alege fundalul</span>
                   <button
-                    className="ds-template-selector-close"
+                    className="ds-tpl-selector-close"
                     onClick={() => setShowTemplateSelector(false)}
-                  >
-                    ✕
-                  </button>
+                  >✕</button>
                 </div>
 
-                {/* Filtre categorii */}
+                {/* Filtre */}
                 <div className="ds-cat-filter">
                   {CATEGORII_TEMPLATES.map(cat => (
                     <button
@@ -667,43 +643,39 @@ const DevotionalShare = ({ devotional }) => {
                 </div>
 
                 {/* Grid template-uri */}
-                <div className="ds-template-grid">
+                <div className="ds-tpl-grid">
                   {templatesFiltrate.map(tpl => (
                     <div
                       key={tpl.id}
-                      className={`ds-template-item ${templateCurent?.id === tpl.id ? 'selectat' : ''}`}
+                      className={`ds-tpl-item ${templateCurent?.id === tpl.id ? 'selectat' : ''}`}
                       onClick={() => handleSelectTemplate(tpl)}
                     >
                       <img
                         src={tpl.thumbnail}
                         alt={tpl.name}
-                        className="ds-template-item-img"
+                        className="ds-tpl-item-img"
                         loading="lazy"
                       />
-                      <div className="ds-template-item-overlay">
-                        <span>{tpl.name}</span>
-                      </div>
+                      <div className="ds-tpl-item-overlay">{tpl.name}</div>
                       {templateCurent?.id === tpl.id && (
-                        <div className="ds-template-item-check">✓</div>
+                        <div className="ds-tpl-item-check">✓</div>
                       )}
                     </div>
                   ))}
                 </div>
 
-                {imagineGenerata && (
-                  <button
-                    className="ds-gen-btn"
-                    style={{ width: '100%', marginTop: 10 }}
-                    onClick={() => {
-                      setImagineGenerata(null);
-                      genereazaImagine(templateCurent);
-                      setShowTemplateSelector(false);
-                    }}
-                    disabled={generand}
-                  >
-                    {generand ? '⏳ Se generează...' : '✨ Regenerează cu template ales'}
-                  </button>
-                )}
+                {/* Generează cu template ales */}
+                <button
+                  className="ds-gen-btn"
+                  style={{ width: '100%', marginTop: 10 }}
+                  onClick={() => {
+                    setShowTemplateSelector(false);
+                    genereazaImagine(templateCurent);
+                  }}
+                  disabled={generand}
+                >
+                  {generand ? '⏳ Se generează...' : '✨ Generează cu acest template'}
+                </button>
               </div>
             )}
           </div>
@@ -713,70 +685,47 @@ const DevotionalShare = ({ devotional }) => {
             <div className="ds-share-title">📲 Distribuie pe:</div>
 
             <div className="ds-btns-grid">
-
-              {/* Share nativ */}
               <button className="ds-btn ds-btn-nativ" onClick={handleShareNativ}>
                 <span className="ds-btn-icon">📤</span>
                 <span className="ds-btn-label">Share</span>
                 <span className="ds-btn-sub">Nativ</span>
               </button>
 
-              {/* WhatsApp */}
               <button className="ds-btn ds-btn-wa" onClick={handleWhatsApp}>
                 <span className="ds-btn-icon">💬</span>
                 <span className="ds-btn-label">WhatsApp</span>
                 <span className="ds-btn-sub">Text + link</span>
               </button>
 
-              {/* Facebook */}
               <button className="ds-btn ds-btn-fb" onClick={handleFacebook}>
                 <span className="ds-btn-icon">📘</span>
                 <span className="ds-btn-label">Facebook</span>
                 <span className="ds-btn-sub">Share link</span>
               </button>
 
-              {/* Download */}
               <button className="ds-btn ds-btn-dl" onClick={handleDownload}>
                 <span className="ds-btn-icon">⬇️</span>
                 <span className="ds-btn-label">Descarcă</span>
                 <span className="ds-btn-sub">Instagram/TikTok</span>
               </button>
 
-              {/* Copy text */}
               <button className="ds-btn ds-btn-copy" onClick={handleCopyText}>
-                <span className="ds-btn-icon">
-                  {copied === 'text' ? '✅' : '📋'}
-                </span>
-                <span className="ds-btn-label">
-                  {copied === 'text' ? 'Copiat!' : 'Copiază'}
-                </span>
+                <span className="ds-btn-icon">{copied === 'text' ? '✅' : '📋'}</span>
+                <span className="ds-btn-label">{copied === 'text' ? 'Copiat!' : 'Copiază'}</span>
                 <span className="ds-btn-sub">Text complet</span>
               </button>
 
-              {/* Copy link */}
               <button className="ds-btn ds-btn-link" onClick={handleCopyLink}>
-                <span className="ds-btn-icon">
-                  {copied === 'link' ? '✅' : '🔗'}
-                </span>
-                <span className="ds-btn-label">
-                  {copied === 'link' ? 'Copiat!' : 'Link'}
-                </span>
+                <span className="ds-btn-icon">{copied === 'link' ? '✅' : '🔗'}</span>
+                <span className="ds-btn-label">{copied === 'link' ? 'Copiat!' : 'Link'}</span>
                 <span className="ds-btn-sub">URL direct</span>
               </button>
-
             </div>
 
-            {/* Sfaturi */}
             <div className="ds-tips">
-              <div className="ds-tip-item">
-                📸 <strong>Instagram:</strong> descarcă imaginea → postează din aplicație
-              </div>
-              <div className="ds-tip-item">
-                🎵 <strong>TikTok:</strong> descarcă imaginea → adaugă în video sau slideshow
-              </div>
-              <div className="ds-tip-item">
-                💬 <strong>WhatsApp:</strong> trimite direct cu textul formatat
-              </div>
+              <div className="ds-tip-item">📸 <strong>Instagram:</strong> descarcă imaginea → postează din aplicație</div>
+              <div className="ds-tip-item">🎵 <strong>TikTok:</strong> descarcă imaginea → adaugă în slideshow</div>
+              <div className="ds-tip-item">💬 <strong>WhatsApp:</strong> trimite direct cu text formatat</div>
             </div>
           </div>
 
