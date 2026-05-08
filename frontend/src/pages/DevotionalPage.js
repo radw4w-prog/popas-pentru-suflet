@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import DevotionalShare from '../components/DevotionalShare';
 
 export default function DevotionalPage() {
   const [loading, setLoading] = useState(true);
@@ -94,7 +95,7 @@ export default function DevotionalPage() {
           <h3>Gândul zilei</h3>
           <p>{devotional.thoughtOfTheDay}</p>
         </section>
-
+<DevotionalShare devotional={devotional} />
         <div className="devotional-footer">
           <small>
             Generat: {devotional.generatedBy === 'ai'

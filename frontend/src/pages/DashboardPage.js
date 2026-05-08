@@ -134,15 +134,34 @@ const DashboardPage = () => {
 
 
 
-      {/* ═══ GÂNDUL ZILEI ═══ */}
-      {gandZilei && (
-        <div className="dash-card dash-gand">
-          <div className="dash-gand-icon">💭</div>
-          <div className="dash-gand-label">Gândul zilei</div>
-          <p className="dash-gand-text">{gandZilei.text}</p>
-          <span className="dash-gand-tema">#{gandZilei.tema}</span>
-        </div>
-      )}
+     {/* ═══ GÂNDUL ZILEI ═══ */}
+{gandZilei && (
+  <div className="dash-card dash-gand">
+    <div className="dash-gand-icon">💭</div>
+    <div className="dash-gand-label">Gândul zilei</div>
+    <p className="dash-gand-text">{gandZilei.text}</p>
+    <span className="dash-gand-tema">#{gandZilei.tema}</span>
+    <button
+      className="ds-mini-share-btn"
+      onClick={() => {
+        const text = encodeURIComponent(
+          `💭 ${gandZilei.text}\n\n📖 Devoțional zilnic pe: https://popas-pentru-suflet.vercel.app/devotional`
+        );
+        if (navigator.share) {
+          navigator.share({
+            title: 'Gândul zilei — Popas pentru Suflet',
+            text: gandZilei.text,
+            url: 'https://popas-pentru-suflet.vercel.app/devotional'
+          }).catch(() => {});
+        } else {
+          window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+      }}
+    >
+      📤 Distribuie gândul
+    </button>
+  </div>
+)}
 
       {/* ═══ RUGĂCIUNEA ZILEI ═══ */}
       {rugaciune && (
