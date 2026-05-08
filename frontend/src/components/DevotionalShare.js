@@ -455,13 +455,13 @@ const DevotionalShare = ({ devotional }) => {
 
       {/* ═══ BUTON PRINCIPAL ═══ */}
       <button
-        className="ds-main-btn"
-        onClick={() => setShareOpen(prev => !prev)}
-      >
-        <span>📤</span>
-        <span>Distribuie devoționalul</span>
-        <span className="ds-arrow">{shareOpen ? '▲' : '▼'}</span>
-      </button>
+  className="ds-main-btn"
+  onClick={() => setShareOpen(prev => !prev)}
+>
+  <span className="ds-main-btn-icon">📤</span>
+  <span>Distribuie devoționalul</span>
+  <span className="ds-arrow">{shareOpen ? '▲' : '▼'}</span>
+</button>
 
       {shareOpen && (
         <div className="ds-panel">
