@@ -44,29 +44,34 @@ const Header = ({ theme, toggleTheme }) => {
   };
 
   useEffect(() => {
-    const handleClick = (e) => {
-      const sidebar = document.querySelector('.sidebar');
-      const overlay = document.querySelector('.sidebar-overlay');
-      const btn = document.querySelector('.menu-btn');
+  const handleClick = (e) => {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const btn = document.querySelector('.menu-btn');
 
-      if (sidebar && sidebar.classList.contains('open')) {
-        if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
-          sidebar.classList.remove('open');
-          setMenuOpen(false);
-          if (overlay) overlay.style.display = 'none';
-          document.body.classList.remove('sidebar-open');
-        }
+    if (sidebar && sidebar.classList.contains('open')) {
+      if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
+        sidebar.classList.remove('open');
+        setMenuOpen(false);
+        if (overlay) overlay.style.display = 'none';
+        document.body.classList.remove('sidebar-open');
       }
+    }
 
-      if (!e.target.closest('.user-menu-wrapper')) setUserMenuOpen(false);
-      if (!e.target.closest('.font-menu-wrapper')) setFontMenuOpen(false);
-    };
+    if (!e.target.closest('.user-menu-wrapper')) {
+      setUserMenuOpen(false);
+    }
+    if (!e.target.closest('.font-menu-wrapper')) {
+      setFontMenuOpen(false);
+    }
+  };
 
-    document.addEventListener('click', handleClick);
-    return () => {
-      document.removeEventListener('click', handleClick);
-    };
-  }, []);
+  // Folosim capture: true pentru a prinde evenimentul înaintea oricărui handler
+  document.addEventListener('click', handleClick, true);
+  return () => {
+    document.removeEventListener('click', handleClick, true);
+  };
+}, []);
 
   useEffect(() => {
     if (isMobile) {
@@ -324,6 +329,16 @@ const Header = ({ theme, toggleTheme }) => {
 >
   👤 Profilul meu
 </button>
+
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setUserMenuOpen(prev => !prev);
+    setFontMenuOpen(false);
+  }}
+  className="header-user-btn"
+>
 
 <button
   onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
