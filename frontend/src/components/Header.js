@@ -35,6 +35,11 @@ const Header = ({ theme, toggleTheme }) => {
       const isOpen = sidebar.classList.toggle('open');
       setMenuOpen(isOpen);
       if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
+      if (isOpen) {
+        document.body.classList.add('sidebar-open');
+      } else {
+        document.body.classList.remove('sidebar-open');
+      }
     }
   };
 
@@ -49,6 +54,7 @@ const Header = ({ theme, toggleTheme }) => {
           sidebar.classList.remove('open');
           setMenuOpen(false);
           if (overlay) overlay.style.display = 'none';
+          document.body.classList.remove('sidebar-open');
         }
       }
 
@@ -56,11 +62,9 @@ const Header = ({ theme, toggleTheme }) => {
       if (!e.target.closest('.font-menu-wrapper')) setFontMenuOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('touchstart', handleClick, { passive: true });
+    document.addEventListener('click', handleClick);
     return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('touchstart', handleClick);
+      document.removeEventListener('click', handleClick);
     };
   }, []);
 
@@ -74,6 +78,7 @@ const Header = ({ theme, toggleTheme }) => {
         if (overlay) overlay.style.display = 'none';
       }
     }
+	document.body.classList.remove('sidebar-open');
     setUserMenuOpen(false);
     setFontMenuOpen(false);
   }, [location.pathname, isMobile]);

@@ -3250,3 +3250,8 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+body.sidebar-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
