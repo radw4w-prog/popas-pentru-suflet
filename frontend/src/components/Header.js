@@ -290,15 +290,24 @@ const Header = ({ theme, toggleTheme }) => {
     </button>
 
     {userMenuOpen && (
-      <>
-        {/* Overlay invizibil — click în afară închide meniul */}
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 8998,
-            background: 'transparent'
-          }}
+  <>
+    <div
+      style={{
+        position: 'fixed',
+        top: 60,
+        right: 10,
+        width: 250,
+        background: 'red',
+        color: 'white',
+        padding: 20,
+        zIndex: 99999,
+        fontSize: 20
+      }}
+    >
+      MENIU DESCHIS
+    </div>
+  </>
+)}
           onClick={() => setUserMenuOpen(false)}
         />
 
