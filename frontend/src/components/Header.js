@@ -308,8 +308,6 @@ const Header = ({ theme, toggleTheme }) => {
     </div>
   </>
 )}
-          onClick={() => setUserMenuOpen(false)}
-        />
 
         <div className="header-user-dropdown" style={{ zIndex: 8999 }}>
           <div className="header-dropdown-user-info">
