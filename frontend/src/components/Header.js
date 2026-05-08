@@ -43,36 +43,39 @@ const Header = ({ theme, toggleTheme }) => {
     }
   };
 
+  // ═══════════════════════════════════════
+  // CLICK OUTSIDE — cu capture: true
+  // ═══════════════════════════════════════
   useEffect(() => {
-  const handleClick = (e) => {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-    const btn = document.querySelector('.menu-btn');
+    const handleClick = (e) => {
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.querySelector('.sidebar-overlay');
+      const btn = document.querySelector('.menu-btn');
 
-    if (sidebar && sidebar.classList.contains('open')) {
-      if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
-        sidebar.classList.remove('open');
-        setMenuOpen(false);
-        if (overlay) overlay.style.display = 'none';
-        document.body.classList.remove('sidebar-open');
+      if (sidebar && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(e.target) && !btn?.contains(e.target)) {
+          sidebar.classList.remove('open');
+          setMenuOpen(false);
+          if (overlay) overlay.style.display = 'none';
+          document.body.classList.remove('sidebar-open');
+        }
       }
-    }
 
-    if (!e.target.closest('.user-menu-wrapper')) {
-      setUserMenuOpen(false);
-    }
-    if (!e.target.closest('.font-menu-wrapper')) {
-      setFontMenuOpen(false);
-    }
-  };
+      if (!e.target.closest('.user-menu-wrapper')) {
+        setUserMenuOpen(false);
+      }
+      if (!e.target.closest('.font-menu-wrapper')) {
+        setFontMenuOpen(false);
+      }
+    };
 
-  // Folosim capture: true pentru a prinde evenimentul înaintea oricărui handler
-  document.addEventListener('click', handleClick, true);
-  return () => {
-    document.removeEventListener('click', handleClick, true);
-  };
-}, []);
+    document.addEventListener('click', handleClick, true);
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, []);
 
+  // Închide la schimbare pagină
   useEffect(() => {
     if (isMobile) {
       const sidebar = document.querySelector('.sidebar');
@@ -83,7 +86,7 @@ const Header = ({ theme, toggleTheme }) => {
         if (overlay) overlay.style.display = 'none';
       }
     }
-	document.body.classList.remove('sidebar-open');
+    document.body.classList.remove('sidebar-open');
     setUserMenuOpen(false);
     setFontMenuOpen(false);
   }, [location.pathname, isMobile]);
@@ -97,10 +100,10 @@ const Header = ({ theme, toggleTheme }) => {
       title: 'Devoțional zilnic',
       subtitle: 'Meditație biblică, rugăciune și gânduri de credință'
     },
-	'/audio-bible': {
-  title: 'Audio Biblie',
-  subtitle: 'Ascultă Biblia Cornilescu completă în română'
-},
+    '/audio-bible': {
+      title: 'Audio Biblie',
+      subtitle: 'Ascultă Biblia Cornilescu completă în română'
+    },
     '/generate': {
       title: 'Creator Conținut',
       subtitle: 'Generează postări creștine cu AI pentru social media'
@@ -141,21 +144,21 @@ const Header = ({ theme, toggleTheme }) => {
       title: 'Statistici Facebook',
       subtitle: 'Reach, engagement și performanța postărilor'
     },
-	'/profile': {
-  title: 'Profilul meu',
-  subtitle: 'Contul tău, statistici și repere spirituale'
-},
-'/journey': {
-  title: 'Călătoria spirituală',
-  subtitle: 'Streak, badge-uri și progres spiritual'
-},
-'/journal': {
-  title: 'Jurnal Spiritual',
-  subtitle: 'Gânduri, rugăciuni și pași cu Dumnezeu'
-},
     '/notifications': {
       title: 'Notificări',
       subtitle: 'Toate notificările și alertele tale'
+    },
+    '/profile': {
+      title: 'Profilul meu',
+      subtitle: 'Contul tău, statistici și repere spirituale'
+    },
+    '/journey': {
+      title: 'Călătoria spirituală',
+      subtitle: 'Streak, badge-uri și progres spiritual'
+    },
+    '/journal': {
+      title: 'Jurnal Spiritual',
+      subtitle: 'Gânduri, rugăciuni și pași cu Dumnezeu'
     }
   };
 
@@ -193,7 +196,10 @@ const Header = ({ theme, toggleTheme }) => {
       <div className="header-left">
         <button
           className="menu-btn"
-          onClick={toggleMenu}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMenu();
+          }}
           aria-label="Deschide meniu"
         >
           {menuOpen ? '✕' : '☰'}
@@ -225,14 +231,15 @@ const Header = ({ theme, toggleTheme }) => {
         {!isMobile && (
           <div className="font-menu-wrapper">
             <button
-  onClick={(e) => {
-    e.stopPropagation();
-    setFontMenuOpen(!fontMenuOpen);
-    setUserMenuOpen(false);
-  }}
-  className="header-action-btn"
-  title="Mărime text"
->
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setFontMenuOpen(prev => !prev);
+                setUserMenuOpen(false);
+              }}
+              className="header-action-btn"
+              title="Mărime text"
+            >
               Aa <span className="header-arrow">▼</span>
             </button>
 
@@ -242,7 +249,11 @@ const Header = ({ theme, toggleTheme }) => {
                 {fontSizeOptions.map(opt => (
                   <button
                     key={opt.key}
-                    onClick={() => { setFontSize(opt.key); setFontMenuOpen(false); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFontSize(opt.key);
+                      setFontMenuOpen(false);
+                    }}
                     className={`header-dropdown-option ${fontSize === opt.key ? 'active' : ''}`}
                   >
                     <span style={{ fontSize: opt.size, fontWeight: 600 }}>{opt.label}</span>
@@ -255,7 +266,10 @@ const Header = ({ theme, toggleTheme }) => {
         )}
 
         <button
-          onClick={toggleTheme}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleTheme();
+          }}
           className="header-action-btn"
           title={theme === 'dark' ? 'Mod luminos' : 'Mod întunecat'}
           style={{
@@ -277,14 +291,15 @@ const Header = ({ theme, toggleTheme }) => {
 
         {isAuthenticated ? (
           <div className="user-menu-wrapper">
-           <button
-  onClick={(e) => {
-    e.stopPropagation();
-    setUserMenuOpen(!userMenuOpen);
-    setFontMenuOpen(false);
-  }}
-  className="header-user-btn"
->
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setUserMenuOpen(prev => !prev);
+                setFontMenuOpen(false);
+              }}
+              className="header-user-btn"
+            >
               <div
                 className="header-user-avatar"
                 style={{
@@ -305,7 +320,10 @@ const Header = ({ theme, toggleTheme }) => {
             </button>
 
             {userMenuOpen && (
-              <div className="header-user-dropdown">
+              <div
+                className="header-user-dropdown"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="header-dropdown-user-info">
                   <div className="header-dropdown-user-name">{user?.nume}</div>
                   <div className="header-dropdown-user-email">{user?.email}</div>
@@ -315,37 +333,41 @@ const Header = ({ theme, toggleTheme }) => {
                 </div>
 
                 {isAdmin && (
-  <button
-    onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
-    className="header-dropdown-item"
-  >
-    🛡️ Admin Panel
-  </button>
-)}
+                  <button
+                    onClick={() => { navigate('/admin'); setUserMenuOpen(false); }}
+                    className="header-dropdown-item"
+                  >
+                    🛡️ Admin Panel
+                  </button>
+                )}
 
-<button
-  onClick={() => { navigate('/profile'); setUserMenuOpen(false); }}
-  className="header-dropdown-item"
->
-  👤 Profilul meu
-</button>
+                <button
+                  onClick={() => { navigate('/profile'); setUserMenuOpen(false); }}
+                  className="header-dropdown-item"
+                >
+                  👤 Profilul meu
+                </button>
 
-<button
-  onClick={(e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setUserMenuOpen(prev => !prev);
-    setFontMenuOpen(false);
-  }}
-  className="header-user-btn"
->
+                <button
+                  onClick={() => { navigate('/journey'); setUserMenuOpen(false); }}
+                  className="header-dropdown-item"
+                >
+                  🕊️ Călătoria spirituală
+                </button>
 
-<button
-  onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
-  className="header-dropdown-item"
->
-  ⚙️ Setări cont
-</button>
+                <button
+                  onClick={() => { navigate('/journal'); setUserMenuOpen(false); }}
+                  className="header-dropdown-item"
+                >
+                  📔 Jurnal spiritual
+                </button>
+
+                <button
+                  onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
+                  className="header-dropdown-item"
+                >
+                  ⚙️ Setări cont
+                </button>
 
                 {isMobile && (
                   <>
@@ -354,7 +376,11 @@ const Header = ({ theme, toggleTheme }) => {
                     {fontSizeOptions.map(opt => (
                       <button
                         key={opt.key}
-                        onClick={() => { setFontSize(opt.key); setUserMenuOpen(false); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFontSize(opt.key);
+                          setUserMenuOpen(false);
+                        }}
                         className={`header-dropdown-item ${fontSize === opt.key ? 'font-active' : ''}`}
                       >
                         <span style={{ fontSize: opt.size }}>Aa</span>
@@ -373,7 +399,13 @@ const Header = ({ theme, toggleTheme }) => {
             )}
           </div>
         ) : (
-          <button onClick={() => navigate('/login')} className="header-login-btn">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/login');
+            }}
+            className="header-login-btn"
+          >
             🔑 <span className="theme-label">Intră în cont</span>
           </button>
         )}
