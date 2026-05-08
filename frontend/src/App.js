@@ -28,6 +28,7 @@ import PrayerPage from './pages/PrayerPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AudioBiblePage from './pages/AudioBiblePage';
 import JourneyPage from './pages/JourneyPage';
+import JournalPage from './pages/JournalPage';
 
 import './styles/App.css';
 import './styles/Premium.css';
@@ -116,6 +117,13 @@ function App() {
   <ProtectedRoute>
     <AppLayout theme={theme} toggleTheme={toggleTheme}>
       <JourneyPage />
+    </AppLayout>
+  </ProtectedRoute>
+} />
+<Route path="/journal" element={
+  <ProtectedRoute>
+    <AppLayout theme={theme} toggleTheme={toggleTheme}>
+      <JournalPage />
     </AppLayout>
   </ProtectedRoute>
 } />

@@ -15,6 +15,7 @@ const Sidebar = ({ theme }) => {
 	{ path: '/audio-bible', icon: '🎧', label: 'Audio Biblie' },
     { path: '/devotional', icon: '🙏', label: 'Devoțional zilnic' },
 	{ icon: '🕊️', label: 'Călătoria mea', path: '/journey' },
+	{ icon: '📔', label: 'Jurnal', path: '/journal' },
 	// În publicItems sau userItems:
 { path: '/prayer', icon: '🙏', label: 'Cereri rugăciune' }
 /*{ path: '/notifications', icon: '🔔', label: 'Notificări' }*/

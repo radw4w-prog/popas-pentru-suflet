@@ -1,0 +1,64 @@
+Ce ai acum — status complet
+✅ Infrastructură
+Frontend Vercel, Backend Render, MongoDB Atlas
+PWA instalabil, cost 0
+✅ Auth & Users
+Login/Register, Facebook Login, roluri admin/user, admin panel
+✅ Biblia
+Cornilescu 31.102 versete
+Navigator, Red Letter, highlights, bookmarks, notițe, copiere
+✅ Audio Biblie
+66 cărți complete, voce profesională
+Auto next capitol + auto next carte
+Lock screen controls, background play
+Progres salvat la secundă
+Volum slider + boost
+Statistici ascultare
+✅ Zona spirituală
+Plan citire Biblie cu progres
+Devoțional zilnic AI
+Cereri de rugăciune comunitare
+Semnele mele (bookmarks/highlights/notițe)
+✅ Călătoria Spirituală (Gamification)
+🔥 Streak zilnic + record personal
+🎯 Obiectiv săptămânal
+🌱→✨ 6 niveluri spirituale
+🏆 17 badge-uri tematice creștine
+📊 Statistici complete
+🔔 Notificare la badge nou cu auto-dismiss
+Pagină dedicată /journey cu 3 taburi
+Hook-uri în citire, audio, devoțional, rugăciune
+Card premium în dashboard
+✅ AI & Social Media
+Generator conținut Groq + Gemini fallback
+Publicare + programare Facebook
+Analytics Facebook
+✅ UI Premium
+Dark/light theme, font size switcher
+Mobile responsive, bottom nav, sidebar
+Touch feedback, tranziții, carduri premium
+Ce recomand acum — în ordinea priorității
+🔴 1. Jurnal Spiritual
+Următorul pe lista ta
+Timp: ~3 ore
+Valoare mare pentru utilizator
+🟡 2. Pagină Profil Utilizator
+Afișează streak, nivel, badge-uri
+Editare nume, avatar
+Timp: ~1.5 ore
+🟡 3. Share Devoțional
+Generează imagine din devoționalul zilei
+Share WhatsApp/Facebook
+Timp: ~1.5 ore
+🟡 4. Push Notifications
+Reminder zilnic: „Citește azi!"
+„Streakul tău e în pericol!"
+Timp: ~2 ore
+🟢 5. Newsletter zilnic
+Devoționalul pe email
+Gratis cu Resend
+Timp: ~2 ore
+🟢 6. Statistici Admin
+Useri activi zilnic
+Cele mai citite cărți
+Timp: ~1.5 ore
