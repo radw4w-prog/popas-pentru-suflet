@@ -274,7 +274,7 @@ function extractJson(raw) {
   try {
     return JSON.parse(text);
   } catch (e) {
-    console.log('❌ JSON.parse eșuat:', text.substring(0, 300));
+    console.log('❌ JSON.parse eșuat:', text.substring(0, 500));
     throw e;
   }
 }
@@ -419,6 +419,11 @@ Construiește TOTUL din schemă. NU folosi versetul ca inspirație liberă.
 
 PUBLIC: cititor român cu lupte reale, nevoie de adevăr biblic și speranță.
 
+Reflecția trebuie să includă explicit TOATE acțiunile principale ale versetului.
+Dacă versetul conține mai multe verbe importante (ex: „iertați”, „mângâiați”),
+fiecare trebuie explicat clar.
+Dacă unul lipsește, outputul este invalid.
+
 STRUCTURĂ:
 - title: titlu emoțional, poetic, memorabil, max 7 cuvinte
 - introduction: problemă umană legată direct de keyMessage, 2-3 propoziții
@@ -460,16 +465,16 @@ REGULI:
 - exclusiv română literară naturală
 - ton pastoral român matur
 - fără clișee: "în lumea de astăzi", "Dumnezeu dorește", "nu este întâmplător"
-- maxim 450 cuvinte total
+- maxim 500 cuvinte total
 
 Returnează DOAR JSON valid fără backticks, primul caracter { ultimul }:
 {"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`;
 
-  const result = await geminiService.generateDevotional(devotionalPrompt, 2000);
+  const result = await geminiService.generateDevotional(devotionalPrompt, 3000);
   const raw = result.text;
 
   console.log(`🤖 Model folosit: ${result.model} (${result.provider})`);
-  console.log('🤖 RAW AI output (primele 300 chars):', raw?.substring(0, 300));
+  console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
 
   try {
     const parsed = extractJson(raw);
