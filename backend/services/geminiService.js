@@ -60,6 +60,37 @@ class AIService {
     ];
   }
 
+
+
+
+async generateDevotional(prompt, maxTokens = 2000) {
+  if (!this.isConfigured()) {
+    throw new Error('Nicio cheie AI configurată');
+  }
+
+  await this.waitRateLimit();
+
+  // 1. Gemini primul — mai bun pentru texte devoționale
+  const geminiResult = await this.tryGemini(prompt, maxTokens);
+  if (geminiResult) {
+    const modelUsed = GEMINI_MODELS.find(m => !this.isModelExhausted(m)) || 'gemini';
+    console.log(`✅ Devotional generat cu Gemini: ${modelUsed}`);
+    return { text: geminiResult, model: modelUsed, provider: 'gemini' };
+  }
+
+  // 2. Groq fallback
+  const groqResult = await this.tryGroq(prompt, maxTokens);
+  if (groqResult) {
+    const modelUsed = GROQ_MODELS.find(m => !this.isModelExhausted(m)) || 'llama';
+    console.log(`✅ Devotional generat cu Groq: ${modelUsed}`);
+    return { text: groqResult, model: modelUsed, provider: 'groq' };
+  }
+
+  throw new Error('Toate modelele AI sunt temporar indisponibile.');
+}
+
+
+
   async waitRateLimit() {
     const elapsed = Date.now() - this.lastRequestTime;
     if (elapsed < this.MIN_INTERVAL) {
@@ -309,30 +340,6 @@ Returnează DOAR JSON valid, fără text înainte sau după:
 }
 
 
-async generateDevotional(prompt, maxTokens = 2000) {
-  if (!this.isConfigured()) {
-    throw new Error('Nicio cheie AI configurată');
-  }
 
-  await this.waitRateLimit();
-
-  // 1. Gemini primul — mai bun pentru texte devoționale
-  const geminiResult = await this.tryGemini(prompt, maxTokens);
-  if (geminiResult) {
-    const modelUsed = GEMINI_MODELS.find(m => !this.isModelExhausted(m)) || 'gemini';
-    console.log(`✅ Devotional generat cu Gemini: ${modelUsed}`);
-    return { text: geminiResult, model: modelUsed, provider: 'gemini' };
-  }
-
-  // 2. Groq fallback
-  const groqResult = await this.tryGroq(prompt, maxTokens);
-  if (groqResult) {
-    const modelUsed = GROQ_MODELS.find(m => !this.isModelExhausted(m)) || 'llama';
-    console.log(`✅ Devotional generat cu Groq: ${modelUsed}`);
-    return { text: groqResult, model: modelUsed, provider: 'groq' };
-  }
-
-  throw new Error('Toate modelele AI sunt temporar indisponibile.');
-}
 
 module.exports = new AIService();
