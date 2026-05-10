@@ -56,9 +56,6 @@
 /* ═══ BODY LOCK ═══ */
 body.sidebar-open {
   overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
 }
 
 /* ═══ HEADER ═══ */

@@ -50,6 +50,10 @@ const AppLayout = ({ children, theme, toggleTheme }) => (
     if (sidebar) sidebar.classList.remove('open');
     if (overlay) overlay.classList.remove('visible');
     document.body.classList.remove('sidebar-open');
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
   }}
 />
     <div className="main-content">
