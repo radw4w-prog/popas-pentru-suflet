@@ -106,10 +106,10 @@
   background: var(--bg-card, #0f0f1a);
   border: 1px solid var(--border-color, rgba(255,255,255,0.08));
   border-radius: 20px;
-  padding: 14px;
+  padding: 10px;
   box-shadow: 0 -8px 40px rgba(0,0,0,0.4);
   animation: bnSlideUp 0.2s ease;
-  max-height: 60vh;
+  max-height: 50vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -159,9 +159,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 14px 6px;
-  border-radius: 14px;
+  gap: 3px;
+  padding: 10px 4px;
+  border-radius: 12px;
   border: 1px solid var(--border-color, rgba(255,255,255,0.06));
   background: rgba(255,255,255,0.02);
   color: var(--text-secondary, #aaa);
@@ -188,11 +188,11 @@
 }
 
 .bn-more-icon {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
 }
 
 .bn-more-label {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 600;
   line-height: 1.3;
 }
