@@ -247,23 +247,19 @@ async function getVerseForTheme(theme) {
 function extractJson(raw) {
   if (!raw) throw new Error('Raw output gol');
 
-  let text = raw;
+  // Elimină BOM
+  let text = raw.replace(/^\uFEFF/, '');
 
-  // Elimină BOM și caractere invizibile
-  text = text.replace(/^\uFEFF/, '');
-
-  // Elimină backticks în toate formele posibile
-  text = text
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
+  // Elimină ORICE backticks indiferent de format sau spații
+  // Acoperă: ```json, ``` json, ```JSON, ` ` ` json etc.
+  text = text.replace(/`{3,}[a-z]*\s*/gi, '').replace(/`{3,}\s*/gi, '');
 
   // Extrage între prima { și ultima }
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
 
   if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    console.log('❌ Nu am găsit {}. Text după cleanup:', text.substring(0, 200));
     throw new Error('Nu am găsit JSON valid în răspuns');
   }
 
@@ -278,7 +274,7 @@ function extractJson(raw) {
   try {
     return JSON.parse(text);
   } catch (e) {
-    console.log('❌ JSON.parse eșuat. Primii 300 chars:', text.substring(0, 300));
+    console.log('❌ JSON.parse eșuat:', text.substring(0, 300));
     throw e;
   }
 }
