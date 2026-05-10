@@ -164,7 +164,16 @@ Returnează DOAR JSON valid, fără niciun text înainte sau după:
 }`;
 
   const raw = await geminiService.generate(prompt, 2000);
-  return extractJson(raw);
+console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
+try {
+  const parsed = extractJson(raw);
+  console.log('✅ JSON parsed OK:', parsed?.title);
+  return parsed;
+} catch (e) {
+  console.log('❌ JSON parse error:', e.message);
+  console.log('🔍 Raw complet:', raw);
+  throw e;
+}
 }
 
 
