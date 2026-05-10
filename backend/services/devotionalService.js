@@ -415,31 +415,146 @@ VERSET ORIGINAL: "${verseText}"
 REFERINȚĂ: ${verseReference}
 TEMA: ${theme}
 
-Construiește TOTUL din schemă. NU folosi versetul ca inspirație liberă.
+Construiește TOTUL din schema versetului.
+NU folosi versetul ca inspirație liberă.
+NU scrie pe tema generală.
+Scrie exclusiv din structura logică extrasă din verset.
 
-PUBLIC: cititor român cu lupte reale, nevoie de adevăr biblic și speranță.
+PUBLIC:
+cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de adevăr biblic, speranță și mângâiere.
+
+━━━━━━━━━━━━━━
+REGULĂ PRINCIPALĂ:
+Dacă un element major din schemă lipsește din reflecție, outputul este INVALID.
 
 Reflecția trebuie să includă explicit TOATE acțiunile principale ale versetului.
-Dacă versetul conține mai multe verbe importante (ex: „iertați”, „mângâiați”),
-fiecare trebuie explicat clar.
-Dacă unul lipsește, outputul este invalid.
+Dacă versetul conține mai multe verbe importante
+(ex: „iertați”, „mângâiați”, „mărturisiți”, „curăță”),
+FIECARE trebuie explicat clar.
 
+Nu parafraza doar versetul.
+Explică sensul lui.
+
+━━━━━━━━━━━━━━
+ANCORARE TEOLOGICĂ OBLIGATORIE:
+Reflection trebuie să răspundă explicit la întrebarea:
+„Care este afirmația teologică principală a acestui verset?”
+
+Dacă versetul conține:
+- o promisiune,
+- o poruncă,
+- o avertizare,
+- o declarație doctrinară,
+
+aceasta trebuie să fie centrul reflecției.
+
+Nu devia spre idei generale despre Dumnezeu.
+
+━━━━━━━━━━━━━━
+CONTROL DE FIDELITATE:
+Nu introduce idei care NU există în verset sau nu sunt deduse logic din el.
+
+Dacă reflecția poate fi folosită la alt verset fără modificări,
+outputul este INVALID.
+
+Devoționalul trebuie să fie imposibil de mutat pe alt verset.
+
+━━━━━━━━━━━━━━
 STRUCTURĂ:
-- title: titlu emoțional, poetic, memorabil, max 7 cuvinte
-- introduction: problemă umană legată direct de keyMessage, 2-3 propoziții
-- reflection: explică actions + commands + spiritualCore + aplică scope, O SINGURĂ metaforă centrală, 4-5 propoziții
-- practicalApplication: legat direct de commands sau actions, pas concret SAU întrebare directă, 2-3 propoziții
-- prayer: bazat pe spiritualCore, personal, cu "Dumnezeu" sau "Doamne", 3-4 propoziții
-- thoughtOfTheDay: rezumat al keyMessage, max 15 cuvinte, DIFERIT de titlu
 
-REGULI:
+- title:
+titlu emoțional, poetic, memorabil, max 7 cuvinte
+
+- introduction:
+problemă umană reală legată direct de adevărul central al versetului,
+2-3 propoziții
+
+- reflection:
+explică:
+acțiunile principale, poruncile (dacă există),
+adevărul spiritual central și aplicarea lui practică
+4-5 propoziții
+folosește O SINGURĂ metaforă centrală
+și păstreaz-o până la final
+
+- practicalApplication:
+legat direct de commands sau actions
+pas concret imediat SAU întrebare directă
+2-3 propoziții
+
+- prayer:
+bazată pe spiritualCore
+personală
+cu „Doamne” sau „Dumnezeu”
+3-4 propoziții
+
+- thoughtOfTheDay:
+rezumat memorabil al keyMessage
+max 15 cuvinte
+TREBUIE să fie diferit de titlu
+
+━━━━━━━━━━━━━━
+REGULI DE STIL:
+
 - exclusiv română literară naturală
 - ton pastoral român matur
-- fără clișee: "în lumea de astăzi", "Dumnezeu dorește", "nu este întâmplător", "acest verset ne amintește"
-- reflection nu începe cu "Versetul spune", "Pavel spune", "Textul ne arată"
-- O singură metaforă centrală — păstrată de la început până la final
-- rugăciunea NU folosește "Puterea Divină", "Univers", "energie"
-- maxim 450 cuvinte total
+- cald, uman, empatic
+- fără limbaj robotic
+
+interzis:
+"acest verset ne amintește"
+"în lumea de astăzi"
+"putem alege să"
+"Dumnezeu dorește"
+"nu este întâmplător"
+"în concluzie"
+
+reflection NU începe cu:
+"Versetul spune"
+"Pavel spune"
+"Textul ne arată"
+
+folosește imagini concrete din viața reală
+
+O singură metaforă centrală
+NU o schimba
+
+evită:
+"inimă de aur"
+"punte de aur"
+"abis fără fund"
+dacă nu sunt absolut naturale
+
+rugăciunea NU folosește:
+"Puterea Divină"
+"Univers"
+"energie"
+
+maxim 500 cuvinte
+
+━━━━━━━━━━━━━━
+VALIDARE FINALĂ OBLIGATORIE:
+
+1. elimină orice termen tehnic intern:
+("actors", "actions", "scope", "keyMessage", "spiritualCore")
+
+2. verifică gramatica română
+
+3. elimină formulări artificiale sau mecanice
+
+4. verifică dacă textul sună ca predicat de un pastor român matur
+
+5. verifică:
+poate fi mutat pe alt verset?
+dacă DA → INVALID → regenerează
+
+6. verifică:
+toate acțiunile principale ale versetului sunt explicate?
+dacă NU → INVALID → regenerează
+
+7. verifică:
+există clișee sau text generic?
+dacă DA → INVALID → regenerează
 
 Returnează DOAR JSON valid fără backticks, primul caracter { ultimul }:
 {"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`
@@ -466,6 +581,7 @@ REGULI:
 - ton pastoral român matur
 - fără clișee: "în lumea de astăzi", "Dumnezeu dorește", "nu este întâmplător"
 - maxim 500 cuvinte total
+
 
 Returnează DOAR JSON valid fără backticks, primul caracter { ultimul }:
 {"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`;
