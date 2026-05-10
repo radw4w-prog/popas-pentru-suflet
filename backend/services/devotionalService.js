@@ -419,7 +419,8 @@ Construiește TOTUL din schema versetului.
 NU folosi versetul ca inspirație liberă.
 NU scrie pe tema generală.
 Scrie exclusiv din structura logică extrasă din verset.
-
+Titlul trebuie să fie coerent cu metafora centrală din reflecție.
+Nu introduce o imagine diferită în titlu.
 PUBLIC:
 cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de adevăr biblic, speranță și mângâiere.
 
