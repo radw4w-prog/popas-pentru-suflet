@@ -43,6 +43,132 @@ const THEME_CONTEXT = {
 };
 
 // ═══════════════════════════════════════
+// VERSETE RECOMANDATE PER TEMĂ
+// ═══════════════════════════════════════
+const VERSETE_RECOMANDATE = {
+  iertare: [
+    { carte: '1 Ioan', capitol: 1, verset: 9 },
+    { carte: 'Efeseni', capitol: 4, verset: 32 },
+    { carte: 'Coloseni', capitol: 3, verset: 13 },
+    { carte: 'Psalmi', capitol: 103, verset: 12 },
+    { carte: 'Matei', capitol: 6, verset: 14 },
+    { carte: 'Luca', capitol: 23, verset: 34 },
+    { carte: 'Romani', capitol: 8, verset: 1 },
+    { carte: '2 Corinteni', capitol: 2, verset: 7 },
+    { carte: 'Mica', capitol: 7, verset: 18 },
+    { carte: 'Ieremia', capitol: 31, verset: 34 }
+  ],
+  dragoste: [
+    { carte: '1 Corinteni', capitol: 13, verset: 4 },
+    { carte: 'Ioan', capitol: 3, verset: 16 },
+    { carte: 'Romani', capitol: 8, verset: 38 },
+    { carte: '1 Ioan', capitol: 4, verset: 8 },
+    { carte: '1 Ioan', capitol: 4, verset: 19 },
+    { carte: 'Ioan', capitol: 15, verset: 13 },
+    { carte: 'Romani', capitol: 5, verset: 8 },
+    { carte: 'Efeseni', capitol: 3, verset: 17 },
+    { carte: 'Psalmi', capitol: 136, verset: 1 },
+    { carte: 'Zaharia', capitol: 3, verset: 17 }
+  ],
+  credinta: [
+    { carte: 'Evrei', capitol: 11, verset: 1 },
+    { carte: 'Romani', capitol: 10, verset: 17 },
+    { carte: 'Marcu', capitol: 11, verset: 24 },
+    { carte: 'Matei', capitol: 17, verset: 20 },
+    { carte: 'Galateni', capitol: 2, verset: 20 },
+    { carte: 'Habacuc', capitol: 2, verset: 4 },
+    { carte: 'Iacov', capitol: 2, verset: 17 },
+    { carte: 'Ioan', capitol: 20, verset: 29 },
+    { carte: '2 Corinteni', capitol: 5, verset: 7 },
+    { carte: 'Filipeni', capitol: 4, verset: 13 }
+  ],
+  pace: [
+    { carte: 'Filipeni', capitol: 4, verset: 7 },
+    { carte: 'Ioan', capitol: 14, verset: 27 },
+    { carte: 'Isaia', capitol: 26, verset: 3 },
+    { carte: 'Romani', capitol: 5, verset: 1 },
+    { carte: 'Psalmi', capitol: 46, verset: 1 },
+    { carte: 'Matei', capitol: 11, verset: 28 },
+    { carte: '2 Tesaloniceni', capitol: 3, verset: 16 },
+    { carte: 'Numeri', capitol: 6, verset: 26 },
+    { carte: 'Ioan', capitol: 16, verset: 33 },
+    { carte: 'Coloseni', capitol: 3, verset: 15 }
+  ],
+  bucurie: [
+    { carte: 'Nehemia', capitol: 8, verset: 10 },
+    { carte: 'Filipeni', capitol: 4, verset: 4 },
+    { carte: 'Psalmi', capitol: 16, verset: 11 },
+    { carte: 'Ioan', capitol: 15, verset: 11 },
+    { carte: 'Romani', capitol: 15, verset: 13 },
+    { carte: 'Galateni', capitol: 5, verset: 22 },
+    { carte: 'Psalmi', capitol: 30, verset: 5 },
+    { carte: '1 Petru', capitol: 1, verset: 8 },
+    { carte: 'Isaia', capitol: 61, verset: 10 },
+    { carte: 'Luca', capitol: 15, verset: 7 }
+  ],
+  speranta: [
+    { carte: 'Romani', capitol: 15, verset: 13 },
+    { carte: 'Ieremia', capitol: 29, verset: 11 },
+    { carte: 'Psalmi', capitol: 31, verset: 24 },
+    { carte: 'Isaia', capitol: 40, verset: 31 },
+    { carte: 'Romani', capitol: 8, verset: 28 },
+    { carte: 'Evrei', capitol: 6, verset: 19 },
+    { carte: 'Psalmi', capitol: 42, verset: 11 },
+    { carte: 'Romani', capitol: 5, verset: 3 },
+    { carte: '1 Petru', capitol: 1, verset: 3 },
+    { carte: 'Plângerile', capitol: 3, verset: 22 }
+  ],
+  rugaciune: [
+    { carte: 'Filipeni', capitol: 4, verset: 6 },
+    { carte: 'Matei', capitol: 7, verset: 7 },
+    { carte: '1 Tesaloniceni', capitol: 5, verset: 17 },
+    { carte: 'Ieremia', capitol: 33, verset: 3 },
+    { carte: 'Psalmi', capitol: 145, verset: 18 },
+    { carte: 'Iacov', capitol: 5, verset: 16 },
+    { carte: 'Ioan', capitol: 16, verset: 24 },
+    { carte: 'Luca', capitol: 18, verset: 1 },
+    { carte: 'Romani', capitol: 8, verset: 26 },
+    { carte: 'Matei', capitol: 6, verset: 9 }
+  ],
+  putere: [
+    { carte: 'Filipeni', capitol: 4, verset: 13 },
+    { carte: 'Isaia', capitol: 40, verset: 31 },
+    { carte: '2 Corinteni', capitol: 12, verset: 9 },
+    { carte: 'Efeseni', capitol: 6, verset: 10 },
+    { carte: 'Psalmi', capitol: 28, verset: 7 },
+    { carte: 'Isaia', capitol: 41, verset: 10 },
+    { carte: 'Zaharia', capitol: 4, verset: 6 },
+    { carte: 'Romani', capitol: 8, verset: 37 },
+    { carte: '2 Timotei', capitol: 1, verset: 7 },
+    { carte: 'Psalmi', capitol: 46, verset: 1 }
+  ],
+  recunostinta: [
+    { carte: '1 Tesaloniceni', capitol: 5, verset: 18 },
+    { carte: 'Psalmi', capitol: 107, verset: 1 },
+    { carte: 'Coloseni', capitol: 3, verset: 17 },
+    { carte: 'Filipeni', capitol: 4, verset: 6 },
+    { carte: 'Psalmi', capitol: 100, verset: 4 },
+    { carte: 'Efeseni', capitol: 5, verset: 20 },
+    { carte: 'Psalmi', capitol: 136, verset: 1 },
+    { carte: 'Luca', capitol: 17, verset: 17 },
+    { carte: 'Psalmi', capitol: 103, verset: 2 },
+    { carte: 'Romani', capitol: 1, verset: 21 }
+  ],
+  intelepciune: [
+    { carte: 'Iacov', capitol: 1, verset: 5 },
+    { carte: 'Proverbe', capitol: 3, verset: 5 },
+    { carte: 'Proverbe', capitol: 1, verset: 7 },
+    { carte: 'Psalmi', capitol: 111, verset: 10 },
+    { carte: 'Proverbe', capitol: 4, verset: 7 },
+    { carte: 'Eclesiastul', capitol: 12, verset: 13 },
+    { carte: 'Isaia', capitol: 11, verset: 2 },
+    { carte: 'Coloseni', capitol: 2, verset: 3 },
+    { carte: '1 Corinteni', capitol: 1, verset: 30 },
+    { carte: 'Romani', capitol: 11, verset: 33 }
+  ]
+};
+
+// ═══════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════
 function getRomaniaDateKey(date = new Date()) {
@@ -52,13 +178,45 @@ function getRomaniaDateKey(date = new Date()) {
 }
 
 function getThemeForDate(dateKey) {
-  const sum = dateKey.split('-').join('').split('').reduce((a, b) => a + Number(b), 0);
+  const sum = dateKey
+    .split('-')
+    .join('')
+    .split('')
+    .reduce((a, b) => a + Number(b), 0);
   return THEMES[sum % THEMES.length];
 }
 
 async function getVerseForTheme(theme) {
-  const regex = THEME_KEYWORDS[theme] || theme;
+  // Încearcă mai întâi din lista de versete recomandate
+  const recomandate = VERSETE_RECOMANDATE[theme];
 
+  if (recomandate && recomandate.length > 0) {
+    const rec = recomandate[Math.floor(Math.random() * recomandate.length)];
+
+    try {
+      const verse = await Verse.findOne({
+        carte: rec.carte,
+        capitol: rec.capitol,
+        verset: rec.verset
+      }).lean();
+
+      if (verse) {
+        console.log(`📖 Verset recomandat: ${rec.carte} ${rec.capitol}:${rec.verset}`);
+        return {
+          text: verse.text,
+          reference: verse.referinta || `${verse.carte} ${verse.capitol}:${verse.verset}`,
+          book: verse.carte,
+          chapter: verse.capitol,
+          number: verse.verset
+        };
+      }
+    } catch (err) {
+      console.log('⚠️ Verset recomandat negăsit, încerc regex');
+    }
+  }
+
+  // Fallback — regex pe cuvinte cheie
+  const regex = THEME_KEYWORDS[theme] || theme;
   let verse = null;
 
   try {
@@ -68,7 +226,7 @@ async function getVerseForTheme(theme) {
     ]);
     verse = found[0];
   } catch (err) {
-    console.log('⚠️ Aggregate pe versete a eșuat, încerc random fallback');
+    console.log('⚠️ Aggregate eșuat, încerc random fallback');
   }
 
   if (!verse) {
@@ -102,7 +260,7 @@ function extractJson(raw) {
 }
 
 // ═══════════════════════════════════════
-// FALLBACK
+// FALLBACK LOCAL
 // ═══════════════════════════════════════
 function buildFallbackDevotional({ theme, verseText, verseReference }) {
   const titles = {
@@ -141,14 +299,12 @@ function validateDevotional(data) {
     'thoughtOfTheDay'
   ];
 
-  // Verifică câmpuri obligatorii
   for (const field of required) {
     if (!data[field] || data[field].trim().length < 10) {
       throw new Error(`Câmpul "${field}" lipsește sau e prea scurt`);
     }
   }
 
-  // Lungimi minime
   if (data.reflection.length < 80) {
     throw new Error('Reflecția e prea scurtă');
   }
@@ -157,7 +313,7 @@ function validateDevotional(data) {
     throw new Error('Rugăciunea e prea scurtă');
   }
 
-  // Clișee AI — aruncă eroare la cele grave
+  // Clișee grave — aruncă eroare ca să regenereze
   const cliseeGrave = [
     'acest verset ne amintește',
     'în lumea de astăzi',
@@ -176,10 +332,10 @@ function validateDevotional(data) {
     }
   }
 
-  // Verifică că aplicația practică e concretă
+  // Verifică că aplicația e concretă — doar log
   const aplicatie = data.practicalApplication.toLowerCase();
   const areConcretetete = [
-    '?',           // conține o întrebare
+    '?',
     'azi ',
     'astăzi',
     'acum',
@@ -191,18 +347,17 @@ function validateDevotional(data) {
     'roagă-te',
     'există',
     'gândește-te'
-  ].some(keyword => aplicatie.includes(keyword));
+  ].some(k => aplicatie.includes(k));
 
   if (!areConcretetete) {
     console.log('⚠️ Aplicația practică pare prea vagă');
-    // Nu aruncă eroare — doar log
   }
 
   return true;
 }
 
 // ═══════════════════════════════════════
-// GENERARE CU AI — prompt premium
+// GENERARE CU AI — prompt premium v3
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
   const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
@@ -285,7 +440,6 @@ async function createDevotionalForDate(date = new Date()) {
         verseReference: verse.reference
       });
 
-      // Validare output AI
       try {
         validateDevotional(devotionalData);
         console.log('✅ Devoțional validat cu succes');
