@@ -368,70 +368,110 @@ REFERINȚĂ: ${verseReference}
 TEMA: ${theme}
 CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
 
-Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere și adevăr biblic.
+Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
-STRUCTURĂ:
-1. titlu emoțional și memorabil
-2. introducere cu hook uman și personal
-3. mesaj biblic profund bazat EXPLICIT pe sensul și contextul ACESTUI verset specific, nu pe tema generală
-4. aplicație practică foarte concretă, personală și directă — cu un pas imediat posibil azi
-5. rugăciune caldă, sinceră și specifică acestui verset
-6. gândul zilei memorabil ca un proverb creștin
+INPUT:
+VERSET: "{verseText}"
+REFERINȚĂ: "{verseReference}"
+TEMA: "{theme}"
+CONTEXT TEMĂ: "{themeContext}"
+
+PUBLIC:
+Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere, speranță și adevăr biblic.
+
+━━━━━━━━━━━━━━
+PAS INTERN OBLIGATORIU (NU afișa)
+1. identifică contextul biblic imediat al versetului
+   - cine vorbește?
+   - cui vorbește?
+   - în ce context?
+2. extrage adevărul central al versetului
+3. caută "bijuteria" versetului:
+   - ideea unică, surprinzătoare sau expresia cea mai puternică
+4. conectează adevărul cu o luptă umană reală
+5. construiește aplicația practică din acel adevăr
+
+IMPORTANT:
+Nu inventa implicații teologice care nu există în text.
+Rămâi fidel sensului exact al versetului.
+━━━━━━━━━━━━━━
+
+STRUCTURĂ OBLIGATORIE:
+1. title → titlu emoțional, poetic, memorabil (max 7 cuvinte)
+2. introduction → hook uman și personal (2-3 propoziții)
+3. reflection → mesaj biblic profund bazat EXPLICIT pe contextul exact al versetului (4-5 propoziții)
+4. practicalApplication → pas concret imediat sau întrebare directă (2-3 propoziții)
+5. prayer → rugăciune personală și specifică (3-4 propoziții)
+6. thoughtOfTheDay → proverb creștin memorabil (max 15 cuvinte)
 
 REGULI ABSOLUTE:
-- exclusiv în română literară naturală
-- ton uman, cald, pastoral — ca un pastor matur vorbind față în față
-- fără limbaj robotic sau de AI
-- interzis: "acest verset ne amintește", "în lumea de astăzi", "putem alege să", "Dumnezeu dorește să", "nu este întâmplător", "în concluzie", "dragi prieteni"
-- nu moraliza rece — vorbește cu căldură și empatie
-- include o metaforă sau imagine vizuală naturală din viața de zi cu zi
-- reflecția trebuie să arate EXPLICIT ce spune versetul, nu doar tema generală
-- aplicația practică TREBUIE să conțină fie o întrebare directă către cititor, fie un pas concret și imediat
-- rugăciunea să fie personală și specifică, nu generică
-- maxim 350 cuvinte total
-- trebuie să pară scris de un pastor român matur, nu de un program de calculator
-- gândul zilei să fie diferit de titlu și să aducă o perspectivă nouă
+- exclusiv română literară naturală
+- ton cald, pastoral, matur
+- trebuie să pară scris de un pastor român matur
+- fără limbaj robotic sau clișee AI
 
-PAS INTERN OBLIGATORIU (nu afișa):
-1. identifică contextul biblic imediat al versetului
-2. extrage adevărul central al versetului
-3. conectează adevărul cu o luptă umană reală
-4. construiește aplicația practică din acel adevăr
+INTERZIS:
+"acest verset ne amintește"
+"în lumea de astăzi"
+"putem alege să"
+"Dumnezeu dorește să"
+"nu este întâmplător"
+"în concluzie"
+"dragi prieteni"
 
-CONSTRÂNGERI DE STIL:
+STIL:
+- introducerea trebuie să pornească dintr-o luptă umană reală:
+  vinovăție, frică, durere, singurătate, dezamăgire sau oboseală
+- folosește O SINGURĂ metaforă centrală
+- păstrează aceeași metaforă până la final
+- nu schimba imaginea principală
+- folosește imagini naturale din viața de zi cu zi
+- evită metafore artificiale:
+  "inimă de aur", "punte de aur", "abis fără fund"
 - evită repetițiile lexicale
 - fiecare devoțional trebuie să fie diferit de cele anterioare
-- introducerea trebuie să pornească dintr-o tensiune emoțională reală
-- voce pastorală românească matură și caldă
-- folosește imagini concrete din viața de zi cu zi
 
-Folosește O SINGURĂ metaforă centrală în întreg devoționalul.
-Nu schimba imaginea principală.
+REFLECTION:
+- nu parafraza doar versetul
+- explică sensul lui
+- menționează explicit ideea centrală în propriile cuvinte
+- nu începe cu:
+  "Versetul spune"
+  "Pavel spune"
+  "Isus spune"
+  "Textul ne arată"
 
-Reflecția trebuie să menționeze explicit ideea centrală a versetului în propriile cuvinte.
-
-Nu începe reflecția cu:
-"Versetul ne arată", "Pavel spune", "Isus spune" decât dacă este absolut necesar.
-Intră direct în mesaj.
-Caută "bijuteria" versetului:
-care este ideea unică, surprinzătoare sau cea mai frumoasă din acest text biblic?
-Construiește reflecția în jurul ei.
-Nu parafraza doar versetul.
-Dacă versetul conține o expresie remarcabilă ("Îi place îndurarea"),
+Dacă versetul conține o expresie remarcabilă
+(ex: "Îi place îndurarea"),
 explorează adâncimea acelei expresii.
-Folosește maximum O metaforă centrală și păstreaz-o până la final.
-Evită expresii poetice artificiale precum:
-"inimă de aur", "punte de aur", "abis fără fund"
-decât dacă sunt absolut naturale în context.
 
-Returnează DOAR JSON valid, fără niciun text înainte sau după:
+RUGĂCIUNEA:
+- personală
+- specifică versetului
+- limbaj creștin biblic explicit:
+  "Dumnezeu", "Domnul Isus", "Duhul Sfânt"
+- NU folosi:
+  "Puterea Divină"
+  "Univers"
+  "energie"
+
+LIMITĂ:
+maxim 500 cuvinte total.
+
+VALIDARE FINALĂ:
+- JSON valid
+- fără text înainte sau după
+- toate câmpurile completate
+
+OUTPUT:
 {
-  "title": "titlu poetic, emoțional, max 7 cuvinte",
-  "introduction": "hook uman și personal, 2-3 propoziții",
-  "reflection": "mesaj biblic profund bazat pe contextul exact al versetului, cu metaforă, 4-5 propoziții",
-  "practicalApplication": "pas concret și imediat sau întrebare directă către cititor, 2-3 propoziții",
-  "prayer": "rugăciune personală și specifică versetului, 3-4 propoziții",
-  "thoughtOfTheDay": "gând memorabil ca un proverb creștin modern, max 15 cuvinte"
+  "title": "",
+  "introduction": "",
+  "reflection": "",
+  "practicalApplication": "",
+  "prayer": "",
+  "thoughtOfTheDay": ""
+}
 }`;
 
   const raw = await geminiService.generate(prompt, 2000);
