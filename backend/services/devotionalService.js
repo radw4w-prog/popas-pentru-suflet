@@ -474,17 +474,18 @@ OUTPUT:
 }
 }`;
 
-  const raw = await geminiService.generate(prompt, 2000);
+  const result = await geminiService.generateDevotional(prompt, 2000);
+  const raw = result.text;
 
+  console.log(`🤖 Model folosit: ${result.model} (${result.provider})`);
   console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
 
   try {
     const parsed = extractJson(raw);
     console.log('✅ JSON parsed OK:', parsed?.title);
-    return parsed;
+    return { data: parsed, model: result.model, provider: result.provider };
   } catch (e) {
     console.log('❌ JSON parse error:', e.message);
-    console.log('🔍 Raw complet:', raw);
     throw e;
   }
 }
@@ -507,17 +508,18 @@ async function createDevotionalForDate(date = new Date()) {
 
   try {
     if (geminiService.isConfigured()) {
-      devotionalData = await generateDevotionalWithAI({
-        theme,
-        verseText: verse.text,
-        verseReference: verse.reference
-      });
+      const aiResult = await generateDevotionalWithAI({
+  theme,
+  verseText: verse.text,
+  verseReference: verse.reference
+});
+devotionalData = aiResult.data;
 
-      try {
-        validateDevotional(devotionalData);
-        console.log('✅ Devoțional validat cu succes');
-        generatedBy = 'ai';
-        aiModel = 'llama-3.3-70b-versatile';
+try {
+  validateDevotional(devotionalData);
+  console.log('✅ Devoțional validat cu succes');
+  generatedBy = 'ai';
+  aiModel = aiResult.model || 'gemini';
       } catch (validErr) {
         console.log('⚠️ Validare eșuată:', validErr.message, '— folosesc fallback');
         devotionalData = buildFallbackDevotional({
