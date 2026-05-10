@@ -35,7 +35,10 @@ const Header = ({ theme, toggleTheme }) => {
     if (sidebar) {
       const isOpen = sidebar.classList.toggle('open');
       setMenuOpen(isOpen);
-      if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
+      if (overlay) {
+  if (isOpen) overlay.classList.add('visible');
+  else overlay.classList.remove('visible');
+}
       if (isOpen) {
         document.body.classList.add('sidebar-open');
       } else {
@@ -51,7 +54,7 @@ const Header = ({ theme, toggleTheme }) => {
       if (sidebar) {
         sidebar.classList.remove('open');
         setMenuOpen(false);
-        if (overlay) overlay.style.display = 'none';
+        if (overlay) overlay.classList.remove('visible');
       }
     }
     document.body.classList.remove('sidebar-open');
