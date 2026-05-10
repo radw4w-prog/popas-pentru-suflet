@@ -247,27 +247,35 @@ async function getVerseForTheme(theme) {
 function extractJson(raw) {
   let text = raw.trim();
 
-  // Elimină backticks ```json ... ``` sau ``` ... ```
+  // Pas 1: dacă e în backticks, extrage conținutul
   const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (blockMatch) {
     text = blockMatch[1].trim();
-  } else {
-    // Extrage direct între prima { și ultima }
-    const firstBrace = text.indexOf('{');
-    const lastBrace = text.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      text = text.substring(firstBrace, lastBrace + 1);
-    }
   }
 
-  // Curăță caractere problematice
+  // Pas 2: găsește JSON-ul între { și }
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    text = text.substring(firstBrace, lastBrace + 1);
+  }
+
+  // Pas 3: curăță caractere control care strică JSON.parse
   text = text
-    .replace(/[\u0000-\u001F\u007F]/g, ' ') // caractere control
-    .replace(/,\s*}/g, '}')                  // trailing commas
-    .replace(/,\s*]/g, ']')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/,(\s*[}\]])/g, '$1')
     .trim();
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // Pas 4: încearcă să repare ghilimelele rupte
+    const reparat = text
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
+    return JSON.parse(reparat);
+  }
 }
 
 // ═══════════════════════════════════════
@@ -474,6 +482,8 @@ VALIDARE FINALĂ:
 - fără text înainte sau după
 - toate câmpurile completate
 
+
+
 OUTPUT:
 {
   "title": "",
@@ -482,8 +492,9 @@ OUTPUT:
   "practicalApplication": "",
   "prayer": "",
   "thoughtOfTheDay": ""
-}
-}`;
+  
+  Returnează DOAR obiectul JSON, fără backticks, fără \`\`\`json, fără niciun text înainte sau după. Primul caracter din răspuns trebuie să fie { și ultimul }.`;
+
 
   const result = await geminiService.generateDevotional(prompt, 2000);
   const raw = result.text;
