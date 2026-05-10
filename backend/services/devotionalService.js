@@ -245,36 +245,55 @@ async function getVerseForTheme(theme) {
 }
 
 function extractJson(raw) {
-  let text = raw.trim();
+  if (!raw) throw new Error('Raw output gol');
 
-  // Pas 1: dacă e în backticks, extrage conținutul
+  let text = raw;
+
+  // Elimină BOM și caractere invizibile de la început
+  text = text.replace(/^\uFEFF/, '');
+  text = text.replace(/^[\s\u00A0\u200B\u200C\u200D\uFEFF]+/, '');
+
+  // Elimină backticks ```json ... ``` sau ``` ... ```
   const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (blockMatch) {
-    text = blockMatch[1].trim();
+    text = blockMatch[1];
   }
 
-  // Pas 2: găsește JSON-ul între { și }
+  // Elimină din nou spații/caractere invizibile după extragere
+  text = text.replace(/^[\s\u00A0\u200B\u200C\u200D\uFEFF]+/, '').trim();
+
+  // Extrage între prima { și ultima }
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    text = text.substring(firstBrace, lastBrace + 1);
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new Error('Nu am găsit JSON valid în răspuns');
   }
 
-  // Pas 3: curăță caractere control care strică JSON.parse
+  text = text.substring(firstBrace, lastBrace + 1);
+
+  // Curăță caractere control
   text = text
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .replace(/,(\s*[}\]])/g, '$1')
     .trim();
 
+  // Încearcă parse direct
   try {
     return JSON.parse(text);
-  } catch (e) {
-    // Pas 4: încearcă să repare ghilimelele rupte
-    const reparat = text
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t');
-    return JSON.parse(reparat);
+  } catch (e1) {
+    // Încearcă cu escape pe newlines
+    try {
+      const escaped = text
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
+      return JSON.parse(escaped);
+    } catch (e2) {
+      // Log pentru debug
+      console.log('❌ Primii 200 chars din text:', JSON.stringify(text.substring(0, 200)));
+      throw new Error(`JSON parse eșuat: ${e2.message}`);
+    }
   }
 }
 
@@ -381,119 +400,40 @@ function validateDevotional(data) {
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
   const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
-VERSETUL:
-"${verseText}"
+VERSETUL: "${verseText}"
 REFERINȚĂ: ${verseReference}
 TEMA: ${theme}
 CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
 
-Scrie un devoțional creștin profund, cald și pastoral în limba română.
-
-INPUT:
-VERSET: "{verseText}"
-REFERINȚĂ: "{verseReference}"
-TEMA: "{theme}"
-CONTEXT TEMĂ: "{themeContext}"
-
-PUBLIC:
 Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere, speranță și adevăr biblic.
 
-━━━━━━━━━━━━━━
-PAS INTERN OBLIGATORIU (NU afișa)
-1. identifică contextul biblic imediat al versetului
-   - cine vorbește?
-   - cui vorbește?
-   - în ce context?
-2. extrage adevărul central al versetului
-3. caută "bijuteria" versetului:
-   - ideea unică, surprinzătoare sau expresia cea mai puternică
-4. conectează adevărul cu o luptă umană reală
-5. construiește aplicația practică din acel adevăr
-
-IMPORTANT:
+PAS INTERN OBLIGATORIU (NU afișa în output):
+1. Identifică contextul biblic al versetului — cine vorbește, cui, în ce context
+2. Extrage adevărul central
+3. Găsește expresia sau ideea cea mai puternică din verset
+4. Conectează cu o luptă umană reală
+5. Construiește aplicația practică din acel adevăr
 Nu inventa implicații teologice care nu există în text.
-Rămâi fidel sensului exact al versetului.
-━━━━━━━━━━━━━━
 
-STRUCTURĂ OBLIGATORIE:
-1. title → titlu emoțional, poetic, memorabil (max 7 cuvinte)
-2. introduction → hook uman și personal (2-3 propoziții)
-3. reflection → mesaj biblic profund bazat EXPLICIT pe contextul exact al versetului (4-5 propoziții)
-4. practicalApplication → pas concret imediat sau întrebare directă (2-3 propoziții)
-5. prayer → rugăciune personală și specifică (3-4 propoziții)
-6. thoughtOfTheDay → proverb creștin memorabil (max 15 cuvinte)
+STRUCTURĂ:
+- title: titlu emoțional, poetic, memorabil, max 7 cuvinte
+- introduction: hook uman pornind dintr-o luptă reală (vinovăție, frică, durere, singurătate), 2-3 propoziții
+- reflection: mesaj biblic bazat EXPLICIT pe contextul exact al versetului, cu O SINGURĂ metaforă centrală, 4-5 propoziții
+- practicalApplication: pas concret imediat SAU întrebare directă către cititor, 2-3 propoziții
+- prayer: rugăciune personală, specifică versetului, cu "Dumnezeu" sau "Doamne", 3-4 propoziții
+- thoughtOfTheDay: proverb creștin memorabil, max 15 cuvinte, DIFERIT de titlu
 
-REGULI ABSOLUTE:
+REGULI:
 - exclusiv română literară naturală
 - ton cald, pastoral, matur
-- trebuie să pară scris de un pastor român matur
-- fără limbaj robotic sau clișee AI
+- fără clișee: "acest verset ne amintește", "în lumea de astăzi", "putem alege să", "Dumnezeu dorește să", "nu este întâmplător", "în concluzie", "dragi prieteni"
+- reflection nu începe cu "Versetul spune", "Pavel spune", "Isus spune", "Textul ne arată"
+- rugăciunea NU folosește "Puterea Divină", "Univers", "energie"
+- O singură metaforă centrală — păstrată de la început până la final
+- maxim 500 cuvinte total
 
-INTERZIS:
-"acest verset ne amintește"
-"în lumea de astăzi"
-"putem alege să"
-"Dumnezeu dorește să"
-"nu este întâmplător"
-"în concluzie"
-"dragi prieteni"
-
-STIL:
-- introducerea trebuie să pornească dintr-o luptă umană reală:
-  vinovăție, frică, durere, singurătate, dezamăgire sau oboseală
-- folosește O SINGURĂ metaforă centrală
-- păstrează aceeași metaforă până la final
-- nu schimba imaginea principală
-- folosește imagini naturale din viața de zi cu zi
-- evită metafore artificiale:
-  "inimă de aur", "punte de aur", "abis fără fund"
-- evită repetițiile lexicale
-- fiecare devoțional trebuie să fie diferit de cele anterioare
-
-REFLECTION:
-- nu parafraza doar versetul
-- explică sensul lui
-- menționează explicit ideea centrală în propriile cuvinte
-- nu începe cu:
-  "Versetul spune"
-  "Pavel spune"
-  "Isus spune"
-  "Textul ne arată"
-
-Dacă versetul conține o expresie remarcabilă
-(ex: "Îi place îndurarea"),
-explorează adâncimea acelei expresii.
-
-RUGĂCIUNEA:
-- personală
-- specifică versetului
-- limbaj creștin biblic explicit:
-  "Dumnezeu", "Domnul Isus", "Duhul Sfânt"
-- NU folosi:
-  "Puterea Divină"
-  "Univers"
-  "energie"
-
-LIMITĂ:
-maxim 500 cuvinte total.
-
-VALIDARE FINALĂ:
-- JSON valid
-- fără text înainte sau după
-- toate câmpurile completate
-
-
-
-OUTPUT:
-{
-  "title": "",
-  "introduction": "",
-  "reflection": "",
-  "practicalApplication": "",
-  "prayer": "",
-  "thoughtOfTheDay": ""
-  
-  Returnează DOAR obiectul JSON, fără backticks, fără \`\`\`json, fără niciun text înainte sau după. Primul caracter din răspuns trebuie să fie { și ultimul }.`;
+Returnează DOAR JSON valid. Primul caracter { și ultimul }. Fără backticks, fără text înainte sau după:
+{"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`;
 
 
   const result = await geminiService.generateDevotional(prompt, 2000);
