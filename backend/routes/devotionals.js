@@ -94,4 +94,24 @@ router.post('/viewed', protect, async (req, res) => {
   }
 });
 
+
+
+
+// GET /api/devotionals/regenerate-today — test regenerare prompt nou
+router.get('/regenerate-today', async (req, res) => {
+  try {
+    const DailyDevotional = require('../models/DailyDevotional');
+    const { getRomaniaDateKey, createDevotionalForDate } = require('../services/devotionalService');
+
+    const dateKey = getRomaniaDateKey();
+    await DailyDevotional.deleteOne({ dateKey });
+
+    const devotional = await createDevotionalForDate(new Date());
+    res.json({ success: true, data: devotional });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 module.exports = router;
