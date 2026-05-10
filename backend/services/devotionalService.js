@@ -1,3 +1,4 @@
+// backend/services/devotionalService.js
 const DailyDevotional = require('../models/DailyDevotional');
 const Verse = require('../models/Verse');
 const geminiService = require('./geminiService');
@@ -28,6 +29,22 @@ const THEME_KEYWORDS = {
   intelepciune: 'înțelep|intelep'
 };
 
+const THEME_CONTEXT = {
+  dragoste: 'dragostea lui Dumnezeu față de oameni și chemarea la iubire față de aproapele',
+  credinta: 'credința autentică, încrederea în Dumnezeu în mijlocul îndoielii și incertitudinii',
+  pace: 'pacea care întrece orice înțelegere, liniștea sufletului în mijlocul furtunilor vieții',
+  bucurie: 'bucuria profundă care vine din relația cu Dumnezeu, diferită de fericirea lumească',
+  speranta: 'speranța vie în Hristos, ancora sufletului în momentele de descurajare',
+  rugaciune: 'rugăciunea ca dialog real cu Dumnezeu, nu ritual mecanic',
+  iertare: 'iertarea ca eliberare, atât cea primită de la Dumnezeu cât și cea oferită altora',
+  putere: 'puterea lui Dumnezeu manifestată în slăbiciunea noastră',
+  recunostinta: 'recunoștința ca mod de viață, nu doar sentiment ocazional',
+  intelepciune: 'înțelepciunea divină în deciziile zilnice, discernământul spiritual'
+};
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
 function getRomaniaDateKey(date = new Date()) {
   return new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Europe/Bucharest'
@@ -46,14 +63,9 @@ async function getVerseForTheme(theme) {
 
   try {
     const found = await Verse.aggregate([
-      {
-        $match: {
-          text: { $regex: regex, $options: 'i' }
-        }
-      },
+      { $match: { text: { $regex: regex, $options: 'i' } } },
       { $sample: { size: 1 } }
     ]);
-
     verse = found[0];
   } catch (err) {
     console.log('⚠️ Aggregate pe versete a eșuat, încerc random fallback');
@@ -89,6 +101,9 @@ function extractJson(raw) {
   return JSON.parse(text);
 }
 
+// ═══════════════════════════════════════
+// FALLBACK
+// ═══════════════════════════════════════
 function buildFallbackDevotional({ theme, verseText, verseReference }) {
   const titles = {
     dragoste: 'Iubirea care nu te lasă',
@@ -105,29 +120,66 @@ function buildFallbackDevotional({ theme, verseText, verseReference }) {
 
   return {
     title: titles[theme] || 'Un gând pentru sufletul tău',
-    introduction: `Versetul de astăzi ne amintește că Dumnezeu este prezent și lucrează în viața noastră chiar și atunci când nu înțelegem totul.`,
-    reflection: `Cuvântul lui Dumnezeu nu este doar o promisiune frumoasă, ci o realitate vie. În fiecare încercare, în fiecare întrebare și în fiecare pas, El rămâne credincios. Versetul acesta ne cheamă să ne așezăm inima din nou în mâinile Lui.`,
+    introduction: `Versetul de astăzi ne cheamă să privim mai adânc în inima noastră și să descoperim ce înseamnă cu adevărat ${theme} în viața de zi cu zi.`,
+    reflection: `Cuvântul lui Dumnezeu nu este doar o promisiune frumoasă, ci o realitate vie. În fiecare încercare, în fiecare întrebare și în fiecare pas, El rămâne credincios. Versetul acesta ne cheamă să ne așezăm inima din nou în mâinile Lui și să descoperim profunzimea iubirii Sale pentru noi.`,
     practicalApplication: `Alege astăzi să trăiești acest adevăr într-un mod concret: oprește-te câteva minute, citește din nou versetul, roagă-te și întreabă-L pe Dumnezeu cum îl poți aplica în situația ta actuală.`,
-    prayer: `Doamne, îți mulțumesc pentru Cuvântul Tău. Ajută-mă să nu rămân doar la citire, ci să trăiesc ceea ce îmi vorbești astăzi. Întărește-mi inima, luminează-mi mintea și călăuzește-mi pașii. Amin.`,
+    prayer: `Doamne, îți mulțumesc pentru Cuvântul Tău care vorbește direct inimii mele. Ajută-mă să nu rămân doar la citire, ci să trăiesc ceea ce îmi spui astăzi. Întărește-mi inima și călăuzește-mi pașii. Amin.`,
     thoughtOfTheDay: `Dumnezeu vorbește și astăzi inimii tale prin Cuvântul Său.`
   };
 }
 
-async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
-  const themeContext = {
-    dragoste: 'dragostea lui Dumnezeu față de oameni și chemarea la iubire față de aproapele',
-    credinta: 'credința autentică, încrederea în Dumnezeu în mijlocul îndoielii și incertitudinii',
-    pace: 'pacea care întrece orice înțelegere, liniștea sufletului în mijlocul furtunilor vieții',
-    bucurie: 'bucuria profundă care vine din relația cu Dumnezeu, diferită de fericirea lumească',
-    speranta: 'speranța vie în Hristos, ancora sufletului în momentele de descurajare',
-    rugaciune: 'rugăciunea ca dialog real cu Dumnezeu, nu ritual mecanic',
-    iertare: 'iertarea ca eliberare, atât cea primită de la Dumnezeu cât și cea oferită altora',
-    putere: 'puterea lui Dumnezeu manifestată în slăbiciunea noastră',
-    recunostinta: 'recunoștința ca mod de viață, nu doar sentiment ocazional',
-    intelepciune: 'înțelepciunea divină în deciziile zilnice, discernământul spiritual'
-  };
+// ═══════════════════════════════════════
+// VALIDARE OUTPUT AI
+// ═══════════════════════════════════════
+function validateDevotional(data) {
+  const required = [
+    'title',
+    'introduction',
+    'reflection',
+    'practicalApplication',
+    'prayer',
+    'thoughtOfTheDay'
+  ];
 
-  const prompt = `Ești Andrei Moldovan, un teolog și scriitor creștin român cu 20 de ani de experiență pastorală. 
+  for (const field of required) {
+    if (!data[field] || data[field].trim().length < 10) {
+      throw new Error(`Câmpul "${field}" lipsește sau e prea scurt`);
+    }
+  }
+
+  if (data.reflection.length < 80) {
+    throw new Error('Reflecția e prea scurtă');
+  }
+
+  if (data.prayer.length < 40) {
+    throw new Error('Rugăciunea e prea scurtă');
+  }
+
+  // Detectează clișee AI frecvente — doar log, nu aruncă eroare
+  const clisee = [
+    'acest verset ne amintește',
+    'în lumina acestui verset',
+    'nu este întâmplător',
+    'dragi prieteni',
+    'în concluzie',
+    'ca și concluzie'
+  ];
+
+  const textComplet = Object.values(data).join(' ').toLowerCase();
+  for (const c of clisee) {
+    if (textComplet.includes(c)) {
+      console.log(`⚠️ Clișeu detectat: "${c}"`);
+    }
+  }
+
+  return true;
+}
+
+// ═══════════════════════════════════════
+// GENERARE CU AI — prompt premium
+// ═══════════════════════════════════════
+async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
+  const prompt = `Ești Andrei Moldovan, un teolog și scriitor creștin român cu 20 de ani de experiență pastorală.
 Scrii devoționale zilnice pentru credincioși simpli din România — oameni cu bucurii și griji reale, nu auditori de conferință.
 
 VERSETUL DE AZI:
@@ -135,7 +187,7 @@ VERSETUL DE AZI:
 — ${verseReference}
 
 TEMA ZILEI: ${theme}
-CONTEXT TEMĂ: ${themeContext[theme] || theme}
+CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
 
 MISIUNEA TA:
 Scrie un devoțional care să facă cititorul să simtă că cineva îl înțelege cu adevărat și că Dumnezeu îi vorbește personal.
@@ -164,65 +216,23 @@ Returnează DOAR JSON valid, fără niciun text înainte sau după:
 }`;
 
   const raw = await geminiService.generate(prompt, 2000);
-console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
-try {
-  const parsed = extractJson(raw);
-  console.log('✅ JSON parsed OK:', parsed?.title);
-  return parsed;
-} catch (e) {
-  console.log('❌ JSON parse error:', e.message);
-  console.log('🔍 Raw complet:', raw);
-  throw e;
-}
-}
 
+  console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
 
-function validateDevotional(data) {
-  const required = [
-    'title',
-    'introduction',
-    'reflection',
-    'practicalApplication',
-    'prayer',
-    'thoughtOfTheDay'
-  ];
-
-  for (const field of required) {
-    if (!data[field] || data[field].trim().length < 10) {
-      throw new Error(`Câmpul "${field}" lipsește sau e prea scurt`);
-    }
+  try {
+    const parsed = extractJson(raw);
+    console.log('✅ JSON parsed OK:', parsed?.title);
+    return parsed;
+  } catch (e) {
+    console.log('❌ JSON parse error:', e.message);
+    console.log('🔍 Raw complet:', raw);
+    throw e;
   }
-
-  // Verifică lungimi minime rezonabile
-  if (data.reflection.length < 80) {
-    throw new Error('Reflecția e prea scurtă');
-  }
-
-  if (data.prayer.length < 40) {
-    throw new Error('Rugăciunea e prea scurtă');
-  }
-
-  // Detectează clișee AI frecvente
-  const clisee = [
-    'acest verset ne amintește',
-    'în lumina acestui verset',
-    'nu este întâmplător',
-    'dragi prieteni',
-    'în concluzie',
-    'ca și concluzie'
-  ];
-
-  const textComplet = Object.values(data).join(' ').toLowerCase();
-  for (const c of clisee) {
-    if (textComplet.includes(c)) {
-      console.log(`⚠️ Devoțional conține clișeu detectat: "${c}"`);
-    }
-  }
-
-  return true;
 }
 
-
+// ═══════════════════════════════════════
+// CREARE DEVOȚIONAL PENTRU O ZI
+// ═══════════════════════════════════════
 async function createDevotionalForDate(date = new Date()) {
   const dateKey = getRomaniaDateKey(date);
 
@@ -244,10 +254,12 @@ async function createDevotionalForDate(date = new Date()) {
         verseReference: verse.reference
       });
 
-      // Validare output
+      // Validare output AI
       try {
         validateDevotional(devotionalData);
         console.log('✅ Devoțional validat cu succes');
+        generatedBy = 'ai';
+        aiModel = 'llama-3.3-70b-versatile';
       } catch (validErr) {
         console.log('⚠️ Validare eșuată:', validErr.message, '— folosesc fallback');
         devotionalData = buildFallbackDevotional({
@@ -256,17 +268,11 @@ async function createDevotionalForDate(date = new Date()) {
           verseReference: verse.reference
         });
         generatedBy = 'fallback';
-      }
-
-      if (generatedBy !== 'fallback') {
-        generatedBy = 'ai';
-        // Detectează modelul real folosit
-        const modelsStatus = geminiService.getModelsStatus();
-        const lastUsed = modelsStatus.find(m => m.status === 'available');
-        aiModel = lastUsed?.model || 'ai';
+        aiModel = '';
       }
 
     } else {
+      console.log('⚠️ AI neconfigurat — folosesc fallback');
       devotionalData = buildFallbackDevotional({
         theme,
         verseText: verse.text,
@@ -280,6 +286,8 @@ async function createDevotionalForDate(date = new Date()) {
       verseText: verse.text,
       verseReference: verse.reference
     });
+    generatedBy = 'fallback';
+    aiModel = '';
   }
 
   try {
@@ -304,7 +312,9 @@ async function createDevotionalForDate(date = new Date()) {
       published: true
     });
 
+    console.log(`📖 Devoțional creat: ${created.title} | ${generatedBy} | ${aiModel}`);
     return created.toObject();
+
   } catch (err) {
     if (err.code === 11000) {
       return await DailyDevotional.findOne({ dateKey }).lean();
@@ -313,6 +323,9 @@ async function createDevotionalForDate(date = new Date()) {
   }
 }
 
+// ═══════════════════════════════════════
+// API PUBLICE
+// ═══════════════════════════════════════
 async function getTodayDevotional() {
   return createDevotionalForDate(new Date());
 }
