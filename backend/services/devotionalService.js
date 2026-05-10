@@ -249,18 +249,15 @@ function extractJson(raw) {
 
   let text = raw;
 
-  // Elimină BOM și caractere invizibile de la început
+  // Elimină BOM și caractere invizibile
   text = text.replace(/^\uFEFF/, '');
-  text = text.replace(/^[\s\u00A0\u200B\u200C\u200D\uFEFF]+/, '');
 
-  // Elimină backticks ```json ... ``` sau ``` ... ```
-  const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (blockMatch) {
-    text = blockMatch[1];
-  }
-
-  // Elimină din nou spații/caractere invizibile după extragere
-  text = text.replace(/^[\s\u00A0\u200B\u200C\u200D\uFEFF]+/, '').trim();
+  // Elimină backticks în toate formele posibile
+  text = text
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
   // Extrage între prima { și ultima }
   const firstBrace = text.indexOf('{');
@@ -278,22 +275,11 @@ function extractJson(raw) {
     .replace(/,(\s*[}\]])/g, '$1')
     .trim();
 
-  // Încearcă parse direct
   try {
     return JSON.parse(text);
-  } catch (e1) {
-    // Încearcă cu escape pe newlines
-    try {
-      const escaped = text
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r')
-        .replace(/\t/g, '\\t');
-      return JSON.parse(escaped);
-    } catch (e2) {
-      // Log pentru debug
-      console.log('❌ Primii 200 chars din text:', JSON.stringify(text.substring(0, 200)));
-      throw new Error(`JSON parse eșuat: ${e2.message}`);
-    }
+  } catch (e) {
+    console.log('❌ JSON.parse eșuat. Primii 300 chars:', text.substring(0, 300));
+    throw e;
   }
 }
 
@@ -398,54 +384,108 @@ function validateDevotional(data) {
 // GENERARE CU AI — prompt premium v3
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
-  const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
+
+  // ── PAS 1: Extrage schema din verset ──
+  const schemaPrompt = `Analizează versetul și extrage structura lui logică.
+
+VERSET: "${verseText}"
+REFERINȚĂ: ${verseReference}
+
+Returnează DOAR JSON valid fără backticks:
+{"actors":[],"actions":[],"commands":[],"keyMessage":"","spiritualCore":"","scope":""}
+
+REGULI:
+- NU interpreta liber
+- NU adăuga teologie nouă
+- DOAR extrage din text`;
+
+  let schema = null;
+  let schemaModel = '';
+
+  try {
+    const schemaResult = await geminiService.generateDevotional(schemaPrompt, 500);
+    schema = extractJson(schemaResult.text);
+    schemaModel = schemaResult.model;
+    console.log('✅ Schema extrasă:', JSON.stringify(schema));
+  } catch (e) {
+    console.log('⚠️ Schema eșuată, merg fără schemă:', e.message);
+  }
+
+  // ── PAS 2: Generează devoționalul ──
+  const devotionalPrompt = schema
+    ? `Scrie un devoțional creștin pastoral în limba română pe baza acestei scheme biblice.
+
+SCHEMA VERSETULUI:
+${JSON.stringify(schema, null, 2)}
+
+VERSET ORIGINAL: "${verseText}"
+REFERINȚĂ: ${verseReference}
+TEMA: ${theme}
+
+Construiește TOTUL din schemă. NU folosi versetul ca inspirație liberă.
+
+PUBLIC: cititor român cu lupte reale, nevoie de adevăr biblic și speranță.
+
+STRUCTURĂ:
+- title: titlu emoțional, poetic, memorabil, max 7 cuvinte
+- introduction: problemă umană legată direct de keyMessage, 2-3 propoziții
+- reflection: explică actions + commands + spiritualCore + aplică scope, O SINGURĂ metaforă centrală, 4-5 propoziții
+- practicalApplication: legat direct de commands sau actions, pas concret SAU întrebare directă, 2-3 propoziții
+- prayer: bazat pe spiritualCore, personal, cu "Dumnezeu" sau "Doamne", 3-4 propoziții
+- thoughtOfTheDay: rezumat al keyMessage, max 15 cuvinte, DIFERIT de titlu
+
+REGULI:
+- exclusiv română literară naturală
+- ton pastoral român matur
+- fără clișee: "în lumea de astăzi", "Dumnezeu dorește", "nu este întâmplător", "acest verset ne amintește"
+- reflection nu începe cu "Versetul spune", "Pavel spune", "Textul ne arată"
+- O singură metaforă centrală — păstrată de la început până la final
+- rugăciunea NU folosește "Puterea Divină", "Univers", "energie"
+- maxim 450 cuvinte total
+
+Returnează DOAR JSON valid fără backticks, primul caracter { ultimul }:
+{"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`
+
+    : `Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
 VERSETUL: "${verseText}"
 REFERINȚĂ: ${verseReference}
 TEMA: ${theme}
 CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
 
-Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere, speranță și adevăr biblic.
-
-PAS INTERN OBLIGATORIU (NU afișa în output):
-1. Identifică contextul biblic al versetului — cine vorbește, cui, în ce context
-2. Extrage adevărul central
-3. Găsește expresia sau ideea cea mai puternică din verset
-4. Conectează cu o luptă umană reală
-5. Construiește aplicația practică din acel adevăr
-Nu inventa implicații teologice care nu există în text.
+Scrie pentru un cititor român obișnuit, cu lupte reale și nevoie de mângâiere.
 
 STRUCTURĂ:
 - title: titlu emoțional, poetic, memorabil, max 7 cuvinte
-- introduction: hook uman pornind dintr-o luptă reală (vinovăție, frică, durere, singurătate), 2-3 propoziții
-- reflection: mesaj biblic bazat EXPLICIT pe contextul exact al versetului, cu O SINGURĂ metaforă centrală, 4-5 propoziții
-- practicalApplication: pas concret imediat SAU întrebare directă către cititor, 2-3 propoziții
-- prayer: rugăciune personală, specifică versetului, cu "Dumnezeu" sau "Doamne", 3-4 propoziții
+- introduction: hook uman pornind dintr-o luptă reală, 2-3 propoziții
+- reflection: mesaj biblic bazat pe contextul exact al versetului, O SINGURĂ metaforă centrală, 4-5 propoziții
+- practicalApplication: pas concret SAU întrebare directă, 2-3 propoziții
+- prayer: rugăciune personală cu "Dumnezeu" sau "Doamne", 3-4 propoziții
 - thoughtOfTheDay: proverb creștin memorabil, max 15 cuvinte, DIFERIT de titlu
 
 REGULI:
 - exclusiv română literară naturală
-- ton cald, pastoral, matur
-- fără clișee: "acest verset ne amintește", "în lumea de astăzi", "putem alege să", "Dumnezeu dorește să", "nu este întâmplător", "în concluzie", "dragi prieteni"
-- reflection nu începe cu "Versetul spune", "Pavel spune", "Isus spune", "Textul ne arată"
-- rugăciunea NU folosește "Puterea Divină", "Univers", "energie"
-- O singură metaforă centrală — păstrată de la început până la final
-- maxim 500 cuvinte total
+- ton pastoral român matur
+- fără clișee: "în lumea de astăzi", "Dumnezeu dorește", "nu este întâmplător"
+- maxim 450 cuvinte total
 
-Returnează DOAR JSON valid. Primul caracter { și ultimul }. Fără backticks, fără text înainte sau după:
+Returnează DOAR JSON valid fără backticks, primul caracter { ultimul }:
 {"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`;
 
-
-  const result = await geminiService.generateDevotional(prompt, 2000);
+  const result = await geminiService.generateDevotional(devotionalPrompt, 2000);
   const raw = result.text;
 
   console.log(`🤖 Model folosit: ${result.model} (${result.provider})`);
-  console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
+  console.log('🤖 RAW AI output (primele 300 chars):', raw?.substring(0, 300));
 
   try {
     const parsed = extractJson(raw);
     console.log('✅ JSON parsed OK:', parsed?.title);
-    return { data: parsed, model: result.model, provider: result.provider };
+    return {
+      data: parsed,
+      model: result.model,
+      provider: result.provider
+    };
   } catch (e) {
     console.log('❌ JSON parse error:', e.message);
     throw e;
