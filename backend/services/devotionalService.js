@@ -428,14 +428,6 @@ Metafora trebuie să fie unică și exclusivă.
 Dacă apare o a doua metaforă, chiar subtilă, outputul este invalid și trebuie regenerat.
 Fiecare acțiune din verset trebuie să primească același nivel de dezvoltare.
 Dacă un verb este mai slab tratat, outputul este invalid.
-Stabilește ierarhia acțiunilor din verset:
-1. acțiunea centrală (nucleul teologic)
-2. acțiuni contextuale secundare (doar pentru contrast)
-
-Nu le trata ca egale.
-Reflecția trebuie să fie construită în jurul acțiunii centrale.
-Dacă există acțiuni narative (ex: ce fac oamenii în fundal),
-ele NU trebuie dezvoltate teologic, ci doar folosite ca fundal.
 
 PUBLIC:
 cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de adevăr biblic, speranță și mângâiere.
