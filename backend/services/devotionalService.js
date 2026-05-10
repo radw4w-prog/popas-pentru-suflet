@@ -413,6 +413,12 @@ Reflecția trebuie să menționeze explicit ideea centrală a versetului în pro
 Nu începe reflecția cu:
 "Versetul ne arată", "Pavel spune", "Isus spune" decât dacă este absolut necesar.
 Intră direct în mesaj.
+Caută "bijuteria" versetului:
+care este ideea unică, surprinzătoare sau cea mai frumoasă din acest text biblic?
+Construiește reflecția în jurul ei.
+Nu parafraza doar versetul.
+Dacă versetul conține o expresie remarcabilă ("Îi place îndurarea"),
+explorează adâncimea acelei expresii.
 
 Returnează DOAR JSON valid, fără niciun text înainte sau după:
 {
