@@ -40,15 +40,16 @@ export const FontSizeContext = React.createContext({
 });
 
 const AppLayout = ({ children, theme, toggleTheme }) => (
-  <div className="app-layout" data-theme={theme}>
-    <Sidebar theme={theme} />
-    <div
-      className="sidebar-overlay"
-      onClick={() => {
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) sidebar.classList.remove('open');
-      }}
-    />
+ <div
+  className="sidebar-overlay"
+  onClick={() => {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('visible');
+    document.body.classList.remove('sidebar-open');
+  }}
+/>
     <div className="main-content">
       <Header theme={theme} toggleTheme={toggleTheme} />
       <div className="page-content">
