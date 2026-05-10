@@ -173,11 +173,12 @@ async generateDevotional(prompt, maxTokens = 2000) {
         const r = await this.http.post(url, {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: maxTokens,
-            topP: 0.92,
-            topK: 40
-          }
+  temperature: 0.85,
+  maxOutputTokens: maxTokens,
+  topP: 0.92,
+  topK: 40,
+  responseMimeType: 'application/json'
+}
         }, { timeout: 60000 });
 
         const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text;
