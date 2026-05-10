@@ -371,66 +371,119 @@ function validateDevotional(data) {
 // GENERARE CU AI — prompt premium v3
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
-  const prompt = `
+  const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
+
+VERSETUL:
+"${verseText}"
+REFERINȚĂ: ${verseReference}
+TEMA: ${theme}
+CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
+
 Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
 INPUT:
-VERSET: "${verseText}"
-REFERINȚĂ: ${verseReference}
-TEMA: ${theme}
-CONTEXT: ${THEME_CONTEXT[theme] || theme}
+VERSET: "{verseText}"
+REFERINȚĂ: "{verseReference}"
+TEMA: "{theme}"
+CONTEXT TEMĂ: "{themeContext}"
 
 PUBLIC:
-Cititor român obișnuit, cu lupte reale, durere reală, nevoie de speranță și adevăr biblic.
+Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere, speranță și adevăr biblic.
 
-━━━━━━━━━━━━━━━━━━
-REGULĂ PRINCIPALĂ:
-Rămâi STRICT fidel sensului biblic al versetului.
-Nu adăuga implicații care nu sunt prezente în text.
+━━━━━━━━━━━━━━
+PAS INTERN OBLIGATORIU (NU afișa)
+1. identifică contextul biblic imediat al versetului
+   - cine vorbește?
+   - cui vorbește?
+   - în ce context?
+2. extrage adevărul central al versetului
+3. caută "bijuteria" versetului:
+   - ideea unică, surprinzătoare sau expresia cea mai puternică
+4. conectează adevărul cu o luptă umană reală
+5. construiește aplicația practică din acel adevăr
 
-━━━━━━━━━━━━━━━━━━
-PAS INTERN (NU afișa):
-1. Context biblic (cine, cui, de ce)
-2. Ideea centrală a versetului
-3. „Bijuteria” versetului (expresia cea mai puternică)
-4. Luptă umană reală conectată
-5. Aplicație practică derivată din text
+IMPORTANT:
+Nu inventa implicații teologice care nu există în text.
+Rămâi fidel sensului exact al versetului.
+━━━━━━━━━━━━━━
 
-━━━━━━━━━━━━━━━━━━
-STRUCTURĂ OUTPUT (JSON):
-{
-"title": "max 7 cuvinte, emoțional, memorabil",
-"introduction": "2-3 propoziții, dintr-o luptă reală",
-"reflection": "4-5 propoziții, explicație biblică + O SINGURĂ metaforă păstrată până la final",
-"practicalApplication": "pas concret SAU întrebare directă",
-"prayer": "3-4 propoziții, personal, cu Dumnezeu / Doamne",
-"thoughtOfTheDay": "max 15 cuvinte, diferit de titlu"
-}
+STRUCTURĂ OBLIGATORIE:
+1. title → titlu emoțional, poetic, memorabil (max 7 cuvinte)
+2. introduction → hook uman și personal (2-3 propoziții)
+3. reflection → mesaj biblic profund bazat EXPLICIT pe contextul exact al versetului (4-5 propoziții)
+4. practicalApplication → pas concret imediat sau întrebare directă (2-3 propoziții)
+5. prayer → rugăciune personală și specifică (3-4 propoziții)
+6. thoughtOfTheDay → proverb creștin memorabil (max 15 cuvinte)
 
-━━━━━━━━━━━━━━━━━━
-REGULI STRICTE:
-- O SINGURĂ metaforă în tot textul
-- nu începe reflection cu: „Versetul spune”, „Pavel spune”, „Isus spune”
-- fără clișee: „în lumea de astăzi”, „putem alege”, „nu este întâmplător”
-- fără limbaj abstract: „energie”, „Univers”, „Puterea Divină”
-- stil pastoral român matur, cald, natural
-- introducerea trebuie să pornească dintr-o emoție reală
+REGULI ABSOLUTE:
+- exclusiv română literară naturală
+- ton cald, pastoral, matur
+- trebuie să pară scris de un pastor român matur
+- fără limbaj robotic sau clișee AI
 
-━━━━━━━━━━━━━━━━━━
+INTERZIS:
+"acest verset ne amintește"
+"în lumea de astăzi"
+"putem alege să"
+"Dumnezeu dorește să"
+"nu este întâmplător"
+"în concluzie"
+"dragi prieteni"
+
+STIL:
+- introducerea trebuie să pornească dintr-o luptă umană reală:
+  vinovăție, frică, durere, singurătate, dezamăgire sau oboseală
+- folosește O SINGURĂ metaforă centrală
+- păstrează aceeași metaforă până la final
+- nu schimba imaginea principală
+- folosește imagini naturale din viața de zi cu zi
+- evită metafore artificiale:
+  "inimă de aur", "punte de aur", "abis fără fund"
+- evită repetițiile lexicale
+- fiecare devoțional trebuie să fie diferit de cele anterioare
+
+REFLECTION:
+- nu parafraza doar versetul
+- explică sensul lui
+- menționează explicit ideea centrală în propriile cuvinte
+- nu începe cu:
+  "Versetul spune"
+  "Pavel spune"
+  "Isus spune"
+  "Textul ne arată"
+
+Dacă versetul conține o expresie remarcabilă
+(ex: "Îi place îndurarea"),
+explorează adâncimea acelei expresii.
+
+RUGĂCIUNEA:
+- personală
+- specifică versetului
+- limbaj creștin biblic explicit:
+  "Dumnezeu", "Domnul Isus", "Duhul Sfânt"
+- NU folosi:
+  "Puterea Divină"
+  "Univers"
+  "energie"
+
 LIMITĂ:
-max 450 cuvinte total
+maxim 500 cuvinte total.
 
-━━━━━━━━━━━━━━━━━━
-CONTROL FINAL (intern):
-Verifică:
+VALIDARE FINALĂ:
 - JSON valid
-- fidelitate biblică
-- o singură metaforă
-- fără clișee AI
+- fără text înainte sau după
 - toate câmpurile completate
 
-Returnează DOAR JSON valid.
-`;
+OUTPUT:
+{
+  "title": "",
+  "introduction": "",
+  "reflection": "",
+  "practicalApplication": "",
+  "prayer": "",
+  "thoughtOfTheDay": ""
+}
+}`;
 
   const result = await geminiService.generateDevotional(prompt, 2000);
   const raw = result.text;
