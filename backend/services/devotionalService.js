@@ -141,12 +141,14 @@ function validateDevotional(data) {
     'thoughtOfTheDay'
   ];
 
+  // Verifică câmpuri obligatorii
   for (const field of required) {
     if (!data[field] || data[field].trim().length < 10) {
       throw new Error(`Câmpul "${field}" lipsește sau e prea scurt`);
     }
   }
 
+  // Lungimi minime
   if (data.reflection.length < 80) {
     throw new Error('Reflecția e prea scurtă');
   }
@@ -155,21 +157,45 @@ function validateDevotional(data) {
     throw new Error('Rugăciunea e prea scurtă');
   }
 
-  // Detectează clișee AI frecvente — doar log, nu aruncă eroare
-  const clisee = [
+  // Clișee AI — aruncă eroare la cele grave
+  const cliseeGrave = [
     'acest verset ne amintește',
-    'în lumina acestui verset',
-    'nu este întâmplător',
+    'în lumea de astăzi',
+    'nu este întâmplător că',
     'dragi prieteni',
     'în concluzie',
-    'ca și concluzie'
+    'dumnezeu dorește să'
   ];
 
   const textComplet = Object.values(data).join(' ').toLowerCase();
-  for (const c of clisee) {
+
+  for (const c of cliseeGrave) {
     if (textComplet.includes(c)) {
-      console.log(`⚠️ Clișeu detectat: "${c}"`);
+      console.log(`⚠️ Clișeu grav detectat: "${c}" — regenerez`);
+      throw new Error(`Text conține clișeu de evitat: "${c}"`);
     }
+  }
+
+  // Verifică că aplicația practică e concretă
+  const aplicatie = data.practicalApplication.toLowerCase();
+  const areConcretetete = [
+    '?',           // conține o întrebare
+    'azi ',
+    'astăzi',
+    'acum',
+    'încearcă',
+    'alege',
+    'scrie',
+    'sună',
+    'vorbește',
+    'roagă-te',
+    'există',
+    'gândește-te'
+  ].some(keyword => aplicatie.includes(keyword));
+
+  if (!areConcretetete) {
+    console.log('⚠️ Aplicația practică pare prea vagă');
+    // Nu aruncă eroare — doar log
   }
 
   return true;
@@ -179,40 +205,45 @@ function validateDevotional(data) {
 // GENERARE CU AI — prompt premium
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
-  const prompt = `Ești Andrei Moldovan, un teolog și scriitor creștin român cu 20 de ani de experiență pastorală.
-Scrii devoționale zilnice pentru credincioși simpli din România — oameni cu bucurii și griji reale, nu auditori de conferință.
+  const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
-VERSETUL DE AZI:
+VERSETUL:
 "${verseText}"
-— ${verseReference}
-
-TEMA ZILEI: ${theme}
+REFERINȚĂ: ${verseReference}
+TEMA: ${theme}
 CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
 
-MISIUNEA TA:
-Scrie un devoțional care să facă cititorul să simtă că cineva îl înțelege cu adevărat și că Dumnezeu îi vorbește personal.
+Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere și adevăr biblic.
+
+STRUCTURĂ:
+1. titlu emoțional și memorabil
+2. introducere cu hook uman și personal
+3. mesaj biblic profund bazat EXPLICIT pe sensul și contextul ACESTUI verset specific, nu pe tema generală
+4. aplicație practică foarte concretă, personală și directă — cu un pas imediat posibil azi
+5. rugăciune caldă, sinceră și specifică acestui verset
+6. gândul zilei memorabil ca un proverb creștin
 
 REGULI ABSOLUTE:
-- Scrie exclusiv în română literară naturală
-- Ton cald, pastoral, uman — ca o conversație sinceră, nu o predică formală
-- Fii specific și concret — evită generalitățile goale
-- Folosește imagini și metafore din viața de zi cu zi românească
-- Nu repeta același cuvânt de mai mult de 2-3 ori în tot textul
-- Nu folosi expresii clișeu: "acest verset ne amintește", "în lumina acestui verset", "Dumnezeu dorește să", "nu este întâmplător că"
-- Nu scrie ca un AI — scrie ca un om care crede cu adevărat ce spune
-- Titlul să fie poetic și intrigant, nu descriptiv și plat
-- Rugăciunea să fie personală și specifică, nu generică
-- Gândul zilei să fie memorabil și original — ca un proverb creștin modern
-- Lungime naturală: introducere 2-3 propoziții, reflecție 4-5 propoziții, aplicație 2-3 propoziții, rugăciune 3-4 propoziții
+- exclusiv în română literară naturală
+- ton uman, cald, pastoral — ca un pastor matur vorbind față în față
+- fără limbaj robotic sau de AI
+- interzis: "acest verset ne amintește", "în lumea de astăzi", "putem alege să", "Dumnezeu dorește să", "nu este întâmplător", "în concluzie", "dragi prieteni"
+- nu moraliza rece — vorbește cu căldură și empatie
+- include o metaforă sau imagine vizuală naturală din viața de zi cu zi
+- reflecția trebuie să arate EXPLICIT ce spune versetul, nu doar tema generală
+- aplicația practică TREBUIE să conțină fie o întrebare directă către cititor, fie un pas concret și imediat
+- rugăciunea să fie personală și specifică, nu generică
+- maxim 350 cuvinte total
+- trebuie să pară scris de un pastor român matur, nu de un program de calculator
 
 Returnează DOAR JSON valid, fără niciun text înainte sau după:
 {
-  "title": "titlu poetic, intrigant, max 7 cuvinte",
-  "introduction": "deschidere caldă care prinde cititorul imediat",
-  "reflection": "reflecție profundă, specifică, cu imagini concrete din viață",
-  "practicalApplication": "aplicație practică și realistă pentru ziua de azi",
-  "prayer": "rugăciune personală, sinceră, specifică temei",
-  "thoughtOfTheDay": "gând memorabil, original, max 15 cuvinte"
+  "title": "titlu poetic, emoțional, max 7 cuvinte",
+  "introduction": "hook uman și personal, 2-3 propoziții",
+  "reflection": "mesaj biblic profund bazat pe contextul exact al versetului, cu metaforă, 4-5 propoziții",
+  "practicalApplication": "pas concret și imediat sau întrebare directă către cititor, 2-3 propoziții",
+  "prayer": "rugăciune personală și specifică versetului, 3-4 propoziții",
+  "thoughtOfTheDay": "gând memorabil ca un proverb creștin modern, max 15 cuvinte"
 }`;
 
   const raw = await geminiService.generate(prompt, 2000);
