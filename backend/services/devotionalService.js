@@ -419,6 +419,10 @@ Construiește reflecția în jurul ei.
 Nu parafraza doar versetul.
 Dacă versetul conține o expresie remarcabilă ("Îi place îndurarea"),
 explorează adâncimea acelei expresii.
+Folosește maximum O metaforă centrală și păstreaz-o până la final.
+Evită expresii poetice artificiale precum:
+"inimă de aur", "punte de aur", "abis fără fund"
+decât dacă sunt absolut naturale în context.
 
 Returnează DOAR JSON valid, fără niciun text înainte sau după:
 {
