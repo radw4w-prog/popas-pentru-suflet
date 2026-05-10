@@ -424,7 +424,10 @@ Nu introduce o imagine diferită în titlu.
 Identifică "bijuteria" unică a versetului:
 care este partea surprinzătoare sau distinctivă a acestui text?
 Aceasta trebuie să ocupe centrul reflecției.
-
+Metafora trebuie să fie unică și exclusivă.
+Dacă apare o a doua metaforă, chiar subtilă, outputul este invalid și trebuie regenerat.
+Fiecare acțiune din verset trebuie să primească același nivel de dezvoltare.
+Dacă un verb este mai slab tratat, outputul este invalid.
 
 PUBLIC:
 cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de adevăr biblic, speranță și mângâiere.

@@ -70,6 +70,18 @@ async generateDevotional(prompt, maxTokens = 5000) {
 
   await this.waitRateLimit();
 
+// 2. Groq fallback
+  const groqResult = await this.tryGroq(prompt, maxTokens);
+  if (groqResult) {
+    const modelUsed = GROQ_MODELS.find(m => !this.isModelExhausted(m)) || 'llama';
+    console.log(`✅ Devotional generat cu Groq: ${modelUsed}`);
+    return { text: groqResult, model: modelUsed, provider: 'groq' };
+  }
+
+
+
+
+
   // 1. Gemini primul — mai bun pentru texte devoționale
   const geminiResult = await this.tryGemini(prompt, maxTokens);
   if (geminiResult) {
@@ -78,15 +90,7 @@ async generateDevotional(prompt, maxTokens = 5000) {
     return { text: geminiResult, model: modelUsed, provider: 'gemini' };
   }
 
-  // 2. Groq fallback
-  const groqResult = await this.tryGroq(prompt, maxTokens);
-  if (groqResult) {
-    const modelUsed = GROQ_MODELS.find(m => !this.isModelExhausted(m)) || 'llama';
-    console.log(`✅ Devotional generat cu Groq: ${modelUsed}`);
-    return { text: groqResult, model: modelUsed, provider: 'groq' };
-  }
-
-  throw new Error('Toate modelele AI sunt temporar indisponibile.');
+    throw new Error('Toate modelele AI sunt temporar indisponibile.');
 }
 
 
