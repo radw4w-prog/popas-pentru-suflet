@@ -40,7 +40,9 @@ export const FontSizeContext = React.createContext({
 });
 
 const AppLayout = ({ children, theme, toggleTheme }) => (
- <div
+  <div className="app-layout" data-theme={theme}>
+    <Sidebar theme={theme} />
+    <div
   className="sidebar-overlay"
   onClick={() => {
     const sidebar = document.querySelector('.sidebar');
