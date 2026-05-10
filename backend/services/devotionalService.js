@@ -421,6 +421,11 @@ NU scrie pe tema generală.
 Scrie exclusiv din structura logică extrasă din verset.
 Titlul trebuie să fie coerent cu metafora centrală din reflecție.
 Nu introduce o imagine diferită în titlu.
+Identifică "bijuteria" unică a versetului:
+care este partea surprinzătoare sau distinctivă a acestui text?
+Aceasta trebuie să ocupe centrul reflecției.
+
+
 PUBLIC:
 cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de adevăr biblic, speranță și mângâiere.
 

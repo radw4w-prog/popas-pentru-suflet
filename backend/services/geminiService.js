@@ -63,7 +63,7 @@ class AIService {
 
 
 
-async generateDevotional(prompt, maxTokens = 2000) {
+async generateDevotional(prompt, maxTokens = 5000) {
   if (!this.isConfigured()) {
     throw new Error('Nicio cheie AI configurată');
   }
