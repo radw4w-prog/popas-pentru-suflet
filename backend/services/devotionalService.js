@@ -390,6 +390,20 @@ REGULI ABSOLUTE:
 - rugăciunea să fie personală și specifică, nu generică
 - maxim 350 cuvinte total
 - trebuie să pară scris de un pastor român matur, nu de un program de calculator
+- gândul zilei să fie diferit de titlu și să aducă o perspectivă nouă
+
+PAS INTERN OBLIGATORIU (nu afișa):
+1. identifică contextul biblic imediat al versetului
+2. extrage adevărul central al versetului
+3. conectează adevărul cu o luptă umană reală
+4. construiește aplicația practică din acel adevăr
+
+CONSTRÂNGERI DE STIL:
+- evită repetițiile lexicale
+- fiecare devoțional trebuie să fie diferit de cele anterioare
+- introducerea trebuie să pornească dintr-o tensiune emoțională reală
+- voce pastorală românească matură și caldă
+- folosește imagini concrete din viața de zi cu zi
 
 Returnează DOAR JSON valid, fără niciun text înainte sau după:
 {
