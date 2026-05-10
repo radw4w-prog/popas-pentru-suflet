@@ -247,14 +247,25 @@ async function getVerseForTheme(theme) {
 function extractJson(raw) {
   let text = raw.trim();
 
+  // Elimină backticks ```json ... ``` sau ``` ... ```
   const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (blockMatch) text = blockMatch[1].trim();
-
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    text = text.substring(firstBrace, lastBrace + 1);
+  if (blockMatch) {
+    text = blockMatch[1].trim();
+  } else {
+    // Extrage direct între prima { și ultima }
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      text = text.substring(firstBrace, lastBrace + 1);
+    }
   }
+
+  // Curăță caractere problematice
+  text = text
+    .replace(/[\u0000-\u001F\u007F]/g, ' ') // caractere control
+    .replace(/,\s*}/g, '}')                  // trailing commas
+    .replace(/,\s*]/g, ']')
+    .trim();
 
   return JSON.parse(text);
 }
@@ -360,119 +371,66 @@ function validateDevotional(data) {
 // GENERARE CU AI — prompt premium v3
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
-  const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
-
-VERSETUL:
-"${verseText}"
-REFERINȚĂ: ${verseReference}
-TEMA: ${theme}
-CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
-
+  const prompt = `
 Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
 INPUT:
-VERSET: "{verseText}"
-REFERINȚĂ: "{verseReference}"
-TEMA: "{theme}"
-CONTEXT TEMĂ: "{themeContext}"
+VERSET: "${verseText}"
+REFERINȚĂ: ${verseReference}
+TEMA: ${theme}
+CONTEXT: ${THEME_CONTEXT[theme] || theme}
 
 PUBLIC:
-Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere, speranță și adevăr biblic.
+Cititor român obișnuit, cu lupte reale, durere reală, nevoie de speranță și adevăr biblic.
 
-━━━━━━━━━━━━━━
-PAS INTERN OBLIGATORIU (NU afișa)
-1. identifică contextul biblic imediat al versetului
-   - cine vorbește?
-   - cui vorbește?
-   - în ce context?
-2. extrage adevărul central al versetului
-3. caută "bijuteria" versetului:
-   - ideea unică, surprinzătoare sau expresia cea mai puternică
-4. conectează adevărul cu o luptă umană reală
-5. construiește aplicația practică din acel adevăr
+━━━━━━━━━━━━━━━━━━
+REGULĂ PRINCIPALĂ:
+Rămâi STRICT fidel sensului biblic al versetului.
+Nu adăuga implicații care nu sunt prezente în text.
 
-IMPORTANT:
-Nu inventa implicații teologice care nu există în text.
-Rămâi fidel sensului exact al versetului.
-━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━
+PAS INTERN (NU afișa):
+1. Context biblic (cine, cui, de ce)
+2. Ideea centrală a versetului
+3. „Bijuteria” versetului (expresia cea mai puternică)
+4. Luptă umană reală conectată
+5. Aplicație practică derivată din text
 
-STRUCTURĂ OBLIGATORIE:
-1. title → titlu emoțional, poetic, memorabil (max 7 cuvinte)
-2. introduction → hook uman și personal (2-3 propoziții)
-3. reflection → mesaj biblic profund bazat EXPLICIT pe contextul exact al versetului (4-5 propoziții)
-4. practicalApplication → pas concret imediat sau întrebare directă (2-3 propoziții)
-5. prayer → rugăciune personală și specifică (3-4 propoziții)
-6. thoughtOfTheDay → proverb creștin memorabil (max 15 cuvinte)
+━━━━━━━━━━━━━━━━━━
+STRUCTURĂ OUTPUT (JSON):
+{
+"title": "max 7 cuvinte, emoțional, memorabil",
+"introduction": "2-3 propoziții, dintr-o luptă reală",
+"reflection": "4-5 propoziții, explicație biblică + O SINGURĂ metaforă păstrată până la final",
+"practicalApplication": "pas concret SAU întrebare directă",
+"prayer": "3-4 propoziții, personal, cu Dumnezeu / Doamne",
+"thoughtOfTheDay": "max 15 cuvinte, diferit de titlu"
+}
 
-REGULI ABSOLUTE:
-- exclusiv română literară naturală
-- ton cald, pastoral, matur
-- trebuie să pară scris de un pastor român matur
-- fără limbaj robotic sau clișee AI
+━━━━━━━━━━━━━━━━━━
+REGULI STRICTE:
+- O SINGURĂ metaforă în tot textul
+- nu începe reflection cu: „Versetul spune”, „Pavel spune”, „Isus spune”
+- fără clișee: „în lumea de astăzi”, „putem alege”, „nu este întâmplător”
+- fără limbaj abstract: „energie”, „Univers”, „Puterea Divină”
+- stil pastoral român matur, cald, natural
+- introducerea trebuie să pornească dintr-o emoție reală
 
-INTERZIS:
-"acest verset ne amintește"
-"în lumea de astăzi"
-"putem alege să"
-"Dumnezeu dorește să"
-"nu este întâmplător"
-"în concluzie"
-"dragi prieteni"
-
-STIL:
-- introducerea trebuie să pornească dintr-o luptă umană reală:
-  vinovăție, frică, durere, singurătate, dezamăgire sau oboseală
-- folosește O SINGURĂ metaforă centrală
-- păstrează aceeași metaforă până la final
-- nu schimba imaginea principală
-- folosește imagini naturale din viața de zi cu zi
-- evită metafore artificiale:
-  "inimă de aur", "punte de aur", "abis fără fund"
-- evită repetițiile lexicale
-- fiecare devoțional trebuie să fie diferit de cele anterioare
-
-REFLECTION:
-- nu parafraza doar versetul
-- explică sensul lui
-- menționează explicit ideea centrală în propriile cuvinte
-- nu începe cu:
-  "Versetul spune"
-  "Pavel spune"
-  "Isus spune"
-  "Textul ne arată"
-
-Dacă versetul conține o expresie remarcabilă
-(ex: "Îi place îndurarea"),
-explorează adâncimea acelei expresii.
-
-RUGĂCIUNEA:
-- personală
-- specifică versetului
-- limbaj creștin biblic explicit:
-  "Dumnezeu", "Domnul Isus", "Duhul Sfânt"
-- NU folosi:
-  "Puterea Divină"
-  "Univers"
-  "energie"
-
+━━━━━━━━━━━━━━━━━━
 LIMITĂ:
-maxim 500 cuvinte total.
+max 450 cuvinte total
 
-VALIDARE FINALĂ:
+━━━━━━━━━━━━━━━━━━
+CONTROL FINAL (intern):
+Verifică:
 - JSON valid
-- fără text înainte sau după
+- fidelitate biblică
+- o singură metaforă
+- fără clișee AI
 - toate câmpurile completate
 
-OUTPUT:
-{
-  "title": "",
-  "introduction": "",
-  "reflection": "",
-  "practicalApplication": "",
-  "prayer": "",
-  "thoughtOfTheDay": ""
-}
-}`;
+Returnează DOAR JSON valid.
+`;
 
   const result = await geminiService.generateDevotional(prompt, 2000);
   const raw = result.text;
