@@ -1,28 +1,15 @@
 // frontend/src/components/BottomNav.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import '../styles/BottomNav.css';
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, isAdmin } = useAuth();
   const [showMore, setShowMore] = useState(false);
-  const moreRef = useRef(null);
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (moreRef.current && !moreRef.current.contains(e.target)) {
-        setShowMore(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('touchstart', handleClick, { passive: true });
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('touchstart', handleClick);
-    };
-  }, []);
 
   // Închide More la navigare
   useEffect(() => {
@@ -34,94 +21,123 @@ const BottomNav = () => {
     setShowMore(false);
   };
 
-  // Items principali - mereu vizibili
+  // Items principali
   const mainItems = [
     { path: '/dashboard', icon: '🏠', label: 'Acasă' },
     { path: '/verses', icon: '📖', label: 'Biblia' },
-    { path: '/generate', icon: '✨', label: 'Creează' },
+    { path: '/audio-bible', icon: '🎧', label: 'Audio' },
     { path: '/devotional', icon: '🙏', label: 'Devoțional' },
   ];
 
   // Items în "Mai mult"
-  const moreItems = [];
+  const moreItems = [
+    { path: '/generate', icon: '✨', label: 'Creează conținut' },
+    { path: '/journey', icon: '🕊️', label: 'Călătoria spirituală' },
+    { path: '/journal', icon: '📔', label: 'Jurnal spiritual' },
+    { path: '/prayer', icon: '🙏', label: 'Cereri de rugăciune' },
+  ];
 
   if (isAuthenticated) {
-    moreItems.push({ path: '/reading', icon: '📗', label: 'Citire' });
-    moreItems.push({ path: '/bookmarks', icon: '🔖', label: 'Semne' });
+    moreItems.push(
+      { path: '/reading', icon: '📗', label: 'Plan citire' },
+      { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
+      { path: '/profile', icon: '👤', label: 'Profilul meu' },
+    );
   }
 
   if (isAdmin) {
     moreItems.push(
       { path: '/schedule', icon: '📅', label: 'Programare' },
       { path: '/history', icon: '📜', label: 'Istoric' },
-	  { path: '/audio-bible', icon: '🎧', label: 'Audio' },
-	  { icon: '🕊️', label: 'Călătorie', path: '/journey' },
-	  { icon: '📔', label: 'Jurnal', path: '/journal' },
       { path: '/analytics', icon: '📊', label: 'Analytics' },
       { path: '/settings', icon: '⚙️', label: 'Setări' },
-      { path: '/admin', icon: '🛡️', label: 'Admin' },
+      { path: '/admin', icon: '🛡️', label: 'Admin Panel' },
     );
   }
 
   if (!isAuthenticated) {
     moreItems.push(
-      { path: '/login', icon: '🔑', label: 'Login' },
-      { path: '/register', icon: '✅', label: 'Cont nou' },
+      { path: '/login', icon: '🔑', label: 'Autentificare' },
+      { path: '/register', icon: '✅', label: 'Cont nou gratuit' },
     );
   }
 
-  const isMainActive = mainItems.some(i => i.path === location.pathname);
   const isMoreActive = moreItems.some(i => i.path === location.pathname);
+
+  // Render More menu prin Portal
+  const renderMoreMenu = () => {
+    if (!showMore || moreItems.length === 0) return null;
+
+    return createPortal(
+      <>
+        {/* Overlay */}
+        <div
+          className="bn-overlay"
+          onClick={() => setShowMore(false)}
+        />
+
+        {/* Menu */}
+        <div className="bn-more-menu">
+          <div className="bn-more-header">
+            <span className="bn-more-title">📋 Mai mult</span>
+            <button
+              className="bn-more-close"
+              onClick={() => setShowMore(false)}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="bn-more-grid">
+            {moreItems.map(item => (
+              <button
+                key={item.path}
+                onClick={() => handleNav(item.path)}
+                className={`bn-more-item ${location.pathname === item.path ? 'bn-more-active' : ''}`}
+              >
+                <span className="bn-more-icon">{item.icon}</span>
+                <span className="bn-more-label">{item.label}</span>
+                {location.pathname === item.path && (
+                  <span className="bn-more-dot">●</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </>,
+      document.body
+    );
+  };
 
   return (
     <>
-      {/* More Menu Popup */}
-      {showMore && moreItems.length > 0 && (
-        <div ref={moreRef} className="bottom-more-menu">
-          {moreItems.map(item => (
-            <button
-              key={item.path}
-              onClick={() => handleNav(item.path)}
-              className={`bottom-more-item ${location.pathname === item.path ? 'active' : ''}`}
-              style={location.pathname === item.path ? {
-                background: 'var(--gold-subtle)',
-                color: 'var(--gold-primary)'
-              } : {}}
-            >
-              <span className="more-icon">{item.icon}</span>
-              <span>{item.label}</span>
-              {location.pathname === item.path && (
-                <span style={{ marginLeft: 'auto', color: 'var(--gold-primary)', fontSize: '0.7rem' }}>●</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      {renderMoreMenu()}
 
       {/* Bottom Nav Bar */}
-      <div className="bottom-nav">
-        <div className="bottom-nav-inner">
+      <div className="bn-bar">
+        <div className="bn-inner">
           {mainItems.map(item => (
             <button
               key={item.path}
               onClick={() => handleNav(item.path)}
-              className={`bottom-nav-item ${location.pathname === item.path ? 'active' : ''}`}
+              className={`bn-item ${location.pathname === item.path ? 'bn-active' : ''}`}
             >
-              <span className="bottom-nav-icon">{item.icon}</span>
-              <span className="bottom-nav-label">{item.label}</span>
+              <span className="bn-icon">{item.icon}</span>
+              <span className="bn-label">{item.label}</span>
             </button>
           ))}
 
           {/* More button */}
-          {moreItems.length > 0 && (
-            <button
-              onClick={() => setShowMore(!showMore)}
-              className={`bottom-nav-item ${showMore || isMoreActive ? 'active' : ''}`}
-            >
-              <span className="bottom-nav-icon">{showMore ? '✕' : '⋯'}</span>
-              <span className="bottom-nav-label">Mai mult</span>
-            </button>
-          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMore(prev => !prev);
+            }}
+            className={`bn-item ${showMore || isMoreActive ? 'bn-active' : ''}`}
+          >
+            <span className="bn-icon">{showMore ? '✕' : '⋯'}</span>
+            <span className="bn-label">Mai mult</span>
+          </button>
         </div>
       </div>
     </>
