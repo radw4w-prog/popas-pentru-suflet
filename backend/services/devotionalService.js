@@ -405,6 +405,15 @@ CONSTRÂNGERI DE STIL:
 - voce pastorală românească matură și caldă
 - folosește imagini concrete din viața de zi cu zi
 
+Folosește O SINGURĂ metaforă centrală în întreg devoționalul.
+Nu schimba imaginea principală.
+
+Reflecția trebuie să menționeze explicit ideea centrală a versetului în propriile cuvinte.
+
+Nu începe reflecția cu:
+"Versetul ne arată", "Pavel spune", "Isus spune" decât dacă este absolut necesar.
+Intră direct în mesaj.
+
 Returnează DOAR JSON valid, fără niciun text înainte sau după:
 {
   "title": "titlu poetic, emoțional, max 7 cuvinte",
