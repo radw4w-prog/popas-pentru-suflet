@@ -382,24 +382,21 @@ function validateDevotional(data) {
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
 
   // ── PAS 1: Extrage schema din verset ──
-  const schemaPrompt = `Analizează versetul și extrage structura lui logică.
+  const schemaPrompt = `Analizează versetul biblic și returnează DOAR JSON valid.
 
 VERSET: "${verseText}"
 REFERINȚĂ: ${verseReference}
 
-Returnează DOAR JSON valid fără backticks:
-{"actors":[],"actions":[],"commands":[],"keyMessage":"","spiritualCore":"","scope":""}
+JSON:
+{"actors":["max 3 actori"],"actions":["max 3 verbe/actiuni"],"commands":["porunci directe, sau gol"],"keyMessage":"ideea centrala, max 15 cuvinte","spiritualCore":"adevarul teologic, max 15 cuvinte","scope":"personal sau comunitar sau doctrinar"}
 
-REGULI:
-- NU interpreta liber
-- NU adăuga teologie nouă
-- DOAR extrage din text`;
+Reguli: doar ce e in text, fara teologie adaugata. Raspuns DOAR JSON, fara backticks.`;
 
   let schema = null;
   let schemaModel = '';
 
   try {
-    const schemaResult = await geminiService.generateDevotional(schemaPrompt, 500);
+    const schemaResult = await geminiService.generateDevotional(schemaPrompt, 800);
     schema = extractJson(schemaResult.text);
     schemaModel = schemaResult.model;
     console.log('✅ Schema extrasă:', JSON.stringify(schema));
