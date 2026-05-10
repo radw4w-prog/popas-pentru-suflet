@@ -101,14 +101,21 @@ router.post('/viewed', protect, async (req, res) => {
 router.get('/regenerate-today', async (req, res) => {
   try {
     const DailyDevotional = require('../models/DailyDevotional');
-    const { getRomaniaDateKey, createDevotionalForDate } = require('../services/devotionalService');
+    const devotionalService = require('../services/devotionalService');
 
-    const dateKey = getRomaniaDateKey();
+    const dateKey = devotionalService.getRomaniaDateKey();
+    
+    // Șterge ce există
     await DailyDevotional.deleteOne({ dateKey });
+    console.log('🗑️ Devoțional șters pentru:', dateKey);
 
-    const devotional = await createDevotionalForDate(new Date());
+    // Creează unul nou
+    const devotional = await devotionalService.createDevotionalForDate(new Date());
+    console.log('✅ Devoțional nou creat:', devotional?.title);
+
     res.json({ success: true, data: devotional });
   } catch (error) {
+    console.error('❌ Eroare regenerare:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
