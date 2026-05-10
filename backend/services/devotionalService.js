@@ -417,149 +417,125 @@ TEMA: ${theme}
 
 ━━━━━━━━━━━━━━
 REGULĂ FUNDAMENTALĂ:
-Tot conținutul devoționalului trebuie derivat EXCLUSIV din:
+Tot devoționalul trebuie derivat STRICT din:
 - actors
 - actions
 - commands
 - keyMessage
 - spiritualCore
 
-Dacă introduci idei din afara schemei → răspuns INVALID.
-
-━━━━━━━━━━━━━━
-OBIECTIV REAL:
-Nu rescrii versetul.
-Construiești sensul lui logic și pastoral.
+Dacă adaugi informații externe → INVALID.
 
 ━━━━━━━━━━━━━━
 STRUCTURĂ OBLIGATORIE:
 
-- title:
-titlu emoțional, natural, max 7 cuvinte
-bazat pe keyMessage sau spiritualCore (NU metafore noi inventate)
+title:
+max 7 cuvinte, bazat pe keyMessage
 
-- introduction:
-problemă umană reală derivată direct din actions/commands
-2-3 propoziții
+introduction:
+problemă umană direct legată de actions/commands
 
-- reflection:
-EXPLICĂ CLAR:
-1. ce fac actorii (actions)
-2. ce cere Dumnezeu (commands, dacă există)
-3. ce înseamnă spiritualCore
-4. cum se aplică în viața reală
-
-✔ O SINGURĂ metaforă centrală (obligatoriu)
-✔ metafora trebuie să fie derivată din schema, nu creată liber
-✔ nu introduce altă imagine secundară
-
+reflection:
+- explică actors + actions + commands
+- explică spiritualCore clar
+- o singură metaforă (derivată din schema)
+- aplicare logică, nu generală
 4-5 propoziții
 
-- practicalApplication:
-pas concret DIRECT din commands sau actions
-sau întrebare aplicabilă imediat
-2-3 propoziții
+practicalApplication:
+pas concret din commands/actions SAU întrebare directă
 
-- prayer:
+prayer:
 bazată strict pe spiritualCore
-personală, realistă
 cu „Doamne” sau „Dumnezeu”
-3-4 propoziții
 
-- thoughtOfTheDay:
-rezumat al keyMessage
-max 15 cuvinte
-trebuie să fie diferit de title
+thoughtOfTheDay:
+max 15 cuvinte, diferit de title
 
 ━━━━━━━━━━━━━━
-REGULI DE CALITATE:
+REGULI CRITICE:
 
-1. FĂRĂ IDEI NOI
-nu adăuga teologie care nu există în schema
-
-2. FĂRĂ GENERALITĂȚI
-evită fraze care ar putea merge pe orice verset
-
-3. FĂRĂ CLIȘEE
-interzis:
-"în lumea de astăzi"
-"Dumnezeu dorește"
-"nu este întâmplător"
-"acest verset ne amintește"
-
-4. REFLECTION RULE:
-Trebuie să răspundă clar:
-→ Ce se întâmplă în text?
-→ Ce cere textul?
-→ Ce înseamnă asta pentru om?
-
-5. METAFORE:
-maxim 1
-obligatoriu derivată din schema
-
-6. TON:
-pastoral român matur, calm, direct, empatic
+- fără idei externe versetului
+- fără clișee religioase
+- fără metafore multiple
+- fără interpretări generale
 
 ━━━━━━━━━━━━━━
-VALIDARE INTERNĂ (obligatoriu înainte de output):
+VALIDARE INTERNĂ:
 
-- există element din actions? ✔
-- există element din commands? ✔ (dacă există)
-- există spiritualCore explicat? ✔
-- metafora este unică? ✔
-- textul poate fi mutat pe alt verset? → dacă DA, regenerează
+Verifică înainte de răspuns:
+✔ toate actions sunt explicate
+✔ commands sunt incluse (dacă există)
+✔ spiritualCore apare clar
+✔ metafora este unică
+✔ textul NU poate fi mutat pe alt verset
 
-━━━━━━━━━━━━━━
-OUTPUT:
 Returnează DOAR JSON valid:
 {"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`
+  : fallbackPrompt;
 
-    : `Scrie un devoțional creștin profund, cald și pastoral în limba română.
+  let maxRetries = 2;
+let result;
 
-VERSETUL: "${verseText}"
-REFERINȚĂ: ${verseReference}
-TEMA: ${theme}
-CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
-
-Scrie pentru un cititor român obișnuit, cu lupte reale și nevoie de mângâiere.
-
-STRUCTURĂ:
-- title: titlu emoțional, poetic, memorabil, max 7 cuvinte
-- introduction: hook uman pornind dintr-o luptă reală, 2-3 propoziții
-- reflection: mesaj biblic bazat pe contextul exact al versetului, O SINGURĂ metaforă centrală, 4-5 propoziții
-- practicalApplication: pas concret SAU întrebare directă, 2-3 propoziții
-- prayer: rugăciune personală cu "Dumnezeu" sau "Doamne", 3-4 propoziții
-- thoughtOfTheDay: proverb creștin memorabil, max 15 cuvinte, DIFERIT de titlu
-
-REGULI:
-- exclusiv română literară naturală
-- ton pastoral român matur
-- fără clișee: "în lumea de astăzi", "Dumnezeu dorește", "nu este întâmplător"
-- maxim 500 cuvinte total
-
-
-Returnează DOAR JSON valid fără backticks, primul caracter { ultimul }:
-{"title":"","introduction":"","reflection":"","practicalApplication":"","prayer":"","thoughtOfTheDay":""}`;
-
-  const result = await geminiService.generateDevotional(devotionalPrompt, 3000);
+for (let i = 0; i < maxRetries; i++) {
+  result = await geminiService.generateDevotional(devotionalPrompt, 2000);
   const raw = result.text;
-
-  console.log(`🤖 Model folosit: ${result.model} (${result.provider})`);
-  console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
 
   try {
     const parsed = extractJson(raw);
-    console.log('✅ JSON parsed OK:', parsed?.title);
-    return {
-      data: parsed,
-      model: result.model,
-      provider: result.provider
-    };
+
+    const isValid = schema ? validateDevotional(schema, parsed) : true;
+
+    if (isValid) {
+      console.log("✅ Valid devotional după", i + 1, "încercări");
+      return {
+        data: parsed,
+        model: result.model,
+        provider: result.provider
+      };
+    }
+
+    console.log("⚠️ Invalid devotional, retry...");
   } catch (e) {
-    console.log('❌ JSON parse error:', e.message);
-    throw e;
+    console.log("❌ JSON invalid, retry...");
   }
 }
+
+throw new Error("Devotional invalid după retry-uri");
+
+
+
+
+function validateDevotional(schema, devo) {
+  if (!devo) return false;
+
+  const required = schema.actions?.length || 0;
+
+  const reflection = devo.reflection || "";
+
+  // verificare minimă: actions din schema apar în text
+  const missingActions = (schema.actions || []).filter(a =>
+    !reflection.toLowerCase().includes(a.toLowerCase())
+  );
+
+  if (missingActions.length > 0) {
+    console.log("❌ Lipsesc actions:", missingActions);
+    return false;
+  }
+
+  // verificare metaforă (heuristic simplu)
+  const metaphorCount = (reflection.match(/ca |precum|este ca|asemenea/i) || []).length;
+  if (metaphorCount > 1) {
+    console.log("❌ Prea multe metafore");
+    return false;
+  }
+
+  return true;
+}
+
+
+
+
 
 // ═══════════════════════════════════════
 // CREARE DEVOȚIONAL PENTRU O ZI
