@@ -185,6 +185,15 @@ STRICT:
 - maxim 200 cuvinte per secțiune
 - păstrează fidelitatea absolută față de verset
 
+
+- evită repetarea expresiilor din verset
+- ton pastoral, cald, natural
+- nu comenta academic textul
+- devoțional, nu comentariu biblic
+- aplicație practică = acțiune concretă
+
+
+
 VERS:
 "${verse?.text || ''}"
 
