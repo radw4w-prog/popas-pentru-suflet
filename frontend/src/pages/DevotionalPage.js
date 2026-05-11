@@ -33,6 +33,12 @@ export default function DevotionalPage() {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [categorieFiltre, setCategorieFiltre] = useState('all');
 
+  // ═══════════════════════════════════════
+  // TEXTURI EDITABILE PENTRU IMAGINE
+  // ═══════════════════════════════════════
+  const [editedVerseText, setEditedVerseText] = useState('');
+  const [editedThoughtText, setEditedThoughtText] = useState('');
+
   // Stiluri text
   const [stilText, setStilText] = useState({
     fontSize: 28,
@@ -68,6 +74,14 @@ export default function DevotionalPage() {
     loadDevotional();
   }, []);
 
+  // ── Sincronizează textele editate când se încarcă devoționalul ──
+  useEffect(() => {
+    if (devotional) {
+      setEditedVerseText(devotional.verseText || '');
+      setEditedThoughtText(devotional.thoughtOfTheDay || '');
+    }
+  }, [devotional]);
+
   const loadDevotional = async () => {
     try {
       setLoading(true);
@@ -95,6 +109,10 @@ export default function DevotionalPage() {
 
     const tpl = tplOverride || template || templateAleatoriu();
     const stil = stilOverride || stilText;
+
+    // ── Folosește textele editate dacă există, altfel originalele ──
+    const versetFinal = editedVerseText?.trim() || devotional.verseText || '';
+    const gandFinal = editedThoughtText?.trim() || devotional.thoughtOfTheDay || '';
 
     return new Promise((resolve) => {
       const useExisting = loadedImgRef.current?._src === (tpl.url || tpl.thumbnail);
@@ -210,13 +228,13 @@ export default function DevotionalPage() {
           clearShadow();
           drawSep(afterTitlu);
 
-          // ── VERSET ──
+          // ── VERSET (cu text editat) ──
           ctx.font = `italic ${fz}px '${stil.font}', Georgia, serif`;
           ctx.fillStyle = stil.culoare;
           ctx.textAlign = 'center';
           setShadow(25);
 
-          const versetText = `\u201C${devotional.verseText || ''}\u201D`;
+          const versetText = `\u201C${versetFinal}\u201D`;
           const versetLines = getLines(versetText, maxW, 7);
           const versetH = versetLines.length * lh;
 
@@ -265,7 +283,7 @@ export default function DevotionalPage() {
           ctx.textAlign = 'center';
           ctx.fillText(`\u2014 ${devotional.verseReference}`, W / 2, afterVerset + 54);
 
-          // ── GÂNDUL ZILEI ──
+          // ── GÂNDUL ZILEI (cu text editat) ──
           const gandY = afterVerset + 108;
           clearShadow();
           drawSep(gandY, 120, 0.3);
@@ -279,7 +297,7 @@ export default function DevotionalPage() {
           ctx.font = `italic ${Math.round(fz * 0.42)}px Georgia, serif`;
           ctx.fillStyle = 'rgba(255,255,255,0.85)';
           setShadow(12);
-          const gandLines = getLines(devotional.thoughtOfTheDay || '', maxW, 4);
+          const gandLines = getLines(gandFinal, maxW, 4);
           gandLines.forEach((line, i) => {
             ctx.fillText(line, W / 2, gandY + 72 + i * Math.round(fz * 0.54));
           });
@@ -390,7 +408,7 @@ export default function DevotionalPage() {
         resolve(null);
       };
     });
-  }, [devotional, template, stilText]);
+  }, [devotional, template, stilText, editedVerseText, editedThoughtText]);
 
   // Auto-generează imaginea când devoționalul e gata
   useEffect(() => {
@@ -464,6 +482,14 @@ export default function DevotionalPage() {
   const handleFacebook = () => {
     const url = encodeURIComponent(`${APP_URL}/devotional`);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
+  };
+
+  // ── RESET textele editate la originale ──
+  const handleResetTexte = () => {
+    if (devotional) {
+      setEditedVerseText(devotional.verseText || '');
+      setEditedThoughtText(devotional.thoughtOfTheDay || '');
+    }
   };
 
   // Template selector
@@ -584,78 +610,157 @@ export default function DevotionalPage() {
           </div>
         )}
 
-        {/* Editor stil */}
+        {/* ═══════════════════════════════════════ */}
+        {/* ═══ EDITOR COMPLET CU TEXTURI EDITABILE ═══ */}
+        {/* ═══════════════════════════════════════ */}
         {showEditor && (
           <div className="dev-editor">
             <div className="dev-editor-title">🎨 Personalizează imaginea</div>
 
-            <div className="dev-editor-grid">
-              {/* Font size */}
-              <div className="dev-editor-item">
-                <label className="dev-editor-label">
-                  Mărime text: {stilText.fontSize}px
-                </label>
-                <input
-                  type="range"
-                  min="16"
-                  max="44"
-                  step="2"
-                  value={stilText.fontSize}
-                  onChange={e => setStilText(p => ({ ...p, fontSize: +e.target.value }))}
-                  className="dev-editor-slider"
-                />
+            {/* ── Secțiune texturi editabile ── */}
+            <div className="dev-editor-section">
+              <div className="dev-editor-section-title">
+                ✏️ Texte din imagine
               </div>
 
-              {/* Poziție */}
+              {/* Verset editabil */}
               <div className="dev-editor-item">
-                <label className="dev-editor-label">Poziție text</label>
-                <div className="dev-editor-pozitie">
-                  {[
-                    { id: 'top', label: '⬆ Sus' },
-                    { id: 'center', label: '↕ Centru' },
-                    { id: 'bottom', label: '⬇ Jos' }
-                  ].map(p => (
-                    <button
-                      key={p.id}
-                      className={`dev-editor-poz-btn ${stilText.pozitie === p.id ? 'activ' : ''}`}
-                      onClick={() => setStilText(prev => ({ ...prev, pozitie: p.id }))}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+                <label className="dev-editor-label">
+                  📜 Versetul din imagine
+                  <span className="dev-editor-label-hint">
+                    ({editedVerseText.length} caractere)
+                  </span>
+                </label>
+                <textarea
+                  className="dev-editor-textarea"
+                  value={editedVerseText}
+                  onChange={e => setEditedVerseText(e.target.value)}
+                  rows={3}
+                  placeholder="Editează textul versetului care apare pe imagine..."
+                />
+                <div className="dev-editor-preview-text">
+                  „{editedVerseText.length > 120
+                    ? editedVerseText.substring(0, 120) + '...'
+                    : editedVerseText}"
                 </div>
               </div>
 
-              {/* Font */}
+              {/* Gândul zilei editabil */}
               <div className="dev-editor-item">
-                <label className="dev-editor-label">Font</label>
-                <select
-                  className="dev-editor-select"
-                  value={stilText.font}
-                  onChange={e => setStilText(p => ({ ...p, font: e.target.value }))}
-                >
-                  {FONTURI.map(g => (
-                    <optgroup key={g.group} label={g.group}>
-                      {g.opts.map(o => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
+                <label className="dev-editor-label">
+                  ✨ Gândul zilei din imagine
+                  <span className="dev-editor-label-hint">
+                    ({editedThoughtText.length} caractere)
+                  </span>
+                </label>
+                <textarea
+                  className="dev-editor-textarea"
+                  value={editedThoughtText}
+                  onChange={e => setEditedThoughtText(e.target.value)}
+                  rows={3}
+                  placeholder="Editează gândul zilei care apare pe imagine..."
+                />
+                <div className="dev-editor-preview-text">
+                  ✦ {editedThoughtText.length > 100
+                    ? editedThoughtText.substring(0, 100) + '...'
+                    : editedThoughtText}
+                </div>
               </div>
 
-              {/* Culoare */}
-              <div className="dev-editor-item">
-                <label className="dev-editor-label">Culoare text</label>
-                <div className="dev-editor-culori">
-                  {['#FFFFFF', '#F4D03F', '#FFE4E1', '#E8F5E9', '#E3F2FD', '#000000'].map(c => (
-                    <div
-                      key={c}
-                      className={`dev-editor-culoare ${stilText.culoare === c ? 'activ' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => setStilText(p => ({ ...p, culoare: c }))}
-                    />
-                  ))}
+              {/* Butoane reset */}
+              <div className="dev-editor-reset-row">
+                <button
+                  className="dev-editor-reset-btn"
+                  onClick={handleResetTexte}
+                >
+                  ↩️ Resetează textele la original
+                </button>
+                <button
+                  className="dev-editor-gen-btn"
+                  onClick={() => genereazaImagine()}
+                  disabled={generandImagine}
+                >
+                  {generandImagine ? '⏳ Se generează...' : '🔄 Generează cu textele editate'}
+                </button>
+              </div>
+            </div>
+
+            <div className="dev-editor-divider" />
+
+            {/* ── Secțiune stil ── */}
+            <div className="dev-editor-section">
+              <div className="dev-editor-section-title">
+                🎨 Stil vizual
+              </div>
+
+              <div className="dev-editor-grid">
+                {/* Font size */}
+                <div className="dev-editor-item">
+                  <label className="dev-editor-label">
+                    Mărime text: {stilText.fontSize}px
+                  </label>
+                  <input
+                    type="range"
+                    min="16"
+                    max="44"
+                    step="2"
+                    value={stilText.fontSize}
+                    onChange={e => setStilText(p => ({ ...p, fontSize: +e.target.value }))}
+                    className="dev-editor-slider"
+                  />
+                </div>
+
+                {/* Poziție */}
+                <div className="dev-editor-item">
+                  <label className="dev-editor-label">Poziție text</label>
+                  <div className="dev-editor-pozitie">
+                    {[
+                      { id: 'top', label: '⬆ Sus' },
+                      { id: 'center', label: '↕ Centru' },
+                      { id: 'bottom', label: '⬇ Jos' }
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        className={`dev-editor-poz-btn ${stilText.pozitie === p.id ? 'activ' : ''}`}
+                        onClick={() => setStilText(prev => ({ ...prev, pozitie: p.id }))}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Font */}
+                <div className="dev-editor-item">
+                  <label className="dev-editor-label">Font</label>
+                  <select
+                    className="dev-editor-select"
+                    value={stilText.font}
+                    onChange={e => setStilText(p => ({ ...p, font: e.target.value }))}
+                  >
+                    {FONTURI.map(g => (
+                      <optgroup key={g.group} label={g.group}>
+                        {g.opts.map(o => (
+                          <option key={o} value={o}>{o}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Culoare */}
+                <div className="dev-editor-item">
+                  <label className="dev-editor-label">Culoare text</label>
+                  <div className="dev-editor-culori">
+                    {['#FFFFFF', '#F4D03F', '#FFE4E1', '#E8F5E9', '#E3F2FD', '#000000'].map(c => (
+                      <div
+                        key={c}
+                        className={`dev-editor-culoare ${stilText.culoare === c ? 'activ' : ''}`}
+                        style={{ background: c }}
+                        onClick={() => setStilText(p => ({ ...p, culoare: c }))}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

@@ -4858,3 +4858,118 @@ body.sidebar-open {
 [data-theme="light"] .dev-error-text {
   color: #555;
 }
+
+
+
+/* ═══ EDITOR TEXTURI EDITABILE ═══ */
+
+.dev-editor-section {
+  margin-bottom: 12px;
+}
+
+.dev-editor-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #D4AF37;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.dev-editor-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 12px 0;
+}
+
+.dev-editor-label-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.dev-editor-textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 160px;
+  transition: border-color 0.2s;
+}
+
+.dev-editor-textarea:focus {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dev-editor-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+}
+
+.dev-editor-preview-text {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(167, 139, 250, 0.6);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.dev-editor-reset-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.dev-editor-reset-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dev-editor-reset-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.dev-editor-gen-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #D4AF37, #B8941F);
+  border: none;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dev-editor-gen-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.dev-editor-gen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
