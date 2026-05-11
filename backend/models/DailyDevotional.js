@@ -1,3 +1,4 @@
+// backend/models/DailyDevotional.js
 const mongoose = require('mongoose');
 
 const dailyDevotionalSchema = new mongoose.Schema(
@@ -57,6 +58,18 @@ const dailyDevotionalSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    
+    // ── Câmpurile noi adăugate corect în schemă ──
+    theologyScore: { 
+      type: Number, 
+      default: null 
+    },
+    wasAutoFixed: { 
+      type: Boolean, 
+      default: false 
+    },
+    // ─────────────────────────────────────────────
+
     published: {
       type: Boolean,
       default: true
@@ -64,7 +77,5 @@ const dailyDevotionalSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-theologyScore: { type: Number, default: null },
-wasAutoFixed: { type: Boolean, default: false }
 
 module.exports = mongoose.model('DailyDevotional', dailyDevotionalSchema);
