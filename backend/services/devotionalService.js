@@ -8,6 +8,7 @@ const { theologicalAIValidator } = require('./theologyValidator');
 // ═══════════════════════════════
 
 const MAX_RETRIES = 3;
+const MAX_THEO_FIXES = 2;
 
 const THEMES = [
   'dragoste', 'credinta', 'pace', 'bucurie',
@@ -29,7 +30,7 @@ const THEME_KEYWORDS = {
 };
 
 // ═══════════════════════════════
-// DATE
+// DATE / THEME
 // ═══════════════════════════════
 
 function getRomaniaDateKey(date = new Date()) {
@@ -37,10 +38,6 @@ function getRomaniaDateKey(date = new Date()) {
     timeZone: 'Europe/Bucharest'
   }).format(date);
 }
-
-// ═══════════════════════════════
-// THEME
-// ═══════════════════════════════
 
 function getThemeForDate(dateKey) {
   const sum = dateKey.replace(/-/g, '')
@@ -51,7 +48,7 @@ function getThemeForDate(dateKey) {
 }
 
 // ═══════════════════════════════
-// VERSE
+// VERSE ENGINE
 // ═══════════════════════════════
 
 async function getVerseForTheme(theme) {
@@ -100,7 +97,7 @@ Returnează JSON:
 
 function buildDevotionalPrompt(data, schema) {
   return `
-Scrie devoțional creștin profund.
+Scrie devoțional creștin STRICT din verset.
 
 VERSET:
 "${data.verseText}"
@@ -111,12 +108,14 @@ ${data.theme}
 SCHEMA:
 ${JSON.stringify(schema)}
 
-REGULI:
-- doar din verset
-- fără clișee
-- 1 metaforă max
+REGULI OBLIGATORII:
+- NU adăuga idei externe
+- NU generaliza
+- NU parafraza versetul
+- 1 metaforă MAXIM
+- explică versetul, nu-l repeta
 
-JSON:
+OUTPUT JSON:
 {
  "title": "",
  "introduction": "",
@@ -145,16 +144,16 @@ function extractJson(raw) {
 function fallbackDevotional(theme, verse) {
   return {
     title: "Un cuvânt pentru tine",
-    introduction: `Astăzi Dumnezeu îți vorbește prin ${theme}.`,
+    introduction: `Dumnezeu îți vorbește astăzi prin ${theme}.`,
     reflection: verse.text,
     practicalApplication: "Roagă-te 5 minute pe acest verset.",
-    prayer: "Doamne, vorbește-mi azi. Amin.",
-    thoughtOfTheDay: "Dumnezeu nu tace."
+    prayer: "Doamne, deschide-mi inima. Amin.",
+    thoughtOfTheDay: "Dumnezeu este prezent azi."
   };
 }
 
 // ═══════════════════════════════
-// VALIDARE SIMPLĂ
+// VALIDARE
 // ═══════════════════════════════
 
 function validate(devotional) {
@@ -166,7 +165,8 @@ function validate(devotional) {
     'dragi prieteni',
     'în concluzie',
     'în lumea de astăzi',
-    'acest verset ne amintește'
+    'acest verset ne amintește',
+    'dumnezeu dorește să'
   ];
 
   return !banned.some(b => text.includes(b));
@@ -208,19 +208,18 @@ function viralScore(text) {
   if (text.includes('speran')) score += 10;
   if (text.includes('azi')) score += 5;
 
-  if (text.includes('dragi prieteni')) score -= 20;
-
   return Math.max(0, Math.min(100, score));
 }
 
 function enhance(devotional, verse, theme) {
-  const emotion = detectEmotion(verse.text);
+  const emotion = detectEmotion(devotional.reflection || verse.text);
 
   return {
     ...devotional,
     viralHook: generateHook(emotion),
     viralTitle: `${theme.toUpperCase()} azi`,
     viralScore: viralScore(verse.text),
+
     socialCaption: `
 ${generateHook(emotion)}
 
@@ -242,7 +241,51 @@ async function callAI(prompt) {
 }
 
 // ═══════════════════════════════
-// MAIN FLOW
+// 🧠 THEOLOGICAL FIX ENGINE v2
+// ═══════════════════════════════
+
+async function theologicalFixLoop(devotional, verse) {
+  let current = devotional;
+
+  for (let i = 0; i < MAX_THEO_FIXES; i++) {
+    const check = theologicalAIValidator(current);
+
+    if (check.isValid && check.score >= 80) {
+      return current;
+    }
+
+    const fixPrompt = `
+Corectează acest devoțional pentru acuratețe biblică.
+
+VERS:
+"${verse.text}"
+
+PROBLEME:
+${JSON.stringify(check.issues)}
+
+DEVOTIONAL:
+${JSON.stringify(current)}
+
+REGULI:
+- doar din verset
+- fără interpretări externe
+- mai clar, mai biblic
+
+Returnează JSON.
+`;
+
+    try {
+      current = await callAI(fixPrompt);
+    } catch (e) {
+      break;
+    }
+  }
+
+  return current;
+}
+
+// ═══════════════════════════════
+// MAIN ENGINE
 // ═══════════════════════════════
 
 async function createDevotionalForDate(date = new Date()) {
@@ -254,43 +297,40 @@ async function createDevotionalForDate(date = new Date()) {
   const theme = getThemeForDate(dateKey);
   const verse = await getVerseForTheme(theme);
 
-  let schema, devotional;
+  let devotional = null;
 
-  // 🔁 AI RETRY LOOP
+  // 1. AI GENERATION LOOP
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
-      schema = await callAI(buildSchemaPrompt(verse));
+      const schema = await callAI(buildSchemaPrompt(verse));
 
       devotional = await callAI(buildDevotionalPrompt(
-        { theme, verseText: verse.text, verseReference: verse.reference },
+        { theme, verseText: verse.text },
         schema
       ));
 
       if (validate(devotional)) break;
 
-    } catch (e) {
-      console.log("Retry AI:", e.message);
-    }
+    } catch (e) {}
   }
 
-  if (!devotional || !validate(devotional)) {
+  if (!devotional) {
     devotional = fallbackDevotional(theme, verse);
   }
 
-  // 🧠 CORECTOR TEOLOGIC (CORECT)
-  const theologyCheck = theologicalAIValidator(devotional);
+  // 2. THEOLOGICAL FIX LOOP (IMPORTANT)
+  devotional = await theologicalFixLoop(devotional, verse);
 
-  if (!theologyCheck.isValid) {
-    console.log("❌ RESPINS TEOLOGIC:", theologyCheck.issues);
+  const finalCheck = theologicalAIValidator(devotional);
+
+  if (!finalCheck.isValid) {
     devotional = fallbackDevotional(theme, verse);
   }
 
-  console.log("🧠 Scor teologic:", theologyCheck.score);
-
-  // 🔥 VIRAL ENGINE (ULTIMUL PAS)
+  // 3. VIRAL ENGINE LAST
   devotional = enhance(devotional, verse, theme);
 
-  // 💾 SAVE
+  // 4. SAVE
   const saved = await DailyDevotional.create({
     dateKey,
     theme,
@@ -303,7 +343,7 @@ async function createDevotionalForDate(date = new Date()) {
     ...devotional,
 
     generatedBy: 'ai',
-    aiModel: 'gemini'
+    aiModel: 'gemini-v2-engine'
   });
 
   return saved.toObject();
