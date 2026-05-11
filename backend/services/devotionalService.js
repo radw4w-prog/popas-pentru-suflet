@@ -1,8 +1,7 @@
-// backend/services/devotionalService.js
-
 const DailyDevotional = require('../models/DailyDevotional');
 const Verse = require('../models/Verse');
 const geminiService = require('./geminiService');
+const { theologicalAIValidator } = require('./theologyValidator');
 
 // ═══════════════════════════════
 // CONFIG
@@ -77,7 +76,7 @@ async function getVerseForTheme(theme) {
 }
 
 // ═══════════════════════════════
-// AI SCHEMA
+// PROMPTS
 // ═══════════════════════════════
 
 function buildSchemaPrompt(verse) {
@@ -98,10 +97,6 @@ Returnează JSON:
 }
 `;
 }
-
-// ═══════════════════════════════
-// DEVOTIONAL PROMPT
-// ═══════════════════════════════
 
 function buildDevotionalPrompt(data, schema) {
   return `
@@ -159,7 +154,7 @@ function fallbackDevotional(theme, verse) {
 }
 
 // ═══════════════════════════════
-// VALIDARE
+// VALIDARE SIMPLĂ
 // ═══════════════════════════════
 
 function validate(devotional) {
@@ -178,14 +173,13 @@ function validate(devotional) {
 }
 
 // ═══════════════════════════════
-// VIRAL ENGINE 🔥
+// VIRAL ENGINE
 // ═══════════════════════════════
 
 function detectEmotion(text) {
   const t = text.toLowerCase();
 
   if (t.includes('nu te teme')) return 'curaj';
-  if (t.includes('durere')) return 'durere';
   if (t.includes('pace')) return 'pace';
   if (t.includes('slăbiciune')) return 'slăbiciune';
   if (t.includes('iubire')) return 'dragoste';
@@ -197,7 +191,6 @@ function detectEmotion(text) {
 function generateHook(emotion) {
   const map = {
     curaj: "Nu ai nevoie de mai mult curaj. Ai nevoie de asta.",
-    durere: "Dacă te doare, citește asta.",
     pace: "Există o pace pe care nu o cunoști încă.",
     slăbiciune: "Slăbiciunea nu e finalul tău.",
     dragoste: "Nu ești uitat.",
@@ -205,10 +198,6 @@ function generateHook(emotion) {
   };
 
   return map[emotion] || "Citește asta până la capăt.";
-}
-
-function generateTitle(theme, emotion) {
-  return `${theme.toUpperCase()} pe care trebuie să-l auzi azi`;
 }
 
 function viralScore(text) {
@@ -229,11 +218,9 @@ function enhance(devotional, verse, theme) {
 
   return {
     ...devotional,
-
     viralHook: generateHook(emotion),
-    viralTitle: generateTitle(theme, emotion),
+    viralTitle: `${theme.toUpperCase()} azi`,
     viralScore: viralScore(verse.text),
-
     socialCaption: `
 ${generateHook(emotion)}
 
@@ -269,9 +256,11 @@ async function createDevotionalForDate(date = new Date()) {
 
   let schema, devotional;
 
+  // 🔁 AI RETRY LOOP
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
       schema = await callAI(buildSchemaPrompt(verse));
+
       devotional = await callAI(buildDevotionalPrompt(
         { theme, verseText: verse.text, verseReference: verse.reference },
         schema
@@ -280,7 +269,7 @@ async function createDevotionalForDate(date = new Date()) {
       if (validate(devotional)) break;
 
     } catch (e) {
-      console.log("Retry:", e.message);
+      console.log("Retry AI:", e.message);
     }
   }
 
@@ -288,24 +277,20 @@ async function createDevotionalForDate(date = new Date()) {
     devotional = fallbackDevotional(theme, verse);
   }
 
+  // 🧠 CORECTOR TEOLOGIC (CORECT)
+  const theologyCheck = theologicalAIValidator(devotional);
+
+  if (!theologyCheck.isValid) {
+    console.log("❌ RESPINS TEOLOGIC:", theologyCheck.issues);
+    devotional = fallbackDevotional(theme, verse);
+  }
+
+  console.log("🧠 Scor teologic:", theologyCheck.score);
+
+  // 🔥 VIRAL ENGINE (ULTIMUL PAS)
   devotional = enhance(devotional, verse, theme);
 
-
-// 🧠 CORECTOR TEOLOGIC AI
-const { theologicalAIValidator } = require('./theologyValidator');
-
-const theologyCheck = theologicalAIValidator(devotionalData);
-
-if (!theologyCheck.isValid) {
-  console.log("❌ RESPINS DE CORECTORUL TEOLOGIC:");
-  console.log(theologyCheck.issues);
-
-  throw new Error("Theological validation failed");
-}
-
-console.log("🧠 Scor teologic:", theologyCheck.score);
-
-
+  // 💾 SAVE
   const saved = await DailyDevotional.create({
     dateKey,
     theme,
@@ -323,10 +308,6 @@ console.log("🧠 Scor teologic:", theologyCheck.score);
 
   return saved.toObject();
 }
-
-
-
-
 
 // ═══════════════════════════════
 // API
