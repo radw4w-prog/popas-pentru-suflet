@@ -1,6 +1,6 @@
 // theologyValidatorV7.js
 
-const { theologicalAIValidatorV6 } = require('./theologyValidatorV6');
+const { theologicalAIValidatorV6 } = require('/theologyValidatorV5');
 const geminiService = require('./geminiService');
 
 // ═══════════════════════════════
