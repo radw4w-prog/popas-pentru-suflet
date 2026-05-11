@@ -290,6 +290,22 @@ async function createDevotionalForDate(date = new Date()) {
 
   devotional = enhance(devotional, verse, theme);
 
+
+// 🧠 CORECTOR TEOLOGIC AI
+const { theologicalAIValidator } = require('./theologyValidator');
+
+const theologyCheck = theologicalAIValidator(devotionalData);
+
+if (!theologyCheck.isValid) {
+  console.log("❌ RESPINS DE CORECTORUL TEOLOGIC:");
+  console.log(theologyCheck.issues);
+
+  throw new Error("Theological validation failed");
+}
+
+console.log("🧠 Scor teologic:", theologyCheck.score);
+
+
   const saved = await DailyDevotional.create({
     dateKey,
     theme,
@@ -311,18 +327,6 @@ async function createDevotionalForDate(date = new Date()) {
 
 
 
-const { theologicalAIValidator } = require('./theologyValidator');
-
-const validation = theologicalAIValidator(devotionalData);
-
-if (!validation.isValid) {
-  console.log("❌ CORECTOR TEOLOGIC a respins devoționalul:");
-  console.log(validation.issues);
-
-  throw new Error("Theological validation failed");
-}
-
-console.log("🧠 Scor teologic:", validation.score);
 
 // ═══════════════════════════════
 // API
