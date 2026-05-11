@@ -1,235 +1,261 @@
-// theologyValidatorV9.js
+// backend/services/theologyValidatorV9.js
 
-// ═══════════════════════════════
-// GENRE DETECTION (Biblical taxonomy)
-// ═══════════════════════════════
+const geminiService = require('./geminiService');
 
-function detectGenre(verseText = '') {
-  const t = verseText.toLowerCase();
+/*
+ V9 FINAL
+ - verificare teologică
+ - verificare semantică
+ - detectează repetiții
+ - detectează artefacte AI
+ - detectează parafrazare excesivă
+ - auto-rewrite dacă e nevoie
+*/
 
-  const psalms = ['psalm', 'laudă', 'sufletul meu', 'doamne te laud'];
-  const law = ['poruncă', 'legea', 'domnul a zis', 'moise'];
-  const prophets = ['vai', 'judecată', 'te-am pedepsit', 'mânia domnului', 'nelegiuire'];
-  const gospels = ['isus', 'împărăția cerurilor', 'ferice de', 'vă spun vouă'];
-  const epistles = ['fraților', 'har', 'credință', 'apostol', 'biserică'];
-  const apocalyptic = ['fiară', 'trâmbiță', 'pecete', 'sfârșitul', 'apocalipsa'];
+const MIN_SCORE = 80;
 
-  if (psalms.some(k => t.includes(k))) return 'PSALMS';
-  if (law.some(k => t.includes(k))) return 'LAW';
-  if (prophets.some(k => t.includes(k))) return 'PROPHETS';
-  if (gospels.some(k => t.includes(k))) return 'GOSPELS';
-  if (epistles.some(k => t.includes(k))) return 'EPISTLES';
-  if (apocalyptic.some(k => t.includes(k))) return 'APOCALYPTIC';
+const AI_ARTIFACTS = [
+  'spiritualcore',
+  'spiritualcore-ul',
+  'keymessage',
+  'coreexpressions',
+  'scope',
+  'actors',
+  'actions',
+  'commands'
+];
 
-  return 'UNKNOWN';
+const GENERIC_PHRASES = [
+  'dumnezeu îți vorbește azi',
+  'ia un moment azi',
+  'citește până la capăt',
+  'reflectează la',
+  'în lumea de azi'
+];
+
+function normalize(text = '') {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:"'()]/g, '')
+    .trim();
 }
 
-// ═══════════════════════════════
-// RULES PER GENRE
-// ═══════════════════════════════
+function countOccurrences(text, phrase) {
+  const regex = new RegExp(phrase, 'gi');
+  return (text.match(regex) || []).length;
+}
 
-const GENRE_RULES = {
-  PSALMS: {
-    allowEmotion: true,
-    allowPersonalJudgment: false,
-    requireHopeBalance: false
-  },
+function hasAIArtifacts(text) {
+  const t = normalize(text);
+  return AI_ARTIFACTS.some(a => t.includes(a));
+}
 
-  LAW: {
-    allowEmotion: false,
-    allowPersonalJudgment: false,
-    requireReverence: true
-  },
+function detectRepetition(text) {
+  const words = normalize(text).split(/\s+/);
 
-  PROPHETS: {
-    allowJudgmentLanguage: true,
-    allowPersonalApplication: false, // CRITICAL FIX
-    requireContextualization: true
-  },
+  const freq = {};
 
-  GOSPELS: {
-    requireChristFocus: true,
-    allowGraceDominant: true
-  },
-
-  EPISTLES: {
-    allowTeachingTone: true,
-    requireGraceBalance: true
-  },
-
-  APOCALYPTIC: {
-    requireSymbolExplanation: true,
-    avoidLiteralFear: true
-  },
-
-  UNKNOWN: {
-    safeMode: true
+  for (const w of words) {
+    if (w.length < 5) continue;
+    freq[w] = (freq[w] || 0) + 1;
   }
-};
 
-// ═══════════════════════════════
-// CONTEXT VIOLATION DETECTOR
-// ═══════════════════════════════
+  return Object.values(freq).some(v => v >= 5);
+}
 
-function detectMisapplication(devotional, verseText, genre) {
-  const text = JSON.stringify(devotional || {}).toLowerCase();
+function isTooCloseToVerse(devotional, verse) {
+  const d = normalize(devotional.reflection || '');
+  const v = normalize(verse.text || '');
 
-  const propheticMarkers = [
-    'te-am pedepsit',
-    'te-am lovit',
-    'mânia domnului'
-  ];
+  const verseWords = v.split(' ');
+  let overlap = 0;
 
-  const personalizeJudgment = [
-    'dumnezeu te pedepsește',
-    'păcatele tale',
-    'ești condamnat'
-  ];
+  for (const w of verseWords) {
+    if (d.includes(w)) overlap++;
+  }
 
-  const isPropheticVerse = genre === 'PROPHETS';
+  const ratio = overlap / verseWords.length;
 
-  const misuse = isPropheticVerse && (
-    personalizJudgment(text) ||
-    propheticMarkers.some(m => text.includes(m))
+  return ratio > 0.72;
+}
+
+function genericApplication(devotional) {
+  const t = normalize(devotional.practicalApplication || '');
+
+  return GENERIC_PHRASES.some(p => t.includes(p));
+}
+
+function christCheck(devotional, verse) {
+  const text = normalize(
+    Object.values(devotional).join(' ')
   );
 
-  return misuse;
+  const verseText = normalize(verse.text);
+
+  if (verseText.includes('isus') || verseText.includes('hristos')) {
+    return text.includes('isus') || text.includes('hristos');
+  }
+
+  return true;
 }
 
-function personalizJudgment(text) {
-  return [
-    'dumnezeu te pedepsește',
-    'păcatele tale',
-    'tu ești vinovat'
-  ].some(m => text.includes(m));
+function doctrineCheck(devotional, verse) {
+  const text = normalize(
+    Object.values(devotional).join(' ')
+  );
+
+  const verseText = normalize(verse.text);
+
+  if (!verseText.includes('isus') && text.includes('isus')) {
+    return false;
+  }
+
+  if (!verseText.includes('cruce') && text.includes('cruce')) {
+    return false;
+  }
+
+  if (!verseText.includes('înviere') && text.includes('înviere')) {
+    return false;
+  }
+
+  return true;
 }
 
-// ═══════════════════════════════
-// SCOR ENGINE
-// ═══════════════════════════════
+async function autoRewrite(devotional, verse, theme) {
+  const prompt = `
+Rescrie devoționalul.
 
-function calculateScore(text, genre) {
-  let score = 70;
+STRICT:
+- fără repetiții
+- fără clișee
+- fără artefacte AI
+- aplicație practică concretă
+- maxim 120 cuvinte per secțiune
+- păstrează fidelitatea față de verset
 
-  const t = (text || '').toLowerCase();
+VERS:
+"${verse.text}"
 
-  if (t.includes('har')) score += 10;
-  if (t.includes('dragoste')) score += 5;
-  if (t.includes('frică')) score -= 10;
+DEVOTIONAL:
+${JSON.stringify(devotional)}
 
-  if (genre === 'PROPHETS' && t.includes('tu ești vinovat')) {
+Returnează JSON:
+{
+ "title":"",
+ "introduction":"",
+ "reflection":"",
+ "practicalApplication":"",
+ "prayer":"",
+ "thoughtOfTheDay":""
+}
+`;
+
+  try {
+    const raw = await geminiService.generate(prompt, 1800, 0.3);
+
+    const match = raw.match(/\{[\s\S]*\}/);
+
+    if (!match) return null;
+
+    return JSON.parse(match[0]);
+
+  } catch {
+    return null;
+  }
+}
+
+async function theologicalAIValidatorV9(devotional, verse, theme) {
+  const issues = [];
+  let score = 100;
+
+  if (!christCheck(devotional, verse)) {
+    issues.push({
+      type: 'ERROR',
+      message: 'Lipsește Hristos când versetul este cristologic'
+    });
+    score -= 20;
+  }
+
+  if (!doctrineCheck(devotional, verse)) {
+    issues.push({
+      type: 'ERROR',
+      message: 'Adaugă doctrină externă versetului'
+    });
+    score -= 20;
+  }
+
+  if (hasAIArtifacts(
+    Object.values(devotional).join(' ')
+  )) {
+    issues.push({
+      type: 'ERROR',
+      message: 'Artefact AI detectat'
+    });
     score -= 25;
   }
 
-  if (t.includes('dragi prieteni')) score -= 10;
+  if (detectRepetition(
+    Object.values(devotional).join(' ')
+  )) {
+    issues.push({
+      type: 'WARNING',
+      message: 'Repetiție excesivă'
+    });
+    score -= 15;
+  }
 
-  return Math.max(0, Math.min(100, score));
-}
+  if (isTooCloseToVerse(devotional, verse)) {
+    issues.push({
+      type: 'WARNING',
+      message: 'Parafrazare prea apropiată de verset'
+    });
+    score -= 10;
+  }
 
-// ═══════════════════════════════
-// AUTO FIX ENGINE
-// ═══════════════════════════════
+  if (genericApplication(devotional)) {
+    issues.push({
+      type: 'WARNING',
+      message: 'Aplicație prea generică'
+    });
+    score -= 10;
+  }
 
-function safeRewrite(devotional, verse, genre) {
-  if (!devotional) return devotional;
+  score = Math.max(0, score);
 
-  const text = JSON.stringify(devotional).toLowerCase();
+  console.log(`🔍 [TEOLOGIE V9] Scor: ${score}/100`);
 
-  const isBad = detectMisapplication(devotional, verse.text, genre);
-
-  if (!isBad) return devotional;
-
-  // FIX for PROPHETS misuse
-  if (genre === 'PROPHETS') {
+  if (score >= MIN_SCORE) {
     return {
-      ...devotional,
-
-      reflection: `
-Acest text profetic reflectă seriozitatea păcatului în contextul istoric al Israelului.
-El nu trebuie aplicat direct ca condamnare personală,
-ci înțeles în lumina caracterului drept și sfânt al lui Dumnezeu.
-      `.trim(),
-
-      practicalApplication:
-        'Reflectează la sfințenia lui Dumnezeu și la nevoia de pocăință, dar și la harul Lui.',
-
-      thoughtOfTheDay:
-        'Dumnezeu este drept, dar și plin de milă în restaurare.'
+      isValid: true,
+      score,
+      issues
     };
   }
 
-  return devotional;
-}
+  console.log("♻️ Auto rewrite V9...");
 
-// ═══════════════════════════════
-// MAIN V9 VALIDATOR
-// ═══════════════════════════════
+  const fixed = await autoRewrite(
+    devotional,
+    verse,
+    theme
+  );
 
-function theologicalAIValidatorV9(devotional, verse = {}, theme = '') {
-  try {
-    if (!devotional) {
-      return {
-        isValid: false,
-        score: 0,
-        issues: ['Devotional missing'],
-        fixed: null,
-        genre: 'UNKNOWN'
-      };
-    }
-
-    const genre = detectGenre(verse.text || '');
-
-    const score = calculateScore(JSON.stringify(devotional), genre);
-
-    const issues = [];
-
-    const rules = GENRE_RULES[genre];
-
-    // ❌ PROPHETS RULE CHECK (IMPORTANT FIX)
-    if (genre === 'PROPHETS') {
-      if (detectMisapplication(devotional, verse.text, genre)) {
-        issues.push('Prophetic text misapplied as personal judgment');
-      }
-    }
-
-    if (score < 60) {
-      issues.push('Low theological balance score');
-    }
-
-    const isValid = issues.length === 0 && score >= 60;
-
-    let fixed = null;
-
-    if (!isValid) {
-      fixed = safeRewrite(devotional, verse, genre);
-    }
-
-    return {
-      isValid,
-      score,
-      issues,
-      fixed,
-      genre
-    };
-
-  } catch (err) {
+  if (!fixed) {
     return {
       isValid: false,
-      score: 0,
-      issues: [err.message],
-      fixed: null,
-      genre: 'UNKNOWN'
+      score,
+      issues
     };
   }
+
+  return {
+    isValid: false,
+    fixed,
+    score,
+    issues
+  };
 }
 
-// ═══════════════════════════════
-// EXPORT
-// ═══════════════════════════════
-
 module.exports = {
-  theologicalAIValidatorV9,
-  detectGenre,
-  calculateScore,
-  safeRewrite
+  theologicalAIValidatorV9
 };

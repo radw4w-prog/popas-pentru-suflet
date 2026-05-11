@@ -365,6 +365,14 @@ Scrii EXCLUSIV din acest verset.
 Dacă textul poate fi mutat pe alt verset, este invalid.
 Nu folosi: alte versete, idei externe, doctrină generală.
 
+REGULI CRITICE:
+- fără alte versete
+- fără doctrină externă
+- fără Isus dacă nu apare în text
+- fără moralism general
+- 1 idee centrală
+- NU folosi numele cheilor JSON în text
+
 ━━━━━━━━━━━━━━
 INTRODUCERE
 Pornește din tensiunea exactă a versetului.
