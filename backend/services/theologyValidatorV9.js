@@ -7,9 +7,10 @@ const geminiService = require('./geminiService');
  ════════════════════════════════════════════════
  - Verificare teologică (Hristocentrism / Supra-teologizare)
  - Verificare semantică (Aplicații prea vagi)
- - Detectează repetiții
- - Detectează artefacte AI
- - Detectează parafrazare excesivă
+ - Detectează repetiții de cuvinte
+ - Detectează expresii repetitive (câmpuri teologice)
+ - Detectează artefacte AI (scăpări ale schemei JSON în text)
+ - Detectează parafrazare excesivă (copierea versetului)
  - Auto-Rewrite via Gemini dacă scorul scade sub MIN_SCORE
 */
 
@@ -49,11 +50,9 @@ function extractCleanJson(raw) {
   try {
     let text = raw.trim();
 
-    // Elimină blocuri markdown
     const block = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
     if (block) text = block[1].trim();
 
-    // Găsește primul { și ultimul }
     const first = text.indexOf('{');
     if (first === -1) return null;
 
@@ -64,20 +63,17 @@ function extractCleanJson(raw) {
       text = text.slice(0, last + 1);
     } else {
       // ── RECUPERARE JSON TĂIAT (truncated) ──
-      // Închide stringul deschis
       text = text.replace(/"([^"]*?)$/, '"$1"');
 
-      // Număr parantezele deschise și închise
-      const openBraces = (text.match(/{/g) || []).length;
-      const closeBraces = (text.match(/}/g) || []).length;
       const openBrackets = (text.match(/\[/g) || []).length;
       const closeBrackets = (text.match(/]/g) || []).length;
-
-      // Închide array-urile și obiectele rămase
       text += ']'.repeat(Math.max(0, openBrackets - closeBrackets));
+
+      const openBraces = (text.match(/{/g) || []).length;
+      const closeBraces = (text.match(/}/g) || []).length;
       text += '}'.repeat(Math.max(0, openBraces - closeBraces));
 
-      console.log('🔧 JSON tăiat recuperat automat.');
+      console.log('🔧 JSON tăiat recuperat automat în V9.');
     }
 
     return JSON.parse(text);
@@ -109,6 +105,22 @@ function detectRepetition(text) {
   return Object.values(freq).some(v => v >= 5);
 }
 
+// ═══════════════════════════════════════
+// NOUĂ: DETECTARE EXPRESII REPETITIVE
+// ═══════════════════════════════════════
+function repeatedPhrases(text) {
+  const phrases = [
+    'vorbirile înduplecătoare',
+    'dovadă dată de duhul',
+    'de duh şi de putere',
+    'de duh și de putere'
+  ];
+
+  const t = normalize(text);
+
+  return phrases.some(p => countOccurrences(t, p) > 1);
+}
+
 function isTooCloseToVerse(devotional, verse) {
   const d = normalize(devotional?.reflection || '');
   const v = normalize(verse?.text || '');
@@ -131,6 +143,9 @@ function genericApplication(devotional) {
   return GENERIC_PHRASES.some(p => t.includes(p));
 }
 
+// ═══════════════════════════════════════
+// VERIFICĂRI TEOLOGICE
+// ═══════════════════════════════════════
 function christCheck(devotional, verse) {
   const text = normalize(Object.values(devotional || {}).join(' '));
   const verseText = normalize(verse?.text || '');
@@ -161,12 +176,14 @@ async function autoRewrite(devotional, verse, theme) {
 Rescrie acest devoțional creștin pentru a corecta erorile semantice/teologice.
 
 STRICT:
-- Fără repetiții de cuvinte
-- Fără clișee sau fraze generice
-- Fără artefacte AI (nume de câmpuri din scheme)
-- Aplicație practică concretă și realizabilă azi
-- Maxim 120 cuvinte per secțiune
-- Păstrează fidelitatea absolută față de verset
+- fără repetiții de cuvinte sau expresii
+- exprimare naturală, umană, pastorală
+- fără formulări robotice
+- fără clișee sau fraze generice
+- fără artefacte AI (nume de câmpuri din scheme)
+- aplicație ultra concretă
+- maxim 200 cuvinte per secțiune
+- păstrează fidelitatea absolută față de verset
 
 VERS:
 "${verse?.text || ''}"
@@ -209,31 +226,43 @@ async function theologicalAIValidatorV9(devotional, verse, theme) {
     };
   }
 
+  // ── 1. Teologic: Hristos ──
   if (!christCheck(devotional, verse)) {
     issues.push('[ERROR] Lipsește menționarea lui Hristos (versetul este cristologic).');
     score -= 20;
   }
 
+  // ── 2. Teologic: Supra-teologizare ──
   if (!doctrineCheck(devotional, verse)) {
-    issues.push('[ERROR] Supra-teologizare:概念e externe (Isus/Cruce/Înviere) adăugate peste verset.');
+    issues.push('[ERROR] Supra-teologizare: concepte externe (Isus/Cruce/Înviere) adăugate peste verset.');
     score -= 20;
   }
 
+  // ── 3. Artefacte AI ──
   if (hasAIArtifacts(Object.values(devotional).join(' '))) {
     issues.push('[ERROR] Artefact AI detectat în textul final.');
     score -= 25;
   }
 
+  // ── 4. Repetiții cuvinte ──
   if (detectRepetition(Object.values(devotional).join(' '))) {
     issues.push('[WARNING] Repetiție excesivă a vocabularului.');
     score -= 15;
   }
 
+  // ── 5. Expresii repetitive (câmpuri teologice) ──
+  if (repeatedPhrases(Object.values(devotional).join(' '))) {
+    issues.push('[WARNING] Expresii repetitive detectate (vorbirile înduplecătoare, de duh și de putere, etc.).');
+    score -= 10;
+  }
+
+  // ── 6. Parafrazare excesivă ──
   if (isTooCloseToVerse(devotional, verse)) {
     issues.push('[WARNING] Parafrazare leneșă: text prea apropiat de verset.');
     score -= 10;
   }
 
+  // ── 7. Aplicație generică ──
   if (genericApplication(devotional)) {
     issues.push('[WARNING] Aplicația practică conține fraze generice.');
     score -= 10;
@@ -241,11 +270,12 @@ async function theologicalAIValidatorV9(devotional, verse, theme) {
 
   score = Math.max(0, score);
 
+  // ── Cazul A: Valid ──
   if (score >= MIN_SCORE) {
     return { isValid: true, score, issues };
   }
 
-  // ── AUTO-FIX ──
+  // ── Cazul B: Auto-Fix ──
   console.log(`♻️ Devoțional respins (scor: ${score}/${MIN_SCORE}). Auto-Rewrite V9...`);
 
   const fixed = await autoRewrite(devotional, verse, theme);
