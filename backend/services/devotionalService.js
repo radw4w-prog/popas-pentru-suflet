@@ -299,27 +299,57 @@ function buildFallbackDevotional({ theme, verseText, verseReference }) {
 // ═══════════════════════════════════════
 
 const SCHEMA_PROMPT_TEMPLATE = (verse) => `
-Analizează versetul biblic și returnează DOAR JSON valid.
+Analizează atent versetul biblic și extrage STRICT elementele explicite din text.
 
-VERSET: "${verse.text}"
-REFERINȚĂ: ${verse.reference}
+VERSET:
+"${verse.text}"
 
-JSON:
+REFERINȚĂ:
+${verse.reference}
+
+Returnează DOAR JSON valid.
+Fără explicații.
+Fără markdown.
+Fără backticks.
+
+FORMAT:
 {
- "actors":["max 3"],
- "actions":["max 3"],
- "commands":["porunci sau []"],
- "keyMessage":"max 15 cuvinte",
- "spiritualCore":"max 15 cuvinte",
- "scope":"personal|comunitar|doctrinar"
+  "actors": ["max 3 entități explicite"],
+  "actions": ["max 3 acțiuni explicite"],
+  "commands": ["imperative explicite sau []"],
+  "coreExpressions": ["max 3 expresii-cheie exacte din verset"],
+  "keyMessage": "max 15 cuvinte",
+  "spiritualCore": "max 15 cuvinte",
+  "scope": "personal|comunitar|doctrinar"
 }
 
-Reguli:
-- doar ce există în text
-- fără teologie adăugată
-- DOAR JSON
-`;
+REGULI:
+1. Extrage DOAR ce există textual.
+2. Nu interpreta.
+3. Nu predica.
+4. Nu adăuga doctrină.
+5. actors = cine apare explicit.
+6. actions = verbe/acțiuni clare.
+7. commands = doar imperative.
+8. coreExpressions = expresii exacte din verset.
+9. keyMessage = rezumat literal.
+10. spiritualCore = adevărul central.
+11. scope:
+   - personal
+   - comunitar
+   - doctrinar
 
+EXEMPLU:
+{
+  "actors":["Dumnezeu","credincios"],
+  "actions":["întărește","susține"],
+  "commands":["nu te teme"],
+  "coreExpressions":["Harul Meu","îți este de ajuns"],
+  "keyMessage":"Dumnezeu susține pe cel slab",
+  "spiritualCore":"puterea divină lucrează în slăbiciune",
+  "scope":"personal"
+}
+`;
 function validateDevotionalAgainstSchema(schema, devotional) {
   if (!devotional) {
     console.log("❌ Devoționalul este gol.");
@@ -438,10 +468,16 @@ function validateDevotionalAgainstSchema(schema, devotional) {
 // GENERARE CU AI — prompt premium v3
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }, schema) {
-  const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
+  const DEVOTIONAL_PROMPT_TEMPLATE = ({
+  verseText,
+  verseReference,
+  theme,
+  schema
+}) => `
+Scrie un devoțional creștin profund, pastoral și profund uman în limba română.
 
 ━━━━━━━━━━━━━━
-VERSETUL:
+VERSET:
 "${verseText}"
 
 REFERINȚĂ:
@@ -450,115 +486,139 @@ ${verseReference}
 TEMA:
 ${theme}
 
-CONTEXT TEMĂ:
-${THEME_CONTEXT[theme] || theme}
-
-${schema ? `
-SCHEMA EXTRASĂ DIN VERSET (OBLIGATORIE):
-- keyMessage: ${schema.keyMessage || 'N/A'}
-- spiritualCore: ${schema.spiritualCore || 'N/A'}
-- actions: ${schema.actions?.length ? schema.actions.join(', ') : 'N/A'}
-- commands: ${schema.commands?.length ? schema.commands.join(', ') : 'N/A'}
-- actors: ${schema.actors?.length ? schema.actors.join(', ') : 'N/A'}
-- coreExpressions: ${schema.coreExpressions?.length ? schema.coreExpressions.join(', ') : 'N/A'}
-` : ''}
+SCHEMA OBLIGATORIE:
+- keyMessage: ${schema.keyMessage}
+- spiritualCore: ${schema.spiritualCore}
+- actions: ${schema.actions.join(', ')}
+- commands: ${schema.commands.length ? schema.commands.join(', ') : 'N/A'}
+- actors: ${schema.actors.join(', ')}
+- coreExpressions: ${schema.coreExpressions.join(', ')}
 
 ━━━━━━━━━━━━━━
-REGULĂ FUNDAMENTALĂ:
+REGULA FUNDAMENTALĂ
 
-Construiește devoționalul EXCLUSIV din acest verset.
+Scrii EXCLUSIV din acest verset.
 
-Nu scrie pe tema generală.
-Nu folosi alte versete.
-Nu introduce idei externe.
-Nu face teologie liberă.
+Nu din temă.
+Nu din alte versete.
+Nu din doctrine generale.
 
-Dacă textul poate fi mutat pe alt verset fără modificări,
-outputul este INVALID.
-
-━━━━━━━━━━━━━━
-ANCORARE OBLIGATORIE ÎN VERSET:
-
-Reflecția trebuie să explice explicit:
-- keyMessage
-- spiritualCore
-- fiecare action
-- fiecare command (dacă există)
-- minimum 2 coreExpressions
-
-Nu doar parafraza versetul.
-Explică sensul lui.
+Dacă textul poate fi mutat pe alt verset,
+este INVALID.
 
 ━━━━━━━━━━━━━━
-INTRODUCERE:
+CONTEXT BIBLIC OBLIGATORIU
 
-Introducerea trebuie să pornească din tensiunea exactă a versetului.
+Explică sensul versetului în contextul lui imediat.
 
-Exemplu:
-dacă versetul vorbește despre "biruință",
-introducerea pornește din sentimentul de înfrângere.
+Întreabă implicit:
+- cine vorbește?
+- cui?
+- de ce?
+- în ce situație?
 
-NU începe cu:
-"Viața este grea"
+Nu transforma versetul în slogan motivațional.
+
+━━━━━━━━━━━━━━
+INTRODUCERE
+
+Pornește din tensiunea umană exactă a versetului.
+
+Ex:
+biruință → sentiment de înfrângere
+pace → anxietate
+iertare → vinovăție
+putere → slăbiciune
+
+INTERZIS:
+"Viața e grea"
 "În momentele dificile"
 "Cu toții trecem prin"
 
 ━━━━━━━━━━━━━━
-METAFORĂ:
+REFLECȚIE
 
-Este permisă O SINGURĂ metaforă.
+Trebuie să explice explicit:
+- keyMessage
+- spiritualCore
+- fiecare action
+- fiecare command
+- minimum 2 coreExpressions
 
-Metafora trebuie derivată direct din verset.
+Nu parafraza.
+Explică.
 
-NU inventa decoruri simbolice:
-- furtuni
-- oceane
-- ziduri
-- munți
-- foc
-- drumuri
-- călătorii
+Arată:
+ce spune,
+de ce spune,
+ce schimbă.
 
-DECÂT dacă apar în verset.
-
-Dacă apare a doua metaforă → INVALID.
+Exact 4-5 propoziții.
 
 ━━━━━━━━━━━━━━
-APLICAȚIE PRACTICĂ:
+METAFORĂ
 
-Trebuie să fie imediată și concretă:
-- un pas clar de făcut azi
+Este permisă EXACT UNA.
+
+Trebuie derivată natural din verset.
+
+Nu folosi:
+furtuni
+oceane
+munți
+drumuri
+ziduri
+foc
+
+decât dacă apar în text.
+
+A doua metaforă = INVALID.
+
+━━━━━━━━━━━━━━
+APLICAȚIE PRACTICĂ
+
+Obligatoriu:
+- un pas concret azi
 SAU
 - o întrebare directă personală
+
+Trebuie să poată fi făcută în 5 minute.
 
 Nu aplicații vagi.
 
 ━━━━━━━━━━━━━━
-RUGĂCIUNE:
+RUGĂCIUNE
 
-Trebuie să fie:
 - personală
+- caldă
 - specifică acestui verset
 - bazată pe spiritualCore
 
 Folosește:
 "Doamne" sau "Dumnezeu"
 
-Nu folosi:
-"Univers"
-"energie"
-"Putere Divină"
+Nu generică.
 
 ━━━━━━━━━━━━━━
-STIL:
+STIL
 
-- română literară naturală
-- ton pastoral român matur
-- cald
-- empatic
-- uman
+Scrie ca un pastor român matur,
+vorbind față în față.
 
-INTERZIS:
+Ton:
+cald
+uman
+blând
+empatic
+pastoral
+
+Nu ca profesor.
+Nu ca AI.
+Nu ca eseu.
+
+━━━━━━━━━━━━━━
+INTERZIS
+
 "acest verset ne amintește"
 "în lumea de astăzi"
 "putem alege să"
@@ -567,43 +627,38 @@ INTERZIS:
 "în concluzie"
 "dragi prieteni"
 
-Nu folosi limbaj robotic.
-
-Nu umple textul cu emoție generică.
-Fiecare propoziție trebuie să explice ceva din verset.
+Nu repeta același cuvânt-cheie > 2 ori.
 
 ━━━━━━━━━━━━━━
-STRUCTURĂ:
+JSON:
 
 {
-  "title": "max 7 cuvinte, poetic și memorabil",
-  "introduction": "2-3 propoziții, hook uman ancorat în tensiunea versetului",
-  "reflection": "4-5 propoziții, explică sensul exact al versetului, o singură metaforă",
-  "practicalApplication": "2-3 propoziții, pas concret sau întrebare directă",
-  "prayer": "3-4 propoziții, personală și specifică versetului",
-  "thoughtOfTheDay": "max 15 cuvinte, diferit de title"
+ "title":"max 7 cuvinte",
+ "introduction":"2-3 propoziții",
+ "reflection":"4-5 propoziții",
+ "practicalApplication":"2-3 propoziții",
+ "prayer":"3-4 propoziții",
+ "thoughtOfTheDay":"max 15 cuvinte"
 }
 
 ━━━━━━━━━━━━━━
-VALIDARE INTERNĂ OBLIGATORIE:
+VALIDARE INTERNĂ
 
-Verifică înainte de răspuns:
-
-✔ toate actions apar explicate
-✔ toate commands apar explicate
-✔ minimum 2 coreExpressions apar clar
-✔ spiritualCore este prezent
-✔ există o singură metaforă
-✔ textul nu poate fi mutat pe alt verset
-✔ nu există clișee
-✔ nu există idei din alte versete
+✔ toate actions explicate
+✔ toate commands explicate
+✔ 2 coreExpressions prezente
+✔ spiritualCore clar
+✔ o singură metaforă
+✔ ancorat în context
+✔ nu poate fi mutat pe alt verset
+✔ fără clișee
+✔ fără repetiții
 
 Dacă una e falsă → regenerează.
 
-━━━━━━━━━━━━━━
-Returnează DOAR JSON valid.
-Primul caracter trebuie să fie { și ultimul }.
-Fără backticks.
+Returnează DOAR JSON.
+Primul caracter: {
+Ultimul caracter: }
 `;
 
   const raw = await geminiService.generate(prompt, 2000, 0.35); // Added temperature
