@@ -17,16 +17,16 @@ const THEMES = [
 ];
 
 const THEME_KEYWORDS = {
-  dragoste: 'dragoste',
-  credinta: 'credin',
+  dragoste: 'dragoste|iubire|iubește',
+  credinta: 'credin|încredere',
   pace: 'pace',
   bucurie: 'bucur',
-  speranta: 'nădejde|nadejde|speran',
-  rugaciune: 'rugă|ruga',
-  iertare: 'ierta',
-  putere: 'putere',
-  recunostinta: 'mulțum|multum',
-  intelepciune: 'înțelep|intelep'
+  speranta: 'speran|nădejde|nadejde',
+  rugaciune: 'rugă|ruga|roagă',
+  iertare: 'ierta|iertare',
+  putere: 'putere|tărie',
+  recunostinta: 'mulțum|multum|recunoștin',
+  intelepciune: 'înțelep|intelep|înțelepciune'
 };
 
 const THEME_CONTEXT = {
@@ -68,7 +68,7 @@ const VERSETE_RECOMANDATE = {
     { carte: 'Romani', capitol: 5, verset: 8 },
     { carte: 'Efeseni', capitol: 3, verset: 17 },
     { carte: 'Psalmi', capitol: 136, verset: 1 },
-    { carte: 'Zaharia', capitol: 3, verset: 17 }
+    { carte: 'Țefania', capitol: 3, verset: 17 }        // Corectat din "Zaharia"
   ],
   credinta: [
     { carte: 'Evrei', capitol: 11, verset: 1 },
@@ -178,112 +178,94 @@ function getRomaniaDateKey(date = new Date()) {
 }
 
 function getThemeForDate(dateKey) {
-  // dateKey expected format: YYYY-MM-DD (from sv-SE format)
   const sum = dateKey
     .split('-')
     .join('')
     .split('')
     .reduce((a, b) => a + Number(b), 0);
   
-  const themeIndex = sum % THEMES.length;
-  return THEMES[themeIndex];
+  return THEMES[sum % THEMES.length];
 }
 
 async function getVerseForTheme(theme) {
-  // Încearcă mai întâi din lista de versete recomandate
   const recomandate = VERSETE_RECOMANDATE[theme];
 
-  if (recomandate && recomandate.length > 0) {
+  if (recomandate?.length > 0) {
     const rec = recomandate[Math.floor(Math.random() * recomandate.length)];
 
-    try {
-      const verse = await Verse.findOne({
-        carte: rec.carte,
-        capitol: rec.capitol,
-        verset: rec.verset
-      }).lean();
+    const verse = await Verse.findOne({
+      carte: rec.carte,
+      capitol: rec.capitol,
+      verset: rec.verset
+    }).lean();
 
-      if (verse) {
-        console.log(`📖 Verset recomandat găsit: ${rec.carte} ${rec.capitol}:${rec.verset}`);
-        return constructVerseObject(verse);
-      }
-    } catch (err) {
-      console.log(`⚠️ Eșec căutare verset recomandat: ${rec.carte} ${rec.capitol}`, err.message);
+    if (verse) {
+      console.log(`📖 Verset recomandat: ${rec.carte} ${rec.capitol}:${rec.verset}`);
+      return {
+        text: verse.text,
+        reference: verse.referinta || `${verse.carte} ${verse.capitol}:${verse.verset}`,
+        book: verse.carte,
+        chapter: verse.capitol,
+        number: verse.verset
+      };
     }
   }
 
-  // Fallback — regex pe cuvinte cheie
+  // Fallback - căutare după cuvinte cheie
   const regex = THEME_KEYWORDS[theme] || theme;
-  let verse = null;
-
-  try {
-    const found = await Verse.aggregate([
-      { $match: { text: { $regex: regex, $options: 'i' } } },
-      { $sample: { size: 1 } }
-    ]);
-    verse = found[0];
-  } catch (err) {
-    console.log('⚠️ Agregare eşuată, mergem pe random: ', err.message);
-  }
-
-  if (!verse) {
-    const count = await Verse.countDocuments();
-    if (count > 0) {
-        const random = Math.floor(Math.random() * count);
-        verse = await Verse.findOne().skip(random).lean();
-    } else {
-        console.warn('⚠️ Baza de date de versete e goală. Se folosește un verset implicit.');
-        verse = { 
-            text: 'Cuvântul Tău este o făclie pentru picioarele mele, o lumină pe cărarea mea.', 
-            referinta: 'Psalmi 119:105',
-            carte: 'Psalmi',
-            capitol: 119,
-            verset: 105
-        };
-    }
-  }
   
-  return constructVerseObject(verse);
-}
+  let verse = await Verse.aggregate([
+    { $match: { text: { $regex: regex, $options: 'i' } } },
+    { $sample: { size: 1 } }
+  ]);
 
-function constructVerseObject(doc) {
-    if(!doc) return { text: '', reference: '', book: '', chapter: 0, number: 0 };
-    return {
-      text: doc.text,
-      reference: doc.referinta || `${doc.carte} ${doc.capitol}:${doc.verset}`,
-      book: doc.carte,
-      chapter: doc.capitol,
-      number: doc.verset
-    };
+  if (!verse || verse.length === 0) {
+    const count = await Verse.countDocuments();
+    const random = Math.floor(Math.random() * count);
+    verse = [await Verse.findOne().skip(random).lean()];
+  }
+
+  const v = verse[0];
+
+  return {
+    text: v.text,
+    reference: v.referinta || `${v.carte} ${v.capitol}:${v.verset}`,
+    book: v.carte,
+    chapter: v.capitol,
+    number: v.verset
+  };
 }
 
 function extractJson(raw) {
-  if (typeof raw !== 'string') {
-      throw new Error('Input not a string');
-  }
+  if (!raw) throw new Error('Răspuns gol de la AI');
 
   let text = raw.trim();
 
-  // Remove markdown code blocks
+  // Elimină blocuri markdown
   const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (blockMatch) text = blockMatch[1].trim();
 
-  // Extract content between first '{' and last '}'
+  // Extrage doar obiectul JSON
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
-
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    text = text.substring(firstBrace, lastBrace + 1);
+  
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new Error('Nu s-a găsit un JSON valid în răspuns');
   }
 
-  // Cleanup potential trailing commas if LLM adds them
-  text = text.replace(/,\s*}/g, '}').replace(/\s*}\s*$/g, '}');
+  text = text.substring(firstBrace, lastBrace + 1);
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('JSON parse error:', e.message);
+    console.error('Text încercat:', text.substring(0, 300));
+    throw new Error('JSON invalid returnat de AI');
+  }
 }
 
 // ═══════════════════════════════════════
-// FALLBACK LOCAL
+// FALLBACK LOCAL (îmbunătățit)
 // ═══════════════════════════════════════
 function buildFallbackDevotional({ theme, verseText, verseReference }) {
   const titles = {
@@ -301,11 +283,11 @@ function buildFallbackDevotional({ theme, verseText, verseReference }) {
 
   return {
     title: titles[theme] || 'Un gând pentru sufletul tău',
-    introduction: `Versetul de astăzi ne cheamă să privim mai adânc în inima noastră și să descoperim ce înseamnă cu adevărat ${theme} în viața de zi cu zi.`,
-    reflection: `Cuvântul lui Dumnezeu nu este doar o promisiune frumoasă, ci o realitate vie. În fiecare încercare, în fiecare întrebare și în fiecare pas, El rămâne credincios. Versetul acesta ne cheamă să ne așezăm inima din nou în mâinile Lui și să descoperim profunzimea iubirii Sale pentru noi.`,
-    practicalApplication: `Alege astăzi să trăiești acest adevăr într-un mod concret: oprește-te câteva minute, citește din nou versetul, roagă-te și întreabă-L pe Dumnezeu cum îl poți aplica în situația ta actuală.`,
-    prayer: `Doamne, îți mulțumesc pentru Cuvântul Tău care vorbește direct inimii mele. Ajută-mă să nu rămân doar la citire, ci să trăiesc ceea ce îmi spui astăzi. Întărește-mi inima și călăuzește-mi pașii. Amin.`,
-    thoughtOfTheDay: `Dumnezeu vorbește și astăzi inimii tale prin Cuvântul Său.`
+    introduction: `Astăzi, Cuvântul lui Dumnezeu ne vorbește prin versetul: "${verseText}" (${verseReference}).`,
+    reflection: `Acest verset ne descoperă o realitate profundă despre ${theme}. El nu este doar o frază frumoasă, ci o ancoră pentru sufletul nostru în mijlocul realităților grele ale vieții. Dumnezeu ne întâlnește exact acolo unde suntem, cu slăbiciunile, întrebările și nevoile noastre.`,
+    practicalApplication: `Astăzi, oprește-te deliberat cel puțin 5 minute, recitește versetul de mai sus și întreabă-L pe Dumnezeu: „Doamne, cum vrei să trăiesc acest adevăr astăzi?”`,
+    prayer: `Doamne, îți mulțumesc pentru Cuvântul Tău care mă întâlnește exact în punctul în care sunt. Ajută-mă să nu trec superficial peste el, ci să-l las să-mi schimbe inima și viața. Vorbește-mi, Te rog, prin versetul acesta. Amin.`,
+    thoughtOfTheDay: `Cuvântul lui Dumnezeu nu ne lasă niciodată așa cum ne găsește.`
   };
 }
 
@@ -313,80 +295,41 @@ function buildFallbackDevotional({ theme, verseText, verseReference }) {
 // VALIDARE OUTPUT AI
 // ═══════════════════════════════════════
 function validateDevotional(data) {
-  if (!data || typeof data !== 'object') {
-    throw new Error('Date invalide pentru validare');
-  }
-
-  const required = [
-    'title',
-    'introduction',
-    'reflection',
-    'practicalApplication',
-    'prayer',
-    'thoughtOfTheDay'
-  ];
+  const required = ['title', 'introduction', 'reflection', 'practicalApplication', 'prayer', 'thoughtOfTheDay'];
 
   for (const field of required) {
-    const val = data[field];
-    // Safe check for string presence and length
-    if (!val || typeof val !== 'string' || val.trim().length < 10) {
-      throw new Error(`Câmpul "${field}" lipsește sau e prea scurt`);
+    if (!data[field] || typeof data[field] !== 'string' || data[field].trim().length < 10) {
+      throw new Error(`Câmpul "${field}" lipsește sau este prea scurt`);
     }
   }
 
-  if (data.reflection.length < 80) {
-    throw new Error('Reflecția e prea scurtă');
-  }
+  if (data.reflection.length < 80) throw new Error('Reflecția este prea scurtă');
+  if (data.prayer.length < 40) throw new Error('Rugăciunea este prea scurtă');
 
-  if (data.prayer.length < 40) {
-    throw new Error('Rugăciunea e prea scurtă');
-  }
-
-  // Clișee grave — aruncă eroare ca să regenereze
   const cliseeGrave = [
     'acest verset ne amintește',
     'în lumea de astăzi',
-    'nu este întâmplător că',
+    'nu este întâmplător',
     'dragi prieteni',
     'în concluzie',
-    'dumnezeu dorește să'
+    'dumnezeu dorește să',
+    'putem alege să',
+    'să ne amintim că'
   ];
 
   const textComplet = Object.values(data).join(' ').toLowerCase();
 
-  for (const c of cliseeGrave) {
-    if (textComplet.includes(c)) {
-      console.log(`⚠️ Clișeu grav detectat: "${c}" — invalidare`);
-      throw new Error(`Text conține clișeu de evitat: "${c}"`);
+  for (const cliseu of cliseeGrave) {
+    if (textComplet.includes(cliseu)) {
+      throw new Error(`Conține clișeu interzis: "${cliseu}"`);
     }
-  }
-
-  // Verifică că aplicația e concretă
-  const aplicatie = data.practicalApplication.toLowerCase();
-  const areConcretetete = [
-    '?',
-    'azi ',
-    'astăzi',
-    'acum',
-    'încearcă',
-    'alege',
-    'scrie',
-    'sună',
-    'vorbește',
-    'roagă-te',
-    'există',
-    'gândește-te'
-  ].some(k => aplicatie.includes(k));
-
-  if (!areConcretetete) {
-    console.log('⚠️ Aplicația practică pare prea vagă, totuși acceptăm');
   }
 
   return true;
 }
 
 // ═══════════════════════════════════════
-// GENERARE CU AI — prompt premium v3
+// GENERARE CU AI
 // ═══════════════════════════════════════
 async function generateDevotionalWithAI({ theme, verseText, verseReference }) {
   const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
@@ -402,7 +345,7 @@ Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie
 STRUCTURĂ:
 1. titlu emoțional și memorabil
 2. introducere cu hook uman și personal
-3. mesaj biblic profund bazat EXPLICIT pe sensul și contextul ACESTUI verset specific, nu pe tema generală
+3. mesaj biblic profund bazat EXPLICIT pe sensul și contextul ACESTUI verset specific
 4. aplicație practică foarte concretă, personală și directă — cu un pas imediat posibil azi
 5. rugăciune caldă, sinceră și specifică acestui verset
 6. gândul zilei memorabil ca un proverb creștin
@@ -410,57 +353,21 @@ STRUCTURĂ:
 REGULI ABSOLUTE:
 - exclusiv în română literară naturală
 - ton uman, cald, pastoral — ca un pastor matur vorbind față în față
-- fără limbaj robotic sau de AI
 - interzis: "acest verset ne amintește", "în lumea de astăzi", "putem alege să", "Dumnezeu dorește să", "nu este întâmplător", "în concluzie", "dragi prieteni"
-- nu moraliza rece — vorbește cu căldură și empatie
-- include o metaforă sau imagine vizuală naturală din viața de zi cu zi
-- reflecția trebuie să arate EXPLICIT ce spune versetul, nu doar tema generală
-- aplicația practică TREBUIE să conțină fie o întrebare directă către cititor, fie un pas concret și imediat
-- rugăciunea să fie personală și specifică, nu generică
+- include o metaforă sau imagine vizuală naturală
+- aplicația practică TREBUIE să conțină fie o întrebare directă, fie un pas concret și imediat
 - maxim 350 cuvinte total
-- trebuie să pară scris de un pastor român matur, nu de un program de calculator
 
-Returnează DOAR JSON valid, fără niciun text înainte sau după:
-{
-  "title": "titlu poetic, emoțional, max 7 cuvinte",
-  "introduction": "hook uman și personal, 2-3 propoziții",
-  "reflection": "mesaj biblic profund bazat pe contextul exact al versetului, cu metaforă, 4-5 propoziții",
-  "practicalApplication": "pas concret și imediat sau întrebare directă către cititor, 2-3 propoziții",
-  "prayer": "rugăciune personală și specifică versetului, 3-4 propoziții",
-  "thoughtOfTheDay": "gând memorabil ca un proverb creștin modern, max 15 cuvinte"
-}`;
+Returnează DOAR JSON valid, fără niciun text înainte sau după.`;
 
-  let raw = '';
-  try {
-    if (geminiService && typeof geminiService.generate === 'function') {
-        raw = await geminiService.generate(prompt, 2000);
-    }
-  } catch (err) {
-     throw new Error(`Serviciul AI nu a putut genera conținut: ${err.message}`);
-  }
+  const raw = await geminiService.generate(prompt, 2000);
 
-  // Safety check if output is empty
-  if (!raw || typeof raw !== 'string') {
-      throw new Error('Răspuns gol sau invalid de la AI');
-  }
+  console.log('🤖 AI raw output (primele 400 chars):', raw?.substring(0, 400));
 
-  console.log('🤖 RAW AI output received (length:', raw.length, ')');
+  const parsed = extractJson(raw);
+  console.log('✅ JSON parsat cu succes:', parsed?.title);
 
-  try {
-    const parsed = extractJson(raw);
-    
-    // Double check structure integrity after parsing
-    if(!parsed.title || !parsed.reflection) {
-         throw new Error('Structura JSON e incompletă');
-    }
-
-    console.log('✅ JSON parsed OK:', parsed?.title);
-    return parsed;
-  } catch (e) {
-    console.log('❌ JSON parse error:', e.message);
-    console.log('🔍 Raw preview:', raw?.substring(0, 300));
-    throw e;
-  }
+  return parsed;
 }
 
 // ═══════════════════════════════════════
@@ -469,100 +376,66 @@ Returnează DOAR JSON valid, fără niciun text înainte sau după:
 async function createDevotionalForDate(date = new Date()) {
   const dateKey = getRomaniaDateKey(date);
 
-  // Check cache first
   const existing = await DailyDevotional.findOne({ dateKey }).lean();
-  if (existing) return existing.toObject();
+  if (existing) return existing;
 
   const theme = getThemeForDate(dateKey);
-  
-  let verseObj;
-  try {
-      verseObj = await getVerseForTheme(theme);
-  } catch (err) {
-      console.error('Eroare fatală la preluarea versetului:', err);
-      // Fallback manual if DB completely broken
-      verseObj = constructVerseObject({text: "Dar mulțumită fie Dumnezeu, care ne duce totdeauna în victoria lui Hristos.", referinta: "2 Corinteni 2:14"});
-  }
+  const verse = await getVerseForTheme(theme);
 
   let devotionalData;
   let generatedBy = 'fallback';
-  let aiModel = '';
+  let aiModel = null;
 
   try {
-    if (geminiService && geminiService.isConfigured && geminiService.isConfigured()) {
+    if (geminiService.isConfigured()) {
       devotionalData = await generateDevotionalWithAI({
         theme,
-        verseText: verseObj.text,
-        verseReference: verseObj.reference
+        verseText: verse.text,
+        verseReference: verse.reference
       });
 
-      try {
-        validateDevotional(devotionalData);
-        console.log('✅ Devoțional validat cu succes');
-        generatedBy = 'ai';
-        aiModel = 'llama-3.3-70b-versatile';
-      } catch (validErr) {
-        console.log('⚠️ Validare AI eșuată (calitate conținut):', validErr.message, '— trecem la fallback');
-        devotionalData = buildFallbackDevotional({
-          theme,
-          verseText: verseObj.text,
-          verseReference: verseObj.reference
-        });
-        generatedBy = 'fallback';
-        aiModel = '';
-      }
-
+      validateDevotional(devotionalData);
+      
+      generatedBy = 'ai';
+      aiModel = 'gemini-1.5-flash';        // Actualizat
+      console.log(`✅ Devoțional generat cu succes prin AI (${theme})`);
     } else {
-      console.log('⚠️ Serviciul AI nu este configurat — folosesc template local');
-      devotionalData = buildFallbackDevotional({
-        theme,
-        verseText: verseObj.text,
-        verseReference: verseObj.reference
-      });
+      throw new Error('Serviciul Gemini nu este configurat');
     }
   } catch (err) {
-    console.log('⚠️ Eroare generală generare AI — fallback activat:', err.message);
+    console.log('⚠️ Folosesc fallback local:', err.message);
     devotionalData = buildFallbackDevotional({
       theme,
-      verseText: verseObj.text,
-      verseReference: verseObj.reference
+      verseText: verse.text,
+      verseReference: verse.reference
     });
     generatedBy = 'fallback';
-    aiModel = '';
+    aiModel = null;
   }
 
-  try {
-    const created = await DailyDevotional.create({
-      dateKey,
-      theme,
-      verseText: verseObj.text,
-      verseReference: verseObj.reference,
-      verseBook: verseObj.book,
-      verseChapter: verseObj.chapter,
-      verseNumber: verseObj.number,
+  const created = await DailyDevotional.create({
+    dateKey,
+    theme,
+    verseText: verse.text,
+    verseReference: verse.reference,
+    verseBook: verse.book,
+    verseChapter: verse.chapter,
+    verseNumber: verse.number,
 
-      title: devotionalData.title,
-      introduction: devotionalData.introduction,
-      reflection: devotionalData.reflection,
-      practicalApplication: devotionalData.practicalApplication,
-      prayer: devotionalData.prayer,
-      thoughtOfTheDay: devotionalData.thoughtOfTheDay,
+    title: devotionalData.title,
+    introduction: devotionalData.introduction,
+    reflection: devotionalData.reflection,
+    practicalApplication: devotionalData.practicalApplication,
+    prayer: devotionalData.prayer,
+    thoughtOfTheDay: devotionalData.thoughtOfTheDay,
 
-      generatedBy,
-      aiModel,
-      published: true
-    });
+    generatedBy,
+    aiModel,
+    published: true
+  });
 
-    console.log(`📖 Devoțional salvat: ${created.dateKey} | ${generatedBy}`);
-    return created.toObject();
-
-  } catch (err) {
-    // Handle Duplicate Key (11000) if concurrent request occurred
-    if (err.code === 11000) {
-      return await DailyDevotional.findOne({ dateKey }).lean();
-    }
-    throw err;
-  }
+  console.log(`📖 Devoțional creat: ${created.title} | ${generatedBy}`);
+  return created.toObject();
 }
 
 // ═══════════════════════════════════════
@@ -574,9 +447,11 @@ async function getTodayDevotional() {
 
 async function getDevotionalByDate(dateKey) {
   let devotional = await DailyDevotional.findOne({ dateKey }).lean();
+  
   if (!devotional && dateKey === getRomaniaDateKey()) {
     devotional = await createDevotionalForDate(new Date());
   }
+  
   return devotional;
 }
 
@@ -592,7 +467,5 @@ module.exports = {
   getTodayDevotional,
   getDevotionalByDate,
   getRecentDevotionals,
-  createDevotionalForDate,
-  getVerseForTheme, // Optional export for debugging/testing
-  buildFallbackDevotional // Optional export
+  createDevotionalForDate
 };
