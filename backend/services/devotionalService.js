@@ -2,7 +2,7 @@
 const DailyDevotional = require('../models/DailyDevotional');
 const Verse = require('../models/Verse');
 const geminiService = require('./geminiService');
-const { theologicalAIValidatorV5 } = require('./theologyValidatorV5');
+const { theologicalAIValidatorV7 } = require('./theologyValidatorV7');
 
 // ═══════════════════════════════════════
 // CONFIGURARE
@@ -536,35 +536,78 @@ function validateStructure(schema, devotional) {
 }
 
 // ═══════════════════════════════════════
-// VALIDARE COMPLETĂ (structură + teologie)
+// VALIDARE COMPLETĂ (structură + teologie V7)
+// Cu suport auto-fix din V7
 // ═══════════════════════════════════════
-function validateDevotionalFull(schema, devotional, verse) {
+async function validateDevotionalFull(schema, devotional, verse, theme) {
   // ── Pasul 1: Validare structurală ──
   const structureOk = validateStructure(schema, devotional);
   if (!structureOk) {
     console.log('❌ Validare structurală eșuată.');
-    return false;
+    return { isValid: false, devotional: null, theologyScore: null };
   }
   console.log('✅ Validare structurală OK.');
 
-  // ── Pasul 2: Validare teologică V5 ──
-  const theologyResult = theologicalAIValidatorV5(devotional, verse);
+  // ── Pasul 2: Validare teologică V7 (semantic + auto-fix) ──
+  try {
+    const theologyResult = await theologicalAIValidatorV7(devotional, verse, theme);
 
-  console.log(`🔍 [TEOLOGIE V5] Scor: ${theologyResult.score}/100`);
+    console.log(`🔍 [TEOLOGIE V7] Scor: ${theologyResult.score}/100`);
 
-  if (theologyResult.issues.length > 0) {
-    theologyResult.issues.forEach(issue => {
-      console.log(`   ⚠️ ${issue}`);
-    });
+    if (theologyResult.issues && theologyResult.issues.length > 0) {
+      theologyResult.issues.forEach(issue => {
+        console.log(`   ⚠️ ${issue}`);
+      });
+    }
+
+    // ── Cazul 1: Valid direct ──
+    if (theologyResult.isValid) {
+      console.log('✅ Validare teologică V7 OK.');
+      return {
+        isValid: true,
+        devotional: devotional,
+        theologyScore: theologyResult.score
+      };
+    }
+
+    // ── Cazul 2: Invalid dar V7 a oferit auto-fix ──
+    if (!theologyResult.isValid && theologyResult.fixed) {
+      console.log('🔧 AUTO-FIX aplicat de V7 validator.');
+
+      // Verifică structura fix-ului (safety check)
+      const fixedStructureOk = validateStructure(schema, theologyResult.fixed);
+      if (fixedStructureOk) {
+        console.log('✅ Auto-fix a trecut validarea structurală.');
+        return {
+          isValid: true,
+          devotional: theologyResult.fixed,
+          theologyScore: theologyResult.score,
+          wasAutoFixed: true
+        };
+      } else {
+        console.log('❌ Auto-fix-ul V7 nu trece validarea structurală.');
+        return { isValid: false, devotional: null, theologyScore: theologyResult.score };
+      }
+    }
+
+    // ── Cazul 3: Invalid fără auto-fix ──
+    console.log(`❌ Validare teologică V7 eșuată (scor: ${theologyResult.score}), fără auto-fix.`);
+    if (theologyResult.issues) {
+      console.log('❌ THEOLOGICAL REJECT V7:', theologyResult.issues);
+    }
+    return { isValid: false, devotional: null, theologyScore: theologyResult.score };
+
+  } catch (theologyErr) {
+    console.log('⚠️ Eroare la validarea teologică V7:', theologyErr.message);
+    // Dacă validatorul V7 crapă, acceptăm devoționalul dacă structura e OK
+    console.log('⚠️ Acceptăm devoționalul pe baza validării structurale (V7 indisponibil).');
+    return {
+      isValid: true,
+      devotional: devotional,
+      theologyScore: null,
+      v7Error: theologyErr.message
+    };
   }
-
-  if (!theologyResult.isValid) {
-    console.log(`❌ Validare teologică eșuată (scor: ${theologyResult.score}).`);
-    return false;
-  }
-
-  console.log('✅ Validare teologică OK.');
-  return true;
 }
 
 // ═══════════════════════════════════════
@@ -583,8 +626,8 @@ async function createDevotionalForDate(date = new Date()) {
   let devotionalData = null;
   let generatedBy = 'fallback';
   let aiModel = '';
-  let schemaResult = null;
   let theologyScore = null;
+  let wasAutoFixed = false;
 
   // Încearcă generarea cu AI dacă este configurat
   if (geminiService.isConfigured()) {
@@ -592,6 +635,8 @@ async function createDevotionalForDate(date = new Date()) {
 
     while (retries < MAX_RETRIES) {
       console.log(`\n🔄 Încercare AI (${retries + 1}/${MAX_RETRIES}) pentru ${dateKey} — tema: ${theme}`);
+
+      let schemaResult = null;
 
       try {
         // ── Pasul 1: Generare Schemă ──
@@ -618,19 +663,23 @@ async function createDevotionalForDate(date = new Date()) {
           verseReference: verse.reference
         }, schemaResult);
 
-        // ── Pasul 3: Validare completă (structură + teologie) ──
-        const isValid = validateDevotionalFull(schemaResult, aiResult, verse);
+        // ── Pasul 3: Validare completă (structură + teologie V7 cu auto-fix) ──
+        const validationResult = await validateDevotionalFull(
+          schemaResult,
+          aiResult,
+          verse,
+          theme
+        );
 
-        if (isValid) {
-          devotionalData = aiResult;
+        if (validationResult.isValid && validationResult.devotional) {
+          devotionalData = validationResult.devotional;
           generatedBy = 'ai';
           aiModel = 'gemini-1.5-pro';
+          theologyScore = validationResult.theologyScore;
+          wasAutoFixed = validationResult.wasAutoFixed || false;
 
-          // Salvăm scorul teologic pentru referință
-          const theologyResult = theologicalAIValidatorV5(aiResult, verse);
-          theologyScore = theologyResult.score;
-
-          console.log(`✅ Devoțional acceptat (teologie: ${theologyScore}/100).`);
+          const fixLabel = wasAutoFixed ? ' (auto-fixed by V7)' : '';
+          console.log(`✅ Devoțional acceptat${fixLabel} — teologie: ${theologyScore || 'N/A'}/100`);
           break;
         } else {
           console.log('⚠️ Devoționalul nu a trecut validarea completă.');
@@ -656,6 +705,7 @@ async function createDevotionalForDate(date = new Date()) {
     generatedBy = 'fallback';
     aiModel = '';
     theologyScore = null;
+    wasAutoFixed = false;
   }
 
   // ── Salvare în Baza de Date ──
@@ -681,14 +731,18 @@ async function createDevotionalForDate(date = new Date()) {
       published: true
     };
 
-    // Adaugă scorul teologic dacă există și modelul suportă
+    // Adaugă metadate teologice dacă există
     if (theologyScore !== null) {
       docToSave.theologyScore = theologyScore;
+    }
+    if (wasAutoFixed) {
+      docToSave.wasAutoFixed = true;
     }
 
     const created = await DailyDevotional.create(docToSave);
 
-    console.log(`📖 Salvat: "${created.title}" | ${generatedBy} | teologie: ${theologyScore || 'N/A'}`);
+    const fixLabel = wasAutoFixed ? ' | 🔧 auto-fixed' : '';
+    console.log(`📖 Salvat: "${created.title}" | ${generatedBy} | teologie: ${theologyScore || 'N/A'}${fixLabel}`);
     return created.toObject();
   } catch (err) {
     if (err.code === 11000) {

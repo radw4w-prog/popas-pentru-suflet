@@ -64,5 +64,7 @@ const dailyDevotionalSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+theologyScore: { type: Number, default: null },
+wasAutoFixed: { type: Boolean, default: false }
 
 module.exports = mongoose.model('DailyDevotional', dailyDevotionalSchema);
