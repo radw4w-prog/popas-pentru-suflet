@@ -1,10 +1,10 @@
 const DailyDevotional = require('../models/DailyDevotional');
 const Verse = require('../models/Verse');
 const geminiService = require('./geminiService');
-const { theologicalAIValidator } = require('./theologyValidator');
+const { theologicalAIValidatorV5 } = require('./theologyValidatorV5');
 
 // ═══════════════════════════════
-// CONFIG V4
+// CONFIG
 // ═══════════════════════════════
 
 const MAX_RETRIES = 3;
@@ -63,6 +63,7 @@ async function getVerseForTheme(theme) {
   ]);
 
   const verse = found?.[0] || await Verse.findOne().lean();
+
   if (!verse) throw new Error("No verse found");
 
   return {
@@ -75,16 +76,12 @@ async function getVerseForTheme(theme) {
 }
 
 // ═══════════════════════════════
-// PROMPT ENGINE V4 (STRICT)
+// PROMPTS
 // ═══════════════════════════════
 
 function buildSchemaPrompt(verse) {
   return `
-Extrage STRICT din versetul biblic.
-
-NU interpreta.
-NU adăuga teologie.
-NU adăuga doctrine.
+Extrage STRICT din verset.
 
 "${verse.text}"
 
@@ -103,7 +100,7 @@ Returnează JSON:
 
 function buildDevotionalPrompt(data, schema) {
   return `
-Scrie un devoțional STRICT bazat DOAR pe verset.
+Scrie devoțional creștin STRICT din verset.
 
 VERSET:
 "${data.verseText}"
@@ -114,14 +111,11 @@ ${data.theme}
 SCHEMA:
 ${JSON.stringify(schema)}
 
-REGULI CRITICE:
-- fără alte versete
+REGULI:
+- doar din verset
 - fără doctrină externă
-- fără Isus dacă nu apare în text
-- fără moralism general
-- 1 idee centrală
-
-STRUCTURĂ:
+- fără interpretări extra
+- fără moralism generic
 
 JSON:
 {
@@ -136,7 +130,7 @@ JSON:
 }
 
 // ═══════════════════════════════
-// PARSER ROBUST
+// PARSER
 // ═══════════════════════════════
 
 function extractJson(raw) {
@@ -146,7 +140,7 @@ function extractJson(raw) {
 }
 
 // ═══════════════════════════════
-// FALLBACK SAFE MODE
+// FALLBACK
 // ═══════════════════════════════
 
 function fallbackDevotional(theme, verse) {
@@ -161,7 +155,7 @@ function fallbackDevotional(theme, verse) {
 }
 
 // ═══════════════════════════════
-// BASIC VALIDATION
+// VALIDARE BASIC
 // ═══════════════════════════════
 
 function validate(devotional) {
@@ -180,7 +174,16 @@ function validate(devotional) {
 }
 
 // ═══════════════════════════════
-// VIRAL ENGINE V4 (SEPARAT DE TEOLOGIE)
+// AI CALL
+// ═══════════════════════════════
+
+async function callAI(prompt) {
+  const raw = await geminiService.generate(prompt, 1800, 0.4);
+  return extractJson(raw);
+}
+
+// ═══════════════════════════════
+// VIRAL ENGINE
 // ═══════════════════════════════
 
 function detectEmotion(text) {
@@ -214,6 +217,7 @@ function viralScore(text) {
   if (text.includes('putere')) score += 10;
   if (text.includes('speran')) score += 10;
   if (text.includes('azi')) score += 5;
+
   if (text.includes('dragi prieteni')) score -= 20;
 
   return Math.max(0, Math.min(100, score));
@@ -241,16 +245,7 @@ ${generateHook(emotion)}
 }
 
 // ═══════════════════════════════
-// AI CALL
-// ═══════════════════════════════
-
-async function callAI(prompt) {
-  const raw = await geminiService.generate(prompt, 1800, 0.4);
-  return extractJson(raw);
-}
-
-// ═══════════════════════════════
-// CORE ENGINE V4
+// MAIN ENGINE V4 (FIXED FLOW)
 // ═══════════════════════════════
 
 async function createDevotionalForDate(date = new Date()) {
@@ -264,15 +259,17 @@ async function createDevotionalForDate(date = new Date()) {
 
   let schema, devotional;
 
-  // 🔁 AI LOOP
+  // STEP 1: AI GENERATION
   for (let i = 0; i < MAX_RETRIES; i++) {
     try {
       schema = await callAI(buildSchemaPrompt(verse));
 
-      devotional = await callAI(buildDevotionalPrompt(
-        { theme, verseText: verse.text, verseReference: verse.reference },
-        schema
-      ));
+      devotional = await callAI(
+        buildDevotionalPrompt(
+          { theme, verseText: verse.text, verseReference: verse.reference },
+          schema
+        )
+      );
 
       if (validate(devotional)) break;
 
@@ -285,20 +282,26 @@ async function createDevotionalForDate(date = new Date()) {
     devotional = fallbackDevotional(theme, verse);
   }
 
-  // 🧠 TEOLOGIC FILTER (FINAL GATE)
-  const theology = theologicalAIValidator(devotional);
+  // STEP 2: THEOLOGY V5 CHECK (CRITICAL FIX)
+  const theologyCheck = theologicalAIValidatorV5({
+    devotional,
+    verse,
+    theme,
+    schema
+  });
 
-  if (!theology.isValid) {
-    console.log("❌ THEOLOGICAL REJECT:", theology.issues);
+  if (!theologyCheck.isValid) {
+    console.log("❌ THEOLOGY REJECT V5:", theologyCheck.issues);
+
     devotional = fallbackDevotional(theme, verse);
+  } else {
+    console.log("🧠 Theology score:", theologyCheck.score);
   }
 
-  console.log("🧠 Theology score:", theology.score);
-
-  // 🔥 VIRAL LAYER (FINAL)
+  // STEP 3: VIRAL ENGINE (LAST LAYER)
   devotional = enhance(devotional, verse, theme);
 
-  // 💾 SAVE
+  // STEP 4: SAVE
   const saved = await DailyDevotional.create({
     dateKey,
     theme,
@@ -311,7 +314,7 @@ async function createDevotionalForDate(date = new Date()) {
     ...devotional,
 
     generatedBy: 'v4-engine',
-    aiModel: 'gemini-pro-v4'
+    aiModel: 'gemini-v4'
   });
 
   return saved.toObject();
