@@ -308,6 +308,22 @@ async function createDevotionalForDate(date = new Date()) {
   return saved.toObject();
 }
 
+
+
+
+const { theologicalAIValidator } = require('./theologyValidator');
+
+const validation = theologicalAIValidator(devotionalData);
+
+if (!validation.isValid) {
+  console.log("❌ CORECTOR TEOLOGIC a respins devoționalul:");
+  console.log(validation.issues);
+
+  throw new Error("Theological validation failed");
+}
+
+console.log("🧠 Scor teologic:", validation.score);
+
 // ═══════════════════════════════
 // API
 // ═══════════════════════════════
