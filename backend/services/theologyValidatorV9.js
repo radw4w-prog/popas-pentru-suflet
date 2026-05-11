@@ -9,7 +9,6 @@ const geminiService = require('./geminiService');
  - Verificare semantică (Aplicații prea vagi)
  - Detectează repetiții de cuvinte
  - Detectează expresii repetitive (câmpuri teologice)
- - Detectează drift carismatic/self-help
  - Detectează artefacte AI (scăpări ale schemei JSON în text)
  - Detectează parafrazare excesivă (copierea versetului)
  - Auto-Rewrite via Gemini dacă scorul scade sub MIN_SCORE
@@ -34,14 +33,6 @@ const GENERIC_PHRASES = [
   'citește până la capăt',
   'reflectează la',
   'în lumea de azi'
-];
-
-const SUSPICIOUS_PHRASES = [
-  'activează duhul',
-  'afirmă cu voce tare',
-  'declară peste viața ta',
-  'rostește peste tine',
-  'universul'
 ];
 
 // ═══════════════════════════════════════
@@ -114,6 +105,9 @@ function detectRepetition(text) {
   return Object.values(freq).some(v => v >= 5);
 }
 
+// ═══════════════════════════════════════
+// NOUĂ: DETECTARE EXPRESII REPETITIVE
+// ═══════════════════════════════════════
 function repeatedPhrases(text) {
   const phrases = [
     'vorbirile înduplecătoare',
@@ -123,15 +117,8 @@ function repeatedPhrases(text) {
   ];
 
   const t = normalize(text);
-  return phrases.some(p => countOccurrences(t, p) > 1);
-}
 
-// ═══════════════════════════════════════
-// NOUĂ: DETECTARE DRIFT CARISMATIC/SELF-HELP
-// ═══════════════════════════════════════
-function detectCharismaticDrift(text) {
-  const t = normalize(text);
-  return SUSPICIOUS_PHRASES.some(p => t.includes(p));
+  return phrases.some(p => countOccurrences(t, p) > 1);
 }
 
 function isTooCloseToVerse(devotional, verse) {
@@ -194,11 +181,18 @@ STRICT:
 - fără formulări robotice
 - fără clișee sau fraze generice
 - fără artefacte AI (nume de câmpuri din scheme)
-- fără limbaj carismatic exagerat (activează, declară, afirmă cu voce tare)
-- fără limbaj self-help sau New Age (univers, energie, vibrație)
 - aplicație ultra concretă
-- maxim 120 cuvinte per secțiune
+- maxim 200 cuvinte per secțiune
 - păstrează fidelitatea absolută față de verset
+
+
+- evită repetarea expresiilor din verset
+- ton pastoral, cald, natural
+- nu comenta academic textul
+- devoțional, nu comentariu biblic
+- aplicație practică = acțiune concretă
+
+
 
 VERS:
 "${verse?.text || ''}"
@@ -271,19 +265,13 @@ async function theologicalAIValidatorV9(devotional, verse, theme) {
     score -= 10;
   }
 
-  // ── 6. Drift carismatic/self-help ──
-  if (detectCharismaticDrift(Object.values(devotional).join(' '))) {
-    issues.push('[WARNING] Posibil drift carismatic/self-help detectat (activează, declară, univers, etc.).');
-    score -= 8;
-  }
-
-  // ── 7. Parafrazare excesivă ──
+  // ── 6. Parafrazare excesivă ──
   if (isTooCloseToVerse(devotional, verse)) {
     issues.push('[WARNING] Parafrazare leneșă: text prea apropiat de verset.');
     score -= 10;
   }
 
-  // ── 8. Aplicație generică ──
+  // ── 7. Aplicație generică ──
   if (genericApplication(devotional)) {
     issues.push('[WARNING] Aplicația practică conține fraze generice.');
     score -= 10;

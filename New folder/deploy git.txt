@@ -2,3 +2,8 @@ cd E:\popas-pentru-suflet
 git add .
 git commit -m "fix: responseMimeType json pentru Gemini 2.5 Flash, maxTokens 3000"
 git push origin main
+
+
+
+
+https://popas-pentru-suflet-backend.onrender.com/api/devotionals/regenerate-today
