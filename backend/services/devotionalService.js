@@ -9,6 +9,13 @@ const { theologicalAIValidatorV9 } = require('./theologyValidatorV9');
 // ═══════════════════════════════════════
 const MAX_RETRIES = 4;
 
+// ── Tokeni per tip de cerere ──
+const TOKEN_LIMITS = {
+  schema: 1024,
+  devotional: 4096,
+  rewrite: 4096
+};
+
 const THEMES = [
   'dragoste',
   'credinta',
@@ -33,19 +40,6 @@ const THEME_KEYWORDS = {
   putere: 'putere',
   recunostinta: 'mulțum|multum',
   intelepciune: 'înțelep|intelep'
-};
-
-const THEME_CONTEXT = {
-  dragoste: 'dragostea lui Dumnezeu față de oameni și chemarea la iubire față de aproapele',
-  credinta: 'credința autentică, încrederea în Dumnezeu în mijlocul îndoielii și incertitudinii',
-  pace: 'pacea care întrece orice înțelegere, liniștea sufletului în mijlocul furtunilor vieții',
-  bucurie: 'bucuria profundă care vine din relația cu Dumnezeu, diferită de fericirea lumească',
-  speranta: 'speranța vie în Hristos, ancora sufletului în momentele de descurajare',
-  rugaciune: 'rugăciunea ca dialog real cu Dumnezeu, nu ritual mecanic',
-  iertare: 'iertarea ca eliberare, atât cea primită de la Dumnezeu cât și cea oferită altora',
-  putere: 'puterea lui Dumnezeu manifestată în slăbiciunea noastră',
-  recunostinta: 'recunoștința ca mod de viață, nu doar sentiment ocazional',
-  intelepciune: 'înțelepciunea divină în deciziile zilnice, discernământul spiritual'
 };
 
 // ═══════════════════════════════════════
@@ -239,7 +233,7 @@ async function getVerseForTheme(theme) {
   }
 
   if (!verse) {
-    throw new Error("Nu s-a putut găsi un verset, chiar și cu fallback-ul aleatoriu.");
+    throw new Error("Nu s-a putut găsi un verset.");
   }
 
   return {
@@ -251,18 +245,48 @@ async function getVerseForTheme(theme) {
   };
 }
 
+// ═══════════════════════════════════════
+// EXTRACT JSON ROBUST (cu recuperare)
+// ═══════════════════════════════════════
 function extractJson(raw) {
   try {
     let text = raw.trim();
 
+    // Elimină blocuri markdown ```json ... ```
     const block = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (block) text = block[1];
+    if (block) text = block[1].trim();
 
+    // Găsește primul {
     const first = text.indexOf('{');
+    if (first === -1) {
+      throw new Error("Nu s-a găsit '{' în răspuns.");
+    }
+
+    text = text.slice(first);
+
+    // Găsește ultimul } valid
     const last = text.lastIndexOf('}');
 
-    if (first !== -1 && last !== -1) {
-      text = text.slice(first, last + 1);
+    if (last !== -1 && last > first) {
+      text = text.slice(0, last + 1);
+    } else {
+      // ── RECUPERARE JSON TĂIAT (truncated) ──
+      console.log('🔧 JSON tăiat detectat — încerc recuperare...');
+
+      // Închide stringul deschis (ex: "introduction": "text parțial")
+      text = text.replace(/"([^"]*?)$/, '"$1"');
+
+      // Închide array-urile deschise
+      const openBrackets = (text.match(/\[/g) || []).length;
+      const closeBrackets = (text.match(/]/g) || []).length;
+      text += ']'.repeat(Math.max(0, openBrackets - closeBrackets));
+
+      // Închide obiectele deschise
+      const openBraces = (text.match(/{/g) || []).length;
+      const closeBraces = (text.match(/}/g) || []).length;
+      text += '}'.repeat(Math.max(0, openBraces - closeBraces));
+
+      console.log('🔧 Recuperare JSON efectuată.');
     }
 
     return JSON.parse(text);
@@ -299,7 +323,7 @@ function buildFallbackDevotional({ theme, verseText, verseReference }) {
 }
 
 // ═══════════════════════════════════════
-// PROMPTS & SCHEMAS
+// PROMPTS
 // ═══════════════════════════════════════
 const SCHEMA_PROMPT_TEMPLATE = (verse) => `
 Analizează STRICT versetul biblic.
@@ -325,96 +349,66 @@ FORMAT:
 
 REGULI:
 1. Extrage DOAR elemente explicite din text.
-2. Nu interpreta.
-3. Nu predica.
-4. actors = max 3 entități explicite.
-5. actions = max 3 verbe/acțiuni explicite.
-6. commands = doar imperative; altfel [].
-7. coreExpressions = max 3 expresii exacte din verset.
-8. keyMessage = max 15 cuvinte.
-9. spiritualCore = max 15 cuvinte.
-10. scope = personal | comunitar | doctrinar.
+2. actors = max 3 entități explicite.
+3. actions = max 3 verbe/acțiuni explicite.
+4. commands = doar imperative; altfel [].
+5. coreExpressions = max 3 expresii exacte din verset.
+6. keyMessage = max 15 cuvinte.
+7. spiritualCore = max 15 cuvinte.
+8. scope = personal | comunitar | doctrinar.
 
 DOAR JSON.
 `;
 
 const DEVOTIONAL_PROMPT_TEMPLATE = ({ verseText, verseReference, theme, schema }) => `
-Scrie un devoțional creștin profund, pastoral și profund uman în limba română.
+Scrie un devoțional creștin profund în limba română.
 
 ━━━━━━━━━━━━━━
-VERSET:
-"${verseText}"
-
-REFERINȚĂ:
-${verseReference}
-
-TEMA:
-${theme}
+VERSET: "${verseText}"
+REFERINȚĂ: ${verseReference}
+TEMA: ${theme}
 
 SCHEMA:
-keyMessage: ${schema.keyMessage || ''}
-spiritualCore: ${schema.spiritualCore || ''}
-actions: ${schema.actions ? schema.actions.join(', ') : ''}
-commands: ${schema.commands && schema.commands.length ? schema.commands.join(', ') : 'none'}
-actors: ${schema.actors ? schema.actors.join(', ') : ''}
-coreExpressions: ${schema.coreExpressions ? schema.coreExpressions.join(', ') : ''}
+keyMessage: ${schema?.keyMessage || ''}
+spiritualCore: ${schema?.spiritualCore || ''}
+actions: ${schema?.actions?.join(', ') || ''}
+commands: ${schema?.commands?.length ? schema.commands.join(', ') : 'none'}
+actors: ${schema?.actors?.join(', ') || ''}
+coreExpressions: ${schema?.coreExpressions?.join(', ') || ''}
 
 ━━━━━━━━━━━━━━
-REGULA SUPREMĂ
-Scrii EXCLUSIV din acest verset.
-Dacă textul poate fi mutat pe alt verset, este invalid.
-Nu folosi: alte versete, idei externe, doctrină generală.
+REGULI ABSOLUTE:
+1. Scrii EXCLUSIV din acest verset. NU alte versete, NU idei externe.
+2. Fiecare propoziție trebuie să poată fi mutată pe acest verset și numai pe acesta.
 
-REGULI CRITICE:
-- fără alte versete
-- fără doctrină externă
-- fără Isus dacă nu apare în text
-- fără moralism general
-- 1 idee centrală
-- NU folosi numele cheilor JSON în text
+INTRODUCERE (3-4 propoziții):
+- Pornește din tensiunea exactă a versetului
+- NU: "Viața este grea", "În momentele dificile", "Cu toții trecem prin"
 
-━━━━━━━━━━━━━━
-INTRODUCERE
-Pornește din tensiunea exactă a versetului.
-Nu folosi: "Viața este grea", "În momentele dificile", "Cu toții trecem prin".
+REFLECȚIE (4-5 propoziții):
+- Ce spune versetul, de ce, ce schimbă în om
+- Include TOATE actions, commands, minimum 2 coreExpressions, spiritualCore
 
-━━━━━━━━━━━━━━
-REFLECȚIE
-Explică: ce spune versetul, de ce spune asta, ce schimbă în om.
-Include: toate actions, toate commands, minimum 2 coreExpressions, spiritualCore.
-Exact 4-5 propoziții. Nu parafraza. Explică.
+APLICAȚIE PRACTICĂ:
+- Un singur pas CONCRET realizabil azi în sub 5 minute
+- SAU o întrebare directă cu ?
+
+RUGĂCIUNE (începe cu "Doamne"):
+- Specifică versetului. Personală. Bazată pe spiritualCore.
+
+STIL: Pastor român matur. Cald. Empatic. Natural.
+INTERZIS: "acest verset ne amintește", "în concluzie", "dragi prieteni", "nu este întâmplător că", "dumnezeu are un plan"
 
 ━━━━━━━━━━━━━━
-METAFORĂ
-Exact UNA. Trebuie derivată natural din verset.
-Interzis: furtuni, oceane, munți, drumuri, ziduri, foc (dacă nu apar în text).
-
-━━━━━━━━━━━━━━
-APLICAȚIE
-Un singur pas concret realizabil azi în sub 5 minute SAU o întrebare directă.
-
-━━━━━━━━━━━━━━
-RUGĂCIUNE
-Specifică acestui verset. Personală. Bazată pe spiritualCore.
-Începe cu: "Doamne"
-
-━━━━━━━━━━━━━━
-STIL
-Pastor român matur. Cald. Empatic. Natural. Nu robotic.
-Interzis: "acest verset ne amintește", "în concluzie", "dragi prieteni", "nu este întâmplător că".
-
-━━━━━━━━━━━━━━
-JSON:
+Returnează DOAR JSON:
 {
- "title":"",
- "introduction":"",
- "reflection":"",
- "practicalApplication":"",
- "prayer":"",
- "thoughtOfTheDay":""
+ "title": "",
+ "introduction": "",
+ "reflection": "",
+ "practicalApplication": "",
+ "prayer": "",
+ "thoughtOfTheDay": ""
 }
-
-DOAR JSON.
 `;
 
 // ═══════════════════════════════════════
@@ -422,7 +416,11 @@ DOAR JSON.
 // ═══════════════════════════════════════
 async function generateSchema(verse) {
   const prompt = SCHEMA_PROMPT_TEMPLATE(verse);
-  const raw = await geminiService.generate(prompt, 700, 0.2);
+  const raw = await geminiService.generate(
+    prompt,
+    TOKEN_LIMITS.schema,   // 1024 (era 700)
+    0.2
+  );
   return extractJson(raw);
 }
 
@@ -434,8 +432,13 @@ async function generateDevotionalWithAI(data, schema) {
     schema: schema
   });
 
-  const raw = await geminiService.generate(prompt, 1800, 0.45);
-  console.log('🤖 RAW AI output (primele 300 chars):', raw?.substring(0, 300));
+  const raw = await geminiService.generate(
+    prompt,
+    TOKEN_LIMITS.devotional,  // 4096 (era 1800 — CAUZA PRINCIPALĂ A EȘECULUI)
+    0.45
+  );
+
+  console.log('🤖 RAW AI output (primele 500 chars):', raw?.substring(0, 500));
 
   try {
     const parsed = extractJson(raw);
@@ -443,13 +446,12 @@ async function generateDevotionalWithAI(data, schema) {
     return parsed;
   } catch (e) {
     console.log('❌ JSON parse error:', e.message);
-    console.log('🔍 Raw complet:', raw);
     throw e;
   }
 }
 
 // ═══════════════════════════════════════
-// VALIDARE STRUCTURALĂ (schemă + conținut)
+// VALIDARE STRUCTURALĂ
 // ═══════════════════════════════════════
 function validateStructure(schema, devotional) {
   if (!devotional) {
@@ -501,7 +503,6 @@ function validateStructure(schema, devotional) {
     }
   }
 
-  // Verificare schemă (dacă există)
   if (schema) {
     const reflectionLower = devotional.reflection.toLowerCase();
 
@@ -510,7 +511,7 @@ function validateStructure(schema, devotional) {
         !reflectionLower.includes(action.toLowerCase())
       );
       if (missingActions.length > 0) {
-        console.log("❌ [STRUCTURĂ] Acțiuni lipsă din schemă:", missingActions.join(', '));
+        console.log("❌ [STRUCTURĂ] Acțiuni lipsă:", missingActions.join(', '));
         return false;
       }
     }
@@ -529,92 +530,59 @@ function validateStructure(schema, devotional) {
     }
   }
 
-  // Avertisment (fără eșec) pentru aplicație practică vagă
-  const aplicatie = devotional.practicalApplication.toLowerCase();
-  const areConcretete = [
-    '?', 'azi ', 'astăzi', 'acum', 'încearcă', 'alege',
-    'scrie', 'sună', 'vorbește', 'roagă-te', 'gândește-te'
-  ].some(k => aplicatie.includes(k));
-
-  if (!areConcretete) {
-    console.log('⚠️ [STRUCTURĂ] Aplicația practică pare vagă (avertisment, nu eșec).');
-  }
-
   return true;
 }
 
 // ═══════════════════════════════════════
-// VALIDARE COMPLETĂ (structură + teologie V9)
-// Cu suport auto-fix din V9
+// VALIDARE COMPLETĂ (structură + V9)
 // ═══════════════════════════════════════
 async function validateDevotionalFull(schema, devotional, verse, theme) {
-  // ── Pasul 1: Validare structurală ──
   const structureOk = validateStructure(schema, devotional);
   if (!structureOk) {
-    console.log('❌ Validare structurală eșuată.');
     return { isValid: false, devotional: null, theologyScore: null };
   }
   console.log('✅ Validare structurală OK.');
 
-  // ── Pasul 2: Validare teologică V9 (semantic + auto-fix) ──
   try {
     const theologyResult = await theologicalAIValidatorV9(devotional, verse, theme);
 
     console.log(`🔍 [TEOLOGIE V9] Scor: ${theologyResult.score}/100`);
 
     if (theologyResult.issues && theologyResult.issues.length > 0) {
-      theologyResult.issues.forEach(issue => {
-        console.log(`   ⚠️ ${issue}`);
-      });
+      theologyResult.issues.forEach(issue => console.log(`   ⚠️ ${issue}`));
     }
 
-    // ── Cazul 1: Valid direct ──
+    // Valid direct
     if (theologyResult.isValid) {
-      console.log('✅ Validare teologică V9 OK.');
       return {
         isValid: true,
-        devotional: devotional,
+        devotional,
         theologyScore: theologyResult.score
       };
     }
 
-    // ── Cazul 2: Invalid dar V9 a oferit auto-fix ──
+    // Auto-fix disponibil
     if (!theologyResult.isValid && theologyResult.fixed) {
-      console.log('🔧 AUTO-FIX aplicat de V9 validator.');
-
-      // Verifică structura fix-ului (safety check)
-      const fixedStructureOk = validateStructure(schema, theologyResult.fixed);
-      if (fixedStructureOk) {
-        console.log('✅ Auto-fix a trecut validarea structurală.');
+      console.log('🔧 AUTO-FIX V9 aplicat.');
+      const fixedOk = validateStructure(schema, theologyResult.fixed);
+      if (fixedOk) {
         return {
           isValid: true,
           devotional: theologyResult.fixed,
           theologyScore: theologyResult.score,
           wasAutoFixed: true
         };
-      } else {
-        console.log('❌ Auto-fix-ul V9 nu trece validarea structurală.');
-        return { isValid: false, devotional: null, theologyScore: theologyResult.score };
       }
+      console.log('❌ Auto-fix nu trece validarea structurală.');
+      return { isValid: false, devotional: null, theologyScore: theologyResult.score };
     }
 
-    // ── Cazul 3: Invalid fără auto-fix ──
-    console.log(`❌ Validare teologică V9 eșuată (scor: ${theologyResult.score}), fără auto-fix.`);
-    if (theologyResult.issues) {
-      console.log('❌ THEOLOGICAL REJECT V9:', theologyResult.issues);
-    }
+    // Invalid fără fix
     return { isValid: false, devotional: null, theologyScore: theologyResult.score };
 
   } catch (theologyErr) {
-    console.log('⚠️ Eroare la validarea teologică V9:', theologyErr.message);
-    // Dacă validatorul V9 crapă, acceptăm devoționalul dacă structura e OK
-    console.log('⚠️ Acceptăm devoționalul pe baza validării structurale (V9 indisponibil).');
-    return {
-      isValid: true,
-      devotional: devotional,
-      theologyScore: null,
-      v9Error: theologyErr.message
-    };
+    console.log('⚠️ V9 indisponibil:', theologyErr.message, '— accept pe structural.');
+    return { isValid: true, devotional, theologyScore: null, v9Error: theologyErr.message };
   }
 }
 
@@ -624,7 +592,6 @@ async function validateDevotionalFull(schema, devotional, verse, theme) {
 async function createDevotionalForDate(date = new Date()) {
   const dateKey = getRomaniaDateKey(date);
 
-  // Verificare DB inițială
   const existing = await DailyDevotional.findOne({ dateKey }).lean();
   if (existing) return existing;
 
@@ -637,124 +604,92 @@ async function createDevotionalForDate(date = new Date()) {
   let theologyScore = null;
   let wasAutoFixed = false;
 
-  // Încearcă generarea cu AI dacă este configurat
   if (geminiService.isConfigured()) {
     let retries = 0;
 
     while (retries < MAX_RETRIES) {
-      console.log(`\n🔄 Încercare AI (${retries + 1}/${MAX_RETRIES}) pentru ${dateKey} — tema: ${theme}`);
+      console.log(`\n🔄 Încercare AI (${retries + 1}/${MAX_RETRIES}) — ${dateKey} — tema: ${theme}`);
 
       let schemaResult = null;
 
       try {
-        // ── Pasul 1: Generare Schemă ──
+        // Schemă
         try {
           schemaResult = await generateSchema(verse);
-          console.log('✅ Schemă generată:', JSON.stringify(schemaResult).substring(0, 200));
+          console.log('✅ Schemă OK');
         } catch (schemaErr) {
-          console.log('⚠️ Eroare schemă, continui cu schemă goală:', schemaErr.message);
+          console.log('⚠️ Schemă eșuată, continui goală:', schemaErr.message);
           schemaResult = {
-            actors: [],
-            actions: [],
-            commands: [],
-            coreExpressions: [],
-            keyMessage: '',
-            spiritualCore: '',
-            scope: ''
+            actors: [], actions: [], commands: [],
+            coreExpressions: [], keyMessage: '', spiritualCore: '', scope: ''
           };
         }
 
-        // ── Pasul 2: Generare Devoțional ──
+        // Devoțional
         const aiResult = await generateDevotionalWithAI({
           theme,
           verseText: verse.text,
           verseReference: verse.reference
         }, schemaResult);
 
-        // ── Pasul 3: Validare completă (structură + teologie V9 cu auto-fix) ──
-        const validationResult = await validateDevotionalFull(
-          schemaResult,
-          aiResult,
-          verse,
-          theme
+        // Validare completă
+        const result = await validateDevotionalFull(
+          schemaResult, aiResult, verse, theme
         );
 
-        if (validationResult.isValid && validationResult.devotional) {
-          devotionalData = validationResult.devotional;
+        if (result.isValid && result.devotional) {
+          devotionalData = result.devotional;
           generatedBy = 'ai';
-          aiModel = 'gemini-1.5-pro';
-          theologyScore = validationResult.theologyScore;
-          wasAutoFixed = validationResult.wasAutoFixed || false;
-
-          const fixLabel = wasAutoFixed ? ' (auto-fixed by V9)' : '';
-          console.log(`✅ Devoțional acceptat${fixLabel} — teologie: ${theologyScore || 'N/A'}/100`);
+          aiModel = 'gemini-2.5-flash';
+          theologyScore = result.theologyScore;
+          wasAutoFixed = result.wasAutoFixed || false;
+          console.log(`✅ Acceptat${wasAutoFixed ? ' (auto-fixed)' : ''} — teologie: ${theologyScore || 'N/A'}/100`);
           break;
-        } else {
-          console.log('⚠️ Devoționalul nu a trecut validarea completă.');
         }
       } catch (err) {
-        console.log('⚠️ Eroare în ciclul AI:', err.message);
+        console.log('⚠️ Eroare ciclu AI:', err.message);
       }
 
       retries++;
     }
-  } else {
-    console.log('⚠️ Serviciul AI nu este configurat.');
   }
 
-  // Dacă AI-ul a eșuat complet, aplică Fallback
   if (!devotionalData) {
-    console.log('⚠️ AI a eșuat după toate încercările. Folosesc fallback local.');
+    console.log('⚠️ Fallback local activat.');
     devotionalData = buildFallbackDevotional({
-      theme,
-      verseText: verse.text,
-      verseReference: verse.reference
+      theme, verseText: verse.text, verseReference: verse.reference
     });
     generatedBy = 'fallback';
-    aiModel = '';
-    theologyScore = null;
-    wasAutoFixed = false;
   }
 
-  // ── Salvare în Baza de Date ──
+  // Salvare DB
   try {
     const docToSave = {
-      dateKey,
-      theme,
+      dateKey, theme,
       verseText: verse.text,
       verseReference: verse.reference,
       verseBook: verse.book,
       verseChapter: verse.chapter,
       verseNumber: verse.number,
-
       title: devotionalData.title,
       introduction: devotionalData.introduction,
       reflection: devotionalData.reflection,
       practicalApplication: devotionalData.practicalApplication,
       prayer: devotionalData.prayer,
       thoughtOfTheDay: devotionalData.thoughtOfTheDay,
-
-      generatedBy,
-      aiModel,
+      generatedBy, aiModel,
       published: true
     };
 
-    // Adaugă metadate teologice dacă există
-    if (theologyScore !== null) {
-      docToSave.theologyScore = theologyScore;
-    }
-    if (wasAutoFixed) {
-      docToSave.wasAutoFixed = true;
-    }
+    if (theologyScore !== null) docToSave.theologyScore = theologyScore;
+    if (wasAutoFixed) docToSave.wasAutoFixed = true;
 
     const created = await DailyDevotional.create(docToSave);
-
-    const fixLabel = wasAutoFixed ? ' | 🔧 auto-fixed' : '';
-    console.log(`📖 Salvat: "${created.title}" | ${generatedBy} | teologie: ${theologyScore || 'N/A'}${fixLabel}`);
+    console.log(`📖 Salvat: "${created.title}" | ${generatedBy}`);
     return created.toObject();
   } catch (err) {
     if (err.code === 11000) {
-      console.log('⚠️ Duplicat detectat la salvare, preiau existentul.');
+      console.log('⚠️ Duplicat, preiau existentul.');
       return await DailyDevotional.findOne({ dateKey }).lean();
     }
     throw err;
@@ -777,10 +712,7 @@ async function getDevotionalByDate(dateKey) {
 }
 
 async function getRecentDevotionals(limit = 30) {
-  return DailyDevotional.find({})
-    .sort({ dateKey: -1 })
-    .limit(limit)
-    .lean();
+  return DailyDevotional.find({}).sort({ dateKey: -1 }).limit(limit).lean();
 }
 
 module.exports = {
