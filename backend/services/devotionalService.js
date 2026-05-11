@@ -2,7 +2,7 @@
 const DailyDevotional = require('../models/DailyDevotional');
 const Verse = require('../models/Verse');
 const geminiService = require('./geminiService');
-const { theologicalAIValidatorV7 } = require('./theologyValidatorV7');
+const { theologicalAIValidatorV9 } = require('./theologyValidatorV9');
 
 // ═══════════════════════════════════════
 // CONFIGURARE
@@ -536,8 +536,8 @@ function validateStructure(schema, devotional) {
 }
 
 // ═══════════════════════════════════════
-// VALIDARE COMPLETĂ (structură + teologie V7)
-// Cu suport auto-fix din V7
+// VALIDARE COMPLETĂ (structură + teologie V9)
+// Cu suport auto-fix din V9
 // ═══════════════════════════════════════
 async function validateDevotionalFull(schema, devotional, verse, theme) {
   // ── Pasul 1: Validare structurală ──
@@ -548,11 +548,11 @@ async function validateDevotionalFull(schema, devotional, verse, theme) {
   }
   console.log('✅ Validare structurală OK.');
 
-  // ── Pasul 2: Validare teologică V7 (semantic + auto-fix) ──
+  // ── Pasul 2: Validare teologică V9 (semantic + auto-fix) ──
   try {
-    const theologyResult = await theologicalAIValidatorV7(devotional, verse, theme);
+    const theologyResult = await theologicalAIValidatorV9(devotional, verse, theme);
 
-    console.log(`🔍 [TEOLOGIE V7] Scor: ${theologyResult.score}/100`);
+    console.log(`🔍 [TEOLOGIE V9] Scor: ${theologyResult.score}/100`);
 
     if (theologyResult.issues && theologyResult.issues.length > 0) {
       theologyResult.issues.forEach(issue => {
@@ -562,7 +562,7 @@ async function validateDevotionalFull(schema, devotional, verse, theme) {
 
     // ── Cazul 1: Valid direct ──
     if (theologyResult.isValid) {
-      console.log('✅ Validare teologică V7 OK.');
+      console.log('✅ Validare teologică V9 OK.');
       return {
         isValid: true,
         devotional: devotional,
@@ -570,9 +570,9 @@ async function validateDevotionalFull(schema, devotional, verse, theme) {
       };
     }
 
-    // ── Cazul 2: Invalid dar V7 a oferit auto-fix ──
+    // ── Cazul 2: Invalid dar V9 a oferit auto-fix ──
     if (!theologyResult.isValid && theologyResult.fixed) {
-      console.log('🔧 AUTO-FIX aplicat de V7 validator.');
+      console.log('🔧 AUTO-FIX aplicat de V9 validator.');
 
       // Verifică structura fix-ului (safety check)
       const fixedStructureOk = validateStructure(schema, theologyResult.fixed);
@@ -585,27 +585,27 @@ async function validateDevotionalFull(schema, devotional, verse, theme) {
           wasAutoFixed: true
         };
       } else {
-        console.log('❌ Auto-fix-ul V7 nu trece validarea structurală.');
+        console.log('❌ Auto-fix-ul V9 nu trece validarea structurală.');
         return { isValid: false, devotional: null, theologyScore: theologyResult.score };
       }
     }
 
     // ── Cazul 3: Invalid fără auto-fix ──
-    console.log(`❌ Validare teologică V7 eșuată (scor: ${theologyResult.score}), fără auto-fix.`);
+    console.log(`❌ Validare teologică V9 eșuată (scor: ${theologyResult.score}), fără auto-fix.`);
     if (theologyResult.issues) {
-      console.log('❌ THEOLOGICAL REJECT V7:', theologyResult.issues);
+      console.log('❌ THEOLOGICAL REJECT V9:', theologyResult.issues);
     }
     return { isValid: false, devotional: null, theologyScore: theologyResult.score };
 
   } catch (theologyErr) {
-    console.log('⚠️ Eroare la validarea teologică V7:', theologyErr.message);
-    // Dacă validatorul V7 crapă, acceptăm devoționalul dacă structura e OK
-    console.log('⚠️ Acceptăm devoționalul pe baza validării structurale (V7 indisponibil).');
+    console.log('⚠️ Eroare la validarea teologică V9:', theologyErr.message);
+    // Dacă validatorul V9 crapă, acceptăm devoționalul dacă structura e OK
+    console.log('⚠️ Acceptăm devoționalul pe baza validării structurale (V9 indisponibil).');
     return {
       isValid: true,
       devotional: devotional,
       theologyScore: null,
-      v7Error: theologyErr.message
+      v9Error: theologyErr.message
     };
   }
 }
@@ -663,7 +663,7 @@ async function createDevotionalForDate(date = new Date()) {
           verseReference: verse.reference
         }, schemaResult);
 
-        // ── Pasul 3: Validare completă (structură + teologie V7 cu auto-fix) ──
+        // ── Pasul 3: Validare completă (structură + teologie V9 cu auto-fix) ──
         const validationResult = await validateDevotionalFull(
           schemaResult,
           aiResult,
@@ -678,7 +678,7 @@ async function createDevotionalForDate(date = new Date()) {
           theologyScore = validationResult.theologyScore;
           wasAutoFixed = validationResult.wasAutoFixed || false;
 
-          const fixLabel = wasAutoFixed ? ' (auto-fixed by V7)' : '';
+          const fixLabel = wasAutoFixed ? ' (auto-fixed by V9)' : '';
           console.log(`✅ Devoțional acceptat${fixLabel} — teologie: ${theologyScore || 'N/A'}/100`);
           break;
         } else {
