@@ -607,6 +607,28 @@ async function createDevotionalForDate(date = new Date()) {
   if (geminiService.isConfigured()) {
     let retries = 0;
 
+// În createDevotionalForDate(), înainte de bucla while:
+
+const AI_PROVIDER_ORDER = [
+  { name: 'groq', priority: 1, cooldownMs: 5000 },
+  { name: 'gemini', priority: 2, cooldownMs: 2000 }
+];
+
+let lastGroqAttempt = 0;
+let lastGeminiAttempt = 0;
+
+// Apoi în ciclu, verifică cooldown:
+if (geminiService.currentProvider === 'groq') {
+  const elapsed = Date.now() - lastGroqAttempt;
+  if (elapsed < 5000) {
+    console.log(`⏳ Groq cooldown: ${(5000 - elapsed) / 1000}s remaining. Trecere la Gemini...`);
+    await new Promise(r => setTimeout(r, 5100 - elapsed));
+  }
+  lastGroqAttempt = Date.now();
+}
+
+
+
     while (retries < MAX_RETRIES) {
       console.log(`\n🔄 Încercare AI (${retries + 1}/${MAX_RETRIES}) — ${dateKey} — tema: ${theme}`);
 
