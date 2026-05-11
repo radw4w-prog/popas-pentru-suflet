@@ -4,16 +4,15 @@ const geminiService = require('./geminiService');
 const { theologicalAIValidator } = require('./theologyValidator');
 
 // ═══════════════════════════════
-// CONFIG V3
+// CONFIG V4
 // ═══════════════════════════════
 
-const MAX_AI_RETRIES = 3;
-const MAX_THEO_FIXES = 2;
+const MAX_RETRIES = 3;
 
 const THEMES = [
-  'dragoste','credinta','pace','bucurie',
-  'speranta','rugaciune','iertare',
-  'putere','recunostinta','intelepciune'
+  'dragoste', 'credinta', 'pace', 'bucurie',
+  'speranta', 'rugaciune', 'iertare',
+  'putere', 'recunostinta', 'intelepciune'
 ];
 
 const THEME_KEYWORDS = {
@@ -30,7 +29,7 @@ const THEME_KEYWORDS = {
 };
 
 // ═══════════════════════════════
-// DATE + THEME ENGINE
+// DATE
 // ═══════════════════════════════
 
 function getRomaniaDateKey(date = new Date()) {
@@ -38,6 +37,10 @@ function getRomaniaDateKey(date = new Date()) {
     timeZone: 'Europe/Bucharest'
   }).format(date);
 }
+
+// ═══════════════════════════════
+// THEME ENGINE
+// ═══════════════════════════════
 
 function getThemeForDate(dateKey) {
   const sum = dateKey.replace(/-/g, '')
@@ -60,7 +63,6 @@ async function getVerseForTheme(theme) {
   ]);
 
   const verse = found?.[0] || await Verse.findOne().lean();
-
   if (!verse) throw new Error("No verse found");
 
   return {
@@ -73,43 +75,35 @@ async function getVerseForTheme(theme) {
 }
 
 // ═══════════════════════════════
-// 🧠 V3: SEMANTIC SCHEMA ENGINE
+// PROMPT ENGINE V4 (STRICT)
 // ═══════════════════════════════
 
 function buildSchemaPrompt(verse) {
   return `
-EXTRAGE SEMANTIC DIN TEXT BIBLIC:
+Extrage STRICT din versetul biblic.
+
+NU interpreta.
+NU adăuga teologie.
+NU adăuga doctrine.
 
 "${verse.text}"
 
-RETURN JSON STRICT:
-
+Returnează JSON:
 {
-  "themeEmotion": "",
-  "spiritualTone": "lamentatie | promisiune | avertizare | lauda | rugaciune",
-  "actors": [],
-  "actions": [],
-  "commands": [],
-  "coreMeaning": "",
-  "spiritualCore": "",
-  "interpretation": "",
-  "scope": "personal | comunitar | profetic"
+ "actors": [],
+ "actions": [],
+ "commands": [],
+ "coreExpressions": [],
+ "keyMessage": "",
+ "spiritualCore": "",
+ "scope": ""
 }
-
-REGULI:
-- NU copia versetul
-- IDENTIFICĂ sensul, nu cuvinte
-- 1 idee centrală
 `;
 }
 
-// ═══════════════════════════════
-// DEVOTIONAL PROMPT V3 (FORȚE INTERPRETARE)
-// ═══════════════════════════════
-
 function buildDevotionalPrompt(data, schema) {
   return `
-Scrie devoțional CREȘTIN PROFUND.
+Scrie un devoțional STRICT bazat DOAR pe verset.
 
 VERSET:
 "${data.verseText}"
@@ -120,20 +114,16 @@ ${data.theme}
 SCHEMA:
 ${JSON.stringify(schema)}
 
-🔥 REGULI CRITICE V3:
-- NU repeta versetul
-- NU parafraza versetul
-- TREBUIE interpretare (obligatoriu)
-- TREBUIE explicație spirituală
-- ZERO fraze generale
-
-❌ INTERZIS:
-"acest verset ne amintește"
-"în lumea de astăzi"
-"Dumnezeu îți vorbește prin..."
+REGULI CRITICE:
+- fără alte versete
+- fără doctrină externă
+- fără Isus dacă nu apare în text
+- fără moralism general
+- 1 idee centrală
 
 STRUCTURĂ:
 
+JSON:
 {
  "title": "",
  "introduction": "",
@@ -142,16 +132,11 @@ STRUCTURĂ:
  "prayer": "",
  "thoughtOfTheDay": ""
 }
-
-REQUIREMENT:
-- introducerea = interpretare, NU introducere generică
-- reflecția = analiză teologică
-- aplicația = concretă, 1 acțiune reală
 `;
 }
 
 // ═══════════════════════════════
-// PARSER SAFE
+// PARSER ROBUST
 // ═══════════════════════════════
 
 function extractJson(raw) {
@@ -161,22 +146,22 @@ function extractJson(raw) {
 }
 
 // ═══════════════════════════════
-// FALLBACK
+// FALLBACK SAFE MODE
 // ═══════════════════════════════
 
 function fallbackDevotional(theme, verse) {
   return {
-    title: "Cuvânt pentru suflet",
-    introduction: `Acest text biblic reflectă o realitate spirituală profundă.`,
+    title: "Un cuvânt pentru sufletul tău",
+    introduction: `Astăzi reflectăm la ${theme}.`,
     reflection: verse.text,
-    practicalApplication: "Meditează 5 minute la acest verset.",
-    prayer: "Doamne, luminează-mi inima. Amin.",
-    thoughtOfTheDay: "Dumnezeu lucrează chiar și în tăcere."
+    practicalApplication: "Alege să meditezi 5 minute la acest verset.",
+    prayer: "Doamne, vorbește-mi prin Cuvântul Tău.",
+    thoughtOfTheDay: "Dumnezeu îți vorbește și azi."
   };
 }
 
 // ═══════════════════════════════
-// VALIDARE V3 (STRICTĂ)
+// BASIC VALIDATION
 // ═══════════════════════════════
 
 function validate(devotional) {
@@ -188,55 +173,62 @@ function validate(devotional) {
     'dragi prieteni',
     'în concluzie',
     'în lumea de astăzi',
-    'acest verset ne amintește',
-    'dumnezeu îți vorbește prin'
+    'acest verset ne amintește'
   ];
 
-  if (banned.some(b => text.includes(b))) return false;
-
-  // must contain interpretation signal
-  if (!text.includes('pentru că') && !text.includes('înseamnă')) {
-    return false;
-  }
-
-  return true;
+  return !banned.some(b => text.includes(b));
 }
 
 // ═══════════════════════════════
-// VIRAL ENGINE V3 (SAFE)
+// VIRAL ENGINE V4 (SEPARAT DE TEOLOGIE)
 // ═══════════════════════════════
 
 function detectEmotion(text) {
   const t = text.toLowerCase();
 
   if (t.includes('nu te teme')) return 'curaj';
-  if (t.includes('tăcere')) return 'tăcere';
-  if (t.includes('durere')) return 'durere';
-  if (t.includes('speran')) return 'speranță';
+  if (t.includes('pace')) return 'pace';
+  if (t.includes('slăbiciune')) return 'slăbiciune';
   if (t.includes('iubire')) return 'dragoste';
+  if (t.includes('speran')) return 'speranță';
 
   return 'reflecție';
 }
 
 function generateHook(emotion) {
   const map = {
-    curaj: "Nu ai nevoie de mai mult curaj.",
-    tăcere: "Când Dumnezeu tace, El tot lucrează.",
-    durere: "Durerea ta nu e ignorată.",
-    speranță: "Nu s-a terminat.",
-    dragoste: "Ești văzut."
+    curaj: "Nu ai nevoie de mai mult curaj. Ai nevoie de adevărul acesta.",
+    pace: "Există o pace pe care încă nu o trăiești.",
+    slăbiciune: "Slăbiciunea ta nu este finalul.",
+    dragoste: "Nu ești uitat.",
+    speranță: "Nu s-a terminat."
   };
 
   return map[emotion] || "Citește până la capăt.";
 }
 
+function viralScore(text) {
+  let score = 50;
+
+  if (text.includes('nu te teme')) score += 15;
+  if (text.includes('putere')) score += 10;
+  if (text.includes('speran')) score += 10;
+  if (text.includes('azi')) score += 5;
+  if (text.includes('dragi prieteni')) score -= 20;
+
+  return Math.max(0, Math.min(100, score));
+}
+
 function enhance(devotional, verse, theme) {
-  const emotion = detectEmotion(devotional.reflection || verse.text);
+  const emotion = detectEmotion(verse.text);
 
   return {
     ...devotional,
+
     viralHook: generateHook(emotion),
-    viralTitle: `${theme.toUpperCase()} - adevărul zilei`,
+    viralTitle: `${theme.toUpperCase()} - mesajul de azi`,
+    viralScore: viralScore(verse.text),
+
     socialCaption: `
 ${generateHook(emotion)}
 
@@ -253,57 +245,12 @@ ${generateHook(emotion)}
 // ═══════════════════════════════
 
 async function callAI(prompt) {
-  const raw = await geminiService.generate(prompt, 1800, 0.45);
+  const raw = await geminiService.generate(prompt, 1800, 0.4);
   return extractJson(raw);
 }
 
 // ═══════════════════════════════
-// 🧠 THEOLOGICAL FIX ENGINE V3
-// ═══════════════════════════════
-
-async function theologicalFixLoop(devotional, verse) {
-  let current = devotional;
-
-  for (let i = 0; i < MAX_THEO_FIXES; i++) {
-    const check = theologicalAIValidator(current);
-
-    if (check.isValid && check.score >= 85) {
-      return current;
-    }
-
-    const fixPrompt = `
-Corectează DOAR teologic acest devoțional.
-
-VERS:
-"${verse.text}"
-
-PROBLEME:
-${JSON.stringify(check.issues)}
-
-DEVOTIONAL:
-${JSON.stringify(current)}
-
-REGULI:
-- nu adăuga idei externe
-- întărește interpretarea
-- elimină generalizări
-- fă-l biblic exact
-
-Return JSON.
-`;
-
-    try {
-      current = await callAI(fixPrompt);
-    } catch (e) {
-      break;
-    }
-  }
-
-  return current;
-}
-
-// ═══════════════════════════════
-// MAIN ENGINE V3
+// CORE ENGINE V4
 // ═══════════════════════════════
 
 async function createDevotionalForDate(date = new Date()) {
@@ -315,41 +262,43 @@ async function createDevotionalForDate(date = new Date()) {
   const theme = getThemeForDate(dateKey);
   const verse = await getVerseForTheme(theme);
 
-  let devotional = null;
-  let schema = null;
+  let schema, devotional;
 
-  // AI LOOP
-  for (let i = 0; i < MAX_AI_RETRIES; i++) {
+  // 🔁 AI LOOP
+  for (let i = 0; i < MAX_RETRIES; i++) {
     try {
       schema = await callAI(buildSchemaPrompt(verse));
 
       devotional = await callAI(buildDevotionalPrompt(
-        { theme, verseText: verse.text },
+        { theme, verseText: verse.text, verseReference: verse.reference },
         schema
       ));
 
       if (validate(devotional)) break;
 
-    } catch (e) {}
+    } catch (e) {
+      console.log("AI retry:", e.message);
+    }
   }
 
-  if (!devotional) {
+  if (!devotional || !validate(devotional)) {
     devotional = fallbackDevotional(theme, verse);
   }
 
-  // 🧠 THEOLOGY REPAIR LAYER
-  devotional = await theologicalFixLoop(devotional, verse);
+  // 🧠 TEOLOGIC FILTER (FINAL GATE)
+  const theology = theologicalAIValidator(devotional);
 
-  const finalCheck = theologicalAIValidator(devotional);
-
-  if (!finalCheck.isValid) {
+  if (!theology.isValid) {
+    console.log("❌ THEOLOGICAL REJECT:", theology.issues);
     devotional = fallbackDevotional(theme, verse);
   }
 
-  // 🔥 VIRAL LAST
+  console.log("🧠 Theology score:", theology.score);
+
+  // 🔥 VIRAL LAYER (FINAL)
   devotional = enhance(devotional, verse, theme);
 
-  // SAVE
+  // 💾 SAVE
   const saved = await DailyDevotional.create({
     dateKey,
     theme,
@@ -361,8 +310,8 @@ async function createDevotionalForDate(date = new Date()) {
 
     ...devotional,
 
-    generatedBy: 'ai',
-    aiModel: 'gemini-v3-engine'
+    generatedBy: 'v4-engine',
+    aiModel: 'gemini-pro-v4'
   });
 
   return saved.toObject();
