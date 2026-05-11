@@ -440,52 +440,171 @@ function validateDevotionalAgainstSchema(schema, devotional) {
 async function generateDevotionalWithAI({ theme, verseText, verseReference }, schema) {
   const prompt = `Scrie un devoțional creștin profund, cald și pastoral în limba română.
 
+━━━━━━━━━━━━━━
 VERSETUL:
 "${verseText}"
-REFERINȚĂ: ${verseReference}
-TEMA: ${theme}
-CONTEXT TEMĂ: ${THEME_CONTEXT[theme] || theme}
 
-${schema ? `Folosește următoarele elemente cheie extrase din verset pentru a ghida reflecția și aplicația:
-- Mesajul cheie al versetului: ${schema.keyMessage || 'N/A'}
-- Miezul spiritual: ${schema.spiritualCore || 'N/A'}
-- Acțiuni menționate: ${schema.actions && schema.actions.length > 0 ? schema.actions.join(', ') : 'N/A'}
-- Porunci: ${schema.commands && schema.commands.length > 0 ? schema.commands.join(', ') : 'N/A'}
-- Actori: ${schema.actors && schema.actors.length > 0 ? schema.actors.join(', ') : 'N/A'}
+REFERINȚĂ:
+${verseReference}
+
+TEMA:
+${theme}
+
+CONTEXT TEMĂ:
+${THEME_CONTEXT[theme] || theme}
+
+${schema ? `
+SCHEMA EXTRASĂ DIN VERSET (OBLIGATORIE):
+- keyMessage: ${schema.keyMessage || 'N/A'}
+- spiritualCore: ${schema.spiritualCore || 'N/A'}
+- actions: ${schema.actions?.length ? schema.actions.join(', ') : 'N/A'}
+- commands: ${schema.commands?.length ? schema.commands.join(', ') : 'N/A'}
+- actors: ${schema.actors?.length ? schema.actors.join(', ') : 'N/A'}
+- coreExpressions: ${schema.coreExpressions?.length ? schema.coreExpressions.join(', ') : 'N/A'}
 ` : ''}
 
-Scrie pentru un cititor român obișnuit, cu lupte reale, griji reale și nevoie reală de mângâiere și adevăr biblic.
+━━━━━━━━━━━━━━
+REGULĂ FUNDAMENTALĂ:
 
+Construiește devoționalul EXCLUSIV din acest verset.
+
+Nu scrie pe tema generală.
+Nu folosi alte versete.
+Nu introduce idei externe.
+Nu face teologie liberă.
+
+Dacă textul poate fi mutat pe alt verset fără modificări,
+outputul este INVALID.
+
+━━━━━━━━━━━━━━
+ANCORARE OBLIGATORIE ÎN VERSET:
+
+Reflecția trebuie să explice explicit:
+- keyMessage
+- spiritualCore
+- fiecare action
+- fiecare command (dacă există)
+- minimum 2 coreExpressions
+
+Nu doar parafraza versetul.
+Explică sensul lui.
+
+━━━━━━━━━━━━━━
+INTRODUCERE:
+
+Introducerea trebuie să pornească din tensiunea exactă a versetului.
+
+Exemplu:
+dacă versetul vorbește despre "biruință",
+introducerea pornește din sentimentul de înfrângere.
+
+NU începe cu:
+"Viața este grea"
+"În momentele dificile"
+"Cu toții trecem prin"
+
+━━━━━━━━━━━━━━
+METAFORĂ:
+
+Este permisă O SINGURĂ metaforă.
+
+Metafora trebuie derivată direct din verset.
+
+NU inventa decoruri simbolice:
+- furtuni
+- oceane
+- ziduri
+- munți
+- foc
+- drumuri
+- călătorii
+
+DECÂT dacă apar în verset.
+
+Dacă apare a doua metaforă → INVALID.
+
+━━━━━━━━━━━━━━
+APLICAȚIE PRACTICĂ:
+
+Trebuie să fie imediată și concretă:
+- un pas clar de făcut azi
+SAU
+- o întrebare directă personală
+
+Nu aplicații vagi.
+
+━━━━━━━━━━━━━━
+RUGĂCIUNE:
+
+Trebuie să fie:
+- personală
+- specifică acestui verset
+- bazată pe spiritualCore
+
+Folosește:
+"Doamne" sau "Dumnezeu"
+
+Nu folosi:
+"Univers"
+"energie"
+"Putere Divină"
+
+━━━━━━━━━━━━━━
+STIL:
+
+- română literară naturală
+- ton pastoral român matur
+- cald
+- empatic
+- uman
+
+INTERZIS:
+"acest verset ne amintește"
+"în lumea de astăzi"
+"putem alege să"
+"Dumnezeu dorește să"
+"nu este întâmplător"
+"în concluzie"
+"dragi prieteni"
+
+Nu folosi limbaj robotic.
+
+Nu umple textul cu emoție generică.
+Fiecare propoziție trebuie să explice ceva din verset.
+
+━━━━━━━━━━━━━━
 STRUCTURĂ:
-1. titlu emoțional și memorabil
-2. introducere cu hook uman și personal
-3. mesaj biblic profund bazat EXPLICIT pe sensul și contextul ACESTUI verset specific, nu pe tema generală
-4. aplicație practică foarte concretă, personală și directă — cu un pas imediat posibil azi
-5. rugăciune caldă, sinceră și specifică acestui verset
-6. gândul zilei memorabil ca un proverb creștin
 
-REGULI ABSOLUTE:
-- exclusiv în română literară naturală
-- ton uman, cald, pastoral — ca un pastor matur vorbind față în față
-- fără limbaj robotic sau de AI
-- interzis: "acest verset ne amintește", "în lumea de astăzi", "putem alege să", "Dumnezeu dorește să", "nu este întâmplător", "în concluzie", "dragi prieteni"
-- nu moraliza rece — vorbește cu căldură și empatie
-- include o metaforă sau imagine vizuală naturală din viața de zi cu zi
-- reflecția trebuie să arate EXPLICIT ce spune versetul, nu doar tema generală
-- aplicația practică TREBUIE să conțină fie o întrebare directă către cititor, fie un pas concret și imediat
-- rugăciunea să fie personală și specifică, nu generică
-- maxim 350 cuvinte total
-- trebuie să pară scris de un pastor român matur, nu de un program de calculator
-
-Returnează DOAR JSON valid, fără niciun text înainte sau după:
 {
-  "title": "titlu poetic, emoțional, max 7 cuvinte",
-  "introduction": "hook uman și personal, 2-3 propoziții",
-  "reflection": "mesaj biblic profund bazat pe contextul exact al versetului, cu metaforă, 4-5 propoziții",
-  "practicalApplication": "pas concret și imediat sau întrebare directă către cititor, 2-3 propoziții",
-  "prayer": "rugăciune personală și specifică versetului, 3-4 propoziții",
-  "thoughtOfTheDay": "gând memorabil ca un proverb creștin modern, max 15 cuvinte"
-}`;
+  "title": "max 7 cuvinte, poetic și memorabil",
+  "introduction": "2-3 propoziții, hook uman ancorat în tensiunea versetului",
+  "reflection": "4-5 propoziții, explică sensul exact al versetului, o singură metaforă",
+  "practicalApplication": "2-3 propoziții, pas concret sau întrebare directă",
+  "prayer": "3-4 propoziții, personală și specifică versetului",
+  "thoughtOfTheDay": "max 15 cuvinte, diferit de title"
+}
+
+━━━━━━━━━━━━━━
+VALIDARE INTERNĂ OBLIGATORIE:
+
+Verifică înainte de răspuns:
+
+✔ toate actions apar explicate
+✔ toate commands apar explicate
+✔ minimum 2 coreExpressions apar clar
+✔ spiritualCore este prezent
+✔ există o singură metaforă
+✔ textul nu poate fi mutat pe alt verset
+✔ nu există clișee
+✔ nu există idei din alte versete
+
+Dacă una e falsă → regenerează.
+
+━━━━━━━━━━━━━━
+Returnează DOAR JSON valid.
+Primul caracter trebuie să fie { și ultimul }.
+Fără backticks.
+`;
 
   const raw = await geminiService.generate(prompt, 2000, 0.35); // Added temperature
 
