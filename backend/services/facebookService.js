@@ -536,6 +536,97 @@ class FacebookService {
     }
   }
 
+
+
+// ═══ PUBLISH VIDEO (Reels) ═══
+async publishVideo(post) {
+  if (!this.isConfigured()) {
+    throw new Error('Facebook nu este configurat!');
+  }
+
+  const message = [post.content, post.hashtags]
+    .filter(Boolean)
+    .join('\n\n');
+
+  console.log('\n════════════════════════════════════');
+  console.log('🎬 FACEBOOK VIDEO PUBLISH');
+  console.log('   Text:', message.substring(0, 80) + '...');
+  console.log('   Are video base64:', post.videoBase64 ? 'DA' : 'NU');
+  console.log('════════════════════════════════════\n');
+
+  if (!post.videoBase64) {
+    throw new Error('Video lipsă pentru publicare.');
+  }
+
+  // Decodează base64 → buffer
+  const matches = post.videoBase64.match(/^data:(video\/\w+);base64,(.+)$/);
+  if (!matches) {
+    throw new Error('Format video invalid. Așteptat data:video/...');
+  }
+
+  const mimeType = matches[1]; // ex: video/webm
+  const data = matches[2];
+  const buffer = Buffer.from(data, 'base64');
+
+  // Salvează temporar
+  const tempDir = path.join(__dirname, '../uploads/temp');
+  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+  const ext = mimeType.split('/')[1] || 'webm';
+  const tempFile = path.join(tempDir, `reel_${Date.now()}.${ext}`);
+
+  fs.writeFileSync(tempFile, buffer);
+  console.log(`✅ Video salvat temporar: ${tempFile} (${Math.round(buffer.length / 1024)} KB)`);
+
+  try {
+    // Upload video pe Facebook
+    const formData = new FormData();
+    formData.append('source', fs.createReadStream(tempFile), {
+      filename: `reel_popas_suflet.${ext}`,
+      contentType: mimeType
+    });
+    formData.append('description', message);
+    formData.append('access_token', this.accessToken);
+
+    // Folosim /videos pentru Reels
+    const r = await this.http.post(
+      `${this.baseUrl}/${this.pageId}/videos`,
+      formData,
+      {
+        headers: formData.getHeaders(),
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        timeout: 180000 // 3 minute pentru upload video
+      }
+    );
+
+    console.log('✅ Video publicat pe Facebook:', r.data.id);
+
+    // Cleanup
+    try { fs.unlinkSync(tempFile); } catch (e) {}
+
+    return {
+      success: true,
+      postId: r.data.id,
+      platform: 'facebook',
+      url: `https://facebook.com/${r.data.id}`,
+      tipMedia: 'video'
+    };
+
+  } catch (error) {
+    // Cleanup la eroare
+    try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile); } catch (e) {}
+
+    const msg = this.getFbErrorMessage(error);
+    console.error('❌ publishVideo:', msg);
+    throw new Error(msg);
+  }
+}
+
+
+
+
+
 } // ← ÎNCHIDE CLASA
 
 module.exports = new FacebookService();

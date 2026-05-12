@@ -66,19 +66,36 @@ router.post('/publish-direct', async (req, res) => {
       return res.status(400).json({ error: 'Facebook neconectat!' });
     }
 
-    let imagePath = null;
+    let result;
 
-    if (imageBase64 && imageBase64.startsWith('data:image')) {
-      imagePath = saveBase64Image(imageBase64, 'publish');
-    }
+// Video direct
+if (req.body.videoBase64 && req.body.videoBase64.startsWith('data:video')) {
+  console.log('🎬 Publicare video direct...');
+  result = await facebookService.publishVideo({
+    content,
+    hashtags,
+    videoBase64: req.body.videoBase64
+  });
+} else {
+  // Imagine sau text
+  let imagePath = null;
+  if (imageBase64 && imageBase64.startsWith('data:image')) {
+    imagePath = saveBase64Image(imageBase64, 'publish');
+  }
 
-    const postObj = {
-      content,
-      hashtags,
-      imageUrl: imagePath || imageUrl || null
-    };
+  const postObj = {
+    content,
+    hashtags,
+    imageUrl: imagePath || imageUrl || null
+  };
 
-    const result = await facebookService.publishPost(postObj);
+  result = await facebookService.publishPost(postObj);
+
+  // Cleanup imagine temporară
+  if (imagePath && fs.existsSync(imagePath)) {
+    try { fs.unlinkSync(imagePath); } catch (e) {}
+  }
+}
 
     // Cleanup imagine temporară
     if (imagePath && fs.existsSync(imagePath)) {
@@ -107,10 +124,12 @@ router.post('/publish-direct', async (req, res) => {
 });
 
 // POST /api/social/schedule
+// POST /api/social/schedule
 router.post('/schedule', async (req, res) => {
   try {
     const {
       content, hashtags, imageBase64, imageUrl,
+      videoBase64, tipMedia,
       platform = 'facebook', scheduledDate,
       tema = '', verset = null
     } = req.body;
@@ -132,13 +151,13 @@ router.post('/schedule', async (req, res) => {
       return res.status(400).json({ error: 'Data trebuie să fie în viitor!' });
     }
 
-    // NU mai salvăm local imaginea pentru programări
-    // Salvăm base64 direct în DB, ca să o poată publica și Render
     const post = await Post.create({
       content,
       hashtags,
-      imageUrl: imageBase64 ? null : (imageUrl || null),
+      imageUrl: (imageBase64 || videoBase64) ? null : (imageUrl || null),
       imageBase64: imageBase64 || null,
+      videoBase64: videoBase64 || null,
+      tipMedia: tipMedia || (videoBase64 ? 'video' : 'image'),
       platform,
       tema,
       verset,
@@ -148,7 +167,7 @@ router.post('/schedule', async (req, res) => {
 
     res.json({
       success: true,
-      message: `✅ Programat pentru ${dateObj.toLocaleString('ro-RO')}`,
+      message: `✅ ${tipMedia === 'video' ? 'Reel' : 'Postare'} programat pentru ${dateObj.toLocaleString('ro-RO')}`,
       post
     });
   } catch (error) {
@@ -185,6 +204,7 @@ router.get('/history', async (req, res) => {
 });
 
 // POST /api/social/publish/:id
+// POST /api/social/publish/:id
 router.post('/publish/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -192,7 +212,16 @@ router.post('/publish/:id', async (req, res) => {
       return res.status(404).json({ error: 'Postarea nu există!' });
     }
 
-    const result = await facebookService.publishPost(post);
+    let result;
+
+    // Video sau imagine
+    if (post.tipMedia === 'video' && post.videoBase64) {
+      console.log('🎬 Publicare video Reel...');
+      result = await facebookService.publishVideo(post);
+    } else {
+      console.log('🖼️ Publicare imagine/text...');
+      result = await facebookService.publishPost(post);
+    }
 
     await Post.findByIdAndUpdate(post._id, {
       status: 'published',

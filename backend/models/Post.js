@@ -26,15 +26,24 @@ const PostSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  imageBase64: {
+    type: String,
+    default: null
+  },
+  videoBase64: {
+    type: String,
+    default: null
+  },
+  tipMedia: {
+    type: String,
+    enum: ['image', 'video'],
+    default: 'image'
+  },
   status: {
-  type: String,
-  enum: ['draft', 'scheduled', 'publishing', 'published', 'failed'],
-  default: 'draft'
-},
-imageBase64: {
-  type: String,
-  default: null
-},
+    type: String,
+    enum: ['draft', 'scheduled', 'publishing', 'published', 'failed'],
+    default: 'draft'
+  },
   scheduledDate: {
     type: Date,
     default: null
@@ -57,13 +66,13 @@ imageBase64: {
     default: null
   },
   analytics: {
-  likes: { type: Number, default: 0 },
-  comments: { type: Number, default: 0 },
-  shares: { type: Number, default: 0 },
-  reach: { type: Number, default: 0 },
-  impressions: { type: Number, default: 0 },
-  syncedAt: { type: Date, default: null }
-},
+    likes: { type: Number, default: 0 },
+    comments: { type: Number, default: 0 },
+    shares: { type: Number, default: 0 },
+    reach: { type: Number, default: 0 },
+    impressions: { type: Number, default: 0 },
+    syncedAt: { type: Date, default: null }
+  },
   failedReason: {
     type: String,
     default: null

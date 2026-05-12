@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ReelGenerator from '../components/ReelGenerator';
 
 
 const API = process.env.REACT_APP_API_URL || '';
@@ -1763,6 +1764,18 @@ const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PA
 </button>
               </div>
             )}
+			{/* ═══ REEL GENERATOR ═══ */}
+<ReelGenerator
+  templateUrl={templateSelectat?.url || templateSelectat?.thumbnail || null}
+  versetText={versetEditat || generated?.verset?.text || ''}
+  versetReferinta={referintaEditata || generated?.verset?.referintaCompleta || generated?.verset?.referinta || ''}
+  descriere={generated?.variante?.[variantaActiva] || generated?.descriere || ''}
+  hashtags={generated?.hashtags || ''}
+  tema={tema}
+  isAdmin={isAdmin}
+/>
+			
+			
           </div>
         </div>
       )}
