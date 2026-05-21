@@ -76,9 +76,15 @@ async function checkAndPublish() {
           continue;
         }
 
-        console.log(`➡️  Publicare: ${post._id}`);
+        console.log(`➡️  Publicare: ${post._id} | tip: ${post.tipMedia || 'image'}`);
 
-        const result = await facebookService.publishPost(post);
+let result;
+if (post.tipMedia === 'video' && post.videoBase64) {
+  console.log('🎬 Publicare video Reel...');
+  result = await facebookService.publishVideo(post);
+} else {
+  result = await facebookService.publishPost(post);
+}
 
         await Post.findByIdAndUpdate(post._id, {
           status: 'published',

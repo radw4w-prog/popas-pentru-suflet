@@ -247,14 +247,14 @@ const ReelGenerator = ({
         ctx.fillStyle = 'rgba(255,255,255,0.88)';
         ctx.textAlign = 'center';
 
-        const descText = descriere.length > 120
-          ? descriere.substring(0, 120) + '...'
-          : descriere;
+        const descText = descriere.length > 200
+  ? descriere.substring(0, 200) + '...'
+  : descriere;
 
-        const descLines = getLines(ctx, descText, W * 0.8, 3);
-        descLines.forEach((line, i) => {
-          ctx.fillText(line, W / 2, versetStartY + versetH + 150 + i * 55);
-        });
+const descLines = getLines(ctx, descText, W * 0.82, 5);
+descLines.forEach((line, i) => {
+  ctx.fillText(line, W / 2, versetStartY + versetH + 140 + i * 50);
+});
         ctx.restore();
       }
     }
