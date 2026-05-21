@@ -360,9 +360,14 @@ const ReelGenerator = ({
 
     // Configurare MediaRecorder
     const stream = canvas.captureStream(FPS);
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-      ? 'video/webm;codecs=vp9'
-      : 'video/webm';
+    const mimeType = MediaRecorder.isTypeSupported('video/mp4')
+  ? 'video/mp4'
+  : MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ? 'video/webm;codecs=vp9'
+    : 'video/webm';
+
+console.log('🎬 Format video ales:', mimeType);
+	  
 
     const recorder = new MediaRecorder(stream, {
       mimeType,
@@ -420,12 +425,13 @@ const ReelGenerator = ({
   // DOWNLOAD
   // ═══════════════════════════════════════
   const handleDownload = () => {
-    if (!videoUrl) return;
-    const link = document.createElement('a');
-    link.href = videoUrl;
-    link.download = `reel-popas-suflet-${Date.now()}.webm`;
-    link.click();
-  };
+  if (!videoUrl) return;
+  const ext = videoBlob?.type?.includes('mp4') ? 'mp4' : 'webm';
+  const link = document.createElement('a');
+  link.href = videoUrl;
+  link.download = `reel-popas-suflet-${Date.now()}.${ext}`;
+  link.click();
+};
 
   // ═══════════════════════════════════════
   // PROGRAMARE FACEBOOK

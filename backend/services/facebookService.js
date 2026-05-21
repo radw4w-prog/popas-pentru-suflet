@@ -581,26 +581,30 @@ async publishVideo(post) {
   try {
     // Upload video pe Facebook
     const formData = new FormData();
-    formData.append('source', fs.createReadStream(tempFile), {
-      filename: `reel_popas_suflet.${ext}`,
-      contentType: mimeType
-    });
-    formData.append('description', message);
-    formData.append('access_token', this.accessToken);
+formData.append('source', fs.createReadStream(tempFile), {
+  filename: `reel_popas_suflet.${ext}`,
+  contentType: mimeType
+});
+formData.append('description', message);
+formData.append('published', 'true');
+formData.append('access_token', this.accessToken);
 
-    // Folosim /videos pentru Reels
-    const r = await this.http.post(
-      `${this.baseUrl}/${this.pageId}/videos`,
-      formData,
-      {
-        headers: formData.getHeaders(),
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 180000 // 3 minute pentru upload video
-      }
-    );
+// Încearcă /videos
+const r = await this.http.post(
+  `${this.baseUrl}/${this.pageId}/videos`,
+  formData,
+  {
+    headers: {
+      ...formData.getHeaders(),
+      'Content-Type': `multipart/form-data; boundary=${formData.getBoundary()}`
+    },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    timeout: 180000
+  }
+);
 
-    console.log('✅ Video publicat pe Facebook:', r.data.id);
+console.log('✅ Video publicat:', r.data);
 
     // Cleanup
     try { fs.unlinkSync(tempFile); } catch (e) {}

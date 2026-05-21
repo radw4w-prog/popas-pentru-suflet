@@ -70,15 +70,18 @@ router.post('/publish-direct', async (req, res) => {
 
 // Video direct
 if (req.body.videoBase64 && req.body.videoBase64.startsWith('data:video')) {
+  // ── Video ──
   console.log('🎬 Publicare video direct...');
   result = await facebookService.publishVideo({
     content,
     hashtags,
     videoBase64: req.body.videoBase64
   });
+
 } else {
-  // Imagine sau text
+  // ── Imagine sau text ──
   let imagePath = null;
+
   if (imageBase64 && imageBase64.startsWith('data:image')) {
     imagePath = saveBase64Image(imageBase64, 'publish');
   }
@@ -86,12 +89,12 @@ if (req.body.videoBase64 && req.body.videoBase64.startsWith('data:video')) {
   const postObj = {
     content,
     hashtags,
+    imageBase64: imageBase64 || null,
     imageUrl: imagePath || imageUrl || null
   };
 
   result = await facebookService.publishPost(postObj);
 
-  // Cleanup imagine temporară
   if (imagePath && fs.existsSync(imagePath)) {
     try { fs.unlinkSync(imagePath); } catch (e) {}
   }
