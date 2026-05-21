@@ -7,6 +7,42 @@ const API = process.env.REACT_APP_API_URL || '';
 // ═══════════════════════════════════════
 // CONFIGURARE REEL
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// MUZICĂ DISPONIBILĂ
+// ═══════════════════════════════════════
+const MUZICA = [
+  {
+    id: 'none',
+    titlu: 'Fără muzică',
+    autor: '',
+    icon: '🔇',
+    url: null
+  },
+  {
+    id: 'music1',
+    titlu: 'Worship Piano',
+    autor: 'Pixabay',
+    icon: '🎹',
+    url: '/audio/music1.mp3'
+  },
+  {
+    id: 'music2',
+    titlu: 'Gospel Inspirational',
+    autor: 'Pixabay',
+    icon: '🎵',
+    url: '/audio/music2.mp3'
+  },
+  {
+    id: 'music3',
+    titlu: 'Christian Meditation',
+    autor: 'Pixabay',
+    icon: '🕊️',
+    url: '/audio/music3.mp3'
+  }
+  // ── Adaugă piese noi aici ──
+  // { id: 'music4', titlu: '...', autor: '...', icon: '🎶', url: '/audio/music4.mp3' },
+];
+
 const REEL_W = 1080;
 const REEL_H = 1920;
 const DURATA_SEC = 15;
@@ -30,12 +66,17 @@ const ReelGenerator = ({
   const [scheduling, setScheduling] = useState(false);
   const [scheduleResult, setScheduleResult] = useState(null);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [muzicaSelectata, setMuzicaSelectata] = useState('none');
+const [audioPreview, setAudioPreview] = useState(null);
 
   const canvasRef = useRef(null);
   const loadedImgRef = useRef(null);
   const loadedLogoRef = useRef(null);
   const animFrameRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+  const audioContextRef = useRef(null);
+const audioSourceRef = useRef(null);
+const audioDestRef = useRef(null);
   const chunksRef = useRef([]);
 
   // Preload logo
@@ -325,93 +366,159 @@ descLines.forEach((line, i) => {
   // GENERARE VIDEO
   // ═══════════════════════════════════════
   const genereazaReel = useCallback(async () => {
-    if (!templateUrl) {
-      alert('Selectează mai întâi un template de imagine.');
+  if (!templateUrl) {
+    alert('Selectează mai întâi un template de imagine.');
+    return;
+  }
+
+  setStatus('generating');
+  setProgress(0);
+  setVideoUrl(null);
+  setVideoBlob(null);
+  setScheduleResult(null);
+  chunksRef.current = [];
+
+  // Oprește preview audio dacă rulează
+  if (audioPreview) {
+    audioPreview.pause();
+    audioPreview.currentTime = 0;
+    setAudioPreview(null);
+  }
+
+  // Încarcă imaginea
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.crossOrigin = 'anonymous';
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = templateUrl;
+  }).catch(() => null);
+
+  if (!img) {
+    setStatus('error');
+    return;
+  }
+
+  loadedImgRef.current = img;
+
+  const canvas = canvasRef.current;
+  canvas.width = REEL_W;
+  canvas.height = REEL_H;
+  const ctx = canvas.getContext('2d');
+
+  // ── Setup AudioContext + mix audio ──
+  let audioTrack = null;
+  const muzica = MUZICA.find(m => m.id === muzicaSelectata);
+
+  if (muzica && muzica.url) {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+      audioContextRef.current = audioCtx;
+
+      // Descarcă și decodează audio
+      const response = await fetch(muzica.url);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+      // Destination pentru MediaRecorder
+      const dest = audioCtx.createMediaStreamDestination();
+      audioDestRef.current = dest;
+
+      // Gain node pentru fade
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      // Fade-in 1 secundă
+      gainNode.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 1);
+      // Fade-out 2 secunde la final
+      gainNode.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + DURATA_SEC - 2);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + DURATA_SEC);
+
+      // Source
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.loop = true;
+      source.connect(gainNode);
+      gainNode.connect(dest);
+      source.start(audioCtx.currentTime);
+      audioSourceRef.current = source;
+
+      audioTrack = dest.stream.getAudioTracks()[0];
+      console.log('🎵 Audio track creat:', muzica.titlu);
+
+    } catch (e) {
+      console.warn('⚠️ Audio eșuat, continui fără muzică:', e.message);
+    }
+  }
+
+  // ── Setup MediaRecorder cu audio + video ──
+  const videoStream = canvas.captureStream(FPS);
+
+  // Adaugă audio track dacă există
+  const stream = new MediaStream([
+    ...videoStream.getVideoTracks(),
+    ...(audioTrack ? [audioTrack] : [])
+  ]);
+
+  const mimeType = MediaRecorder.isTypeSupported('video/mp4')
+    ? 'video/mp4'
+    : MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+
+  console.log('🎬 Format video ales:', mimeType);
+
+  const recorder = new MediaRecorder(stream, {
+    mimeType,
+    videoBitsPerSecond: 4000000
+  });
+
+  mediaRecorderRef.current = recorder;
+
+  recorder.ondataavailable = (e) => {
+    if (e.data.size > 0) chunksRef.current.push(e.data);
+  };
+
+  recorder.onstop = () => {
+    // Cleanup AudioContext
+    if (audioSourceRef.current) {
+      try { audioSourceRef.current.stop(); } catch (e) {}
+    }
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch (e) {}
+    }
+
+    const blob = new Blob(chunksRef.current, { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    setVideoUrl(url);
+    setVideoBlob(blob);
+    setStatus('done');
+    setProgress(100);
+  };
+
+  recorder.start(100);
+
+  // ── Animație frame cu frame ──
+  let frameIndex = 0;
+  const interval = (DURATA_SEC * 1000) / TOTAL_FRAMES;
+
+  const renderFrame = () => {
+    if (frameIndex >= TOTAL_FRAMES) {
+      recorder.stop();
+      clearTimeout(animFrameRef.current);
       return;
     }
 
-    setStatus('generating');
-    setProgress(0);
-    setVideoUrl(null);
-    setVideoBlob(null);
-    setScheduleResult(null);
-    chunksRef.current = [];
+    drawFrame(ctx, img, frameIndex);
+    setProgress(Math.round((frameIndex / TOTAL_FRAMES) * 100));
+    frameIndex++;
 
-    // Încarcă imaginea
-    const img = await new Promise((resolve, reject) => {
-      const i = new Image();
-      i.crossOrigin = 'anonymous';
-      i.onload = () => resolve(i);
-      i.onerror = reject;
-      i.src = templateUrl;
-    }).catch(() => null);
+    animFrameRef.current = setTimeout(renderFrame, interval);
+  };
 
-    if (!img) {
-      setStatus('error');
-      return;
-    }
+  renderFrame();
 
-    loadedImgRef.current = img;
-
-    const canvas = canvasRef.current;
-    canvas.width = REEL_W;
-    canvas.height = REEL_H;
-    const ctx = canvas.getContext('2d');
-
-    // Configurare MediaRecorder
-    const stream = canvas.captureStream(FPS);
-    const mimeType = MediaRecorder.isTypeSupported('video/mp4')
-  ? 'video/mp4'
-  : MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ? 'video/webm;codecs=vp9'
-    : 'video/webm';
-
-console.log('🎬 Format video ales:', mimeType);
-	  
-
-    const recorder = new MediaRecorder(stream, {
-      mimeType,
-      videoBitsPerSecond: 4000000 // 4 Mbps
-    });
-
-    mediaRecorderRef.current = recorder;
-
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-
-    recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      setVideoUrl(url);
-      setVideoBlob(blob);
-      setStatus('done');
-      setProgress(100);
-    };
-
-    recorder.start(100); // chunk la 100ms
-
-    // Animație frame cu frame
-    let frameIndex = 0;
-    const interval = (DURATA_SEC * 1000) / TOTAL_FRAMES;
-
-    const renderFrame = () => {
-      if (frameIndex >= TOTAL_FRAMES) {
-        recorder.stop();
-        cancelAnimationFrame(animFrameRef.current);
-        return;
-      }
-
-      drawFrame(ctx, img, frameIndex);
-      setProgress(Math.round((frameIndex / TOTAL_FRAMES) * 100));
-      frameIndex++;
-
-      animFrameRef.current = setTimeout(renderFrame, interval);
-    };
-
-    renderFrame();
-
-  }, [templateUrl, drawFrame]);
+}, [templateUrl, drawFrame, muzicaSelectata, audioPreview]);
 
   // Cleanup
   useEffect(() => {
@@ -420,6 +527,34 @@ console.log('🎬 Format video ales:', mimeType);
       if (videoUrl) URL.revokeObjectURL(videoUrl);
     };
   }, [videoUrl]);
+  
+  
+  
+  const handlePreviewMuzica = (muzica) => {
+  // Oprește preview curent
+  if (audioPreview) {
+    audioPreview.pause();
+    audioPreview.currentTime = 0;
+    setAudioPreview(null);
+    if (!muzica || !muzica.url) return;
+  }
+
+  if (!muzica || !muzica.url) return;
+
+  const audio = new Audio(muzica.url);
+  audio.volume = 0.5;
+  audio.play().catch(() => {});
+  setAudioPreview(audio);
+
+  // Oprește după 8 secunde
+  setTimeout(() => {
+    audio.pause();
+    audio.currentTime = 0;
+    setAudioPreview(null);
+  }, 8000);
+};
+  
+  
 
   // ═══════════════════════════════════════
   // DOWNLOAD
@@ -530,7 +665,55 @@ console.log('🎬 Format video ales:', mimeType);
             <span className="reel-feature">✅ 15 secunde</span>
             <span className="reel-feature">✅ 1080×1920</span>
           </div>
+          
+		  
+		  {/* Selector muzică */}
+<div className="reel-muzica-section">
+  <div className="reel-muzica-title">🎵 Muzică de fundal</div>
+  <div className="reel-muzica-list">
+    {MUZICA.map(m => (
+      <div
+        key={m.id}
+        className={`reel-muzica-item ${muzicaSelectata === m.id ? 'selectat' : ''}`}
+        onClick={() => setMuzicaSelectata(m.id)}
+      >
+        <span className="reel-muzica-icon">{m.icon}</span>
+        <div className="reel-muzica-info">
+          <div className="reel-muzica-nume">{m.titlu}</div>
+          {m.autor && (
+            <div className="reel-muzica-autor">{m.autor}</div>
+          )}
+        </div>
+        {muzicaSelectata === m.id && (
+          <span className="reel-muzica-check">✓</span>
+        )}
+        {m.url && (
           <button
+            className="reel-muzica-preview-btn"
+            onClick={e => {
+              e.stopPropagation();
+              handlePreviewMuzica(
+                audioPreview ? null : m
+              );
+            }}
+            title="Preview 8 secunde"
+          >
+            {audioPreview ? '⏹' : '▶'}
+          </button>
+        )}
+      </div>
+    ))}
+  </div>
+  {audioPreview && (
+    <div className="reel-muzica-playing">
+      🎵 Se redă preview... (8 secunde)
+    </div>
+  )}
+</div>
+		  
+		  
+		  
+		  <button
             className="reel-gen-btn"
             onClick={genereazaReel}
             disabled={!templateUrl || !versetText}
