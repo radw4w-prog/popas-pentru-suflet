@@ -5300,3 +5300,66 @@ body.sidebar-open {
   color: var(--text-secondary, #aaa);
   line-height: 1.4;
 }
+
+
+.reel-share-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.reel-manual-info {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reel-manual-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin-bottom: 4px;
+}
+
+.reel-manual-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.reel-manual-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(108,99,255,0.2);
+  border: 1px solid rgba(108,99,255,0.3);
+  color: #a78bfa;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reel-copy-text-btn {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(108,99,255,0.3);
+  background: rgba(108,99,255,0.08);
+  color: #a78bfa;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.reel-copy-text-btn:hover {
+  background: rgba(108,99,255,0.15);
+}

@@ -592,66 +592,110 @@ console.log('🎬 Format video ales:', mimeType);
           </div>
 
           {/* Acțiuni */}
-          <div className="reel-actions">
-            <button className="reel-action-btn reel-dl-btn" onClick={handleDownload}>
-              ⬇️ Descarcă WebM
-            </button>
-            <button
-              className="reel-action-btn reel-regen-btn"
-              onClick={() => {
-                setStatus('idle');
-                setVideoUrl(null);
-                setVideoBlob(null);
-              }}
-            >
-              🔄 Regenerează
-            </button>
+<div className="reel-actions">
+  <button className="reel-action-btn reel-dl-btn" onClick={handleDownload}>
+    ⬇️ Descarcă Reel
+  </button>
+  <button
+    className="reel-action-btn reel-share-btn"
+    onClick={() => {
+      if (navigator.share && videoBlob) {
+        const file = new File([videoBlob], 'reel-popas-suflet.webm', { type: videoBlob.type });
+        navigator.share({
+          title: 'Popas pentru Suflet — Reel',
+          text: descriere || '',
+          files: navigator.canShare && navigator.canShare({ files: [file] }) ? [file] : undefined
+        }).catch(() => {});
+      } else {
+        handleDownload();
+      }
+    }}
+  >
+    📤 Share
+  </button>
+  <button
+    className="reel-action-btn reel-regen-btn"
+    onClick={() => {
+      setStatus('idle');
+      setVideoUrl(null);
+      setVideoBlob(null);
+    }}
+  >
+    🔄 Regenerează
+  </button>
+</div>
+
+{/* Info postare manuală */}
+<div className="reel-manual-info">
+  <div className="reel-manual-title">📱 Cum postezi Reel-ul</div>
+  <div className="reel-manual-step">
+    <span className="reel-manual-num">1</span>
+    <span>Descarcă video-ul pe telefon</span>
+  </div>
+  <div className="reel-manual-step">
+    <span className="reel-manual-num">2</span>
+    <span>Deschide Facebook → Creează Reel → selectează video</span>
+  </div>
+  <div className="reel-manual-step">
+    <span className="reel-manual-num">3</span>
+    <span>Adaugă textul copiat mai jos și publică</span>
+  </div>
+  <button
+    className="reel-copy-text-btn"
+    onClick={async () => {
+      const text = [descriere, hashtags].filter(Boolean).join('\n\n');
+      await navigator.clipboard.writeText(text);
+      alert('✅ Text copiat!');
+    }}
+  >
+    📋 Copiază textul pentru postare
+  </button>
+</div>
+
+{/* Programare prin scheduler */}
+{isAdmin && (
+  <div className="reel-schedule-section">
+    <button
+      className="reel-schedule-toggle"
+      onClick={() => setShowSchedule(prev => !prev)}
+    >
+      📅 {showSchedule ? 'Ascunde programare' : 'Programează pe Facebook'}
+    </button>
+
+    {showSchedule && (
+      <div className="reel-schedule-form">
+        <div className="reel-schedule-info">
+          ℹ️ Video-ul va fi trimis automat la Facebook la data selectată prin serverul backend.
+        </div>
+        <label className="reel-schedule-label">
+          Data și ora (ora României):
+        </label>
+        <input
+          type="datetime-local"
+          className="reel-schedule-input"
+          value={scheduledAt}
+          onChange={e => setScheduledAt(e.target.value)}
+        />
+        <button
+          className="reel-schedule-btn"
+          onClick={handleSchedule}
+          disabled={scheduling || !scheduledAt}
+        >
+          {scheduling
+            ? '⏳ Se programează...'
+            : '📅 Programează Reel'
+          }
+        </button>
+
+        {scheduleResult && (
+          <div className={`reel-schedule-result ${scheduleResult.success ? 'success' : 'error'}`}>
+            {scheduleResult.message}
           </div>
-
-          {/* Programare Facebook */}
-          {isAdmin && (
-            <div className="reel-schedule-section">
-              <button
-                className="reel-schedule-toggle"
-                onClick={() => setShowSchedule(prev => !prev)}
-              >
-                📅 {showSchedule ? 'Ascunde programare' : 'Programează pe Facebook'}
-              </button>
-
-              {showSchedule && (
-                <div className="reel-schedule-form">
-                  <div className="reel-schedule-info">
-                    ℹ️ Video-ul va fi publicat automat pe Facebook la data selectată.
-                  </div>
-                  <label className="reel-schedule-label">
-                    Data și ora (ora României):
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="reel-schedule-input"
-                    value={scheduledAt}
-                    onChange={e => setScheduledAt(e.target.value)}
-                  />
-                  <button
-                    className="reel-schedule-btn"
-                    onClick={handleSchedule}
-                    disabled={scheduling || !scheduledAt}
-                  >
-                    {scheduling
-                      ? '⏳ Se programează...'
-                      : '📅 Programează Reel pe Facebook'
-                    }
-                  </button>
-
-                  {scheduleResult && (
-                    <div className={`reel-schedule-result ${scheduleResult.success ? 'success' : 'error'}`}>
-                      {scheduleResult.message}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+        )}
+      </div>
+    )}
+  </div>
+)}
 
           {/* Tips */}
           <div className="reel-tips">

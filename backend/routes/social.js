@@ -49,6 +49,7 @@ router.get('/status', async (req, res) => {
   }
 });
 
+
 // POST /api/social/publish-direct
 router.post('/publish-direct', async (req, res) => {
   try {
@@ -68,47 +69,45 @@ router.post('/publish-direct', async (req, res) => {
 
     let result;
 
-// Video direct
-if (req.body.videoBase64 && req.body.videoBase64.startsWith('data:video')) {
-  // ── Video ──
-  console.log('🎬 Publicare video direct...');
-  result = await facebookService.publishVideo({
-    content,
-    hashtags,
-    videoBase64: req.body.videoBase64
-  });
+    if (req.body.videoBase64 && req.body.videoBase64.startsWith('data:video')) {
+      // ── Video ──
+      console.log('🎬 Publicare video direct...');
+      result = await facebookService.publishVideo({
+        content,
+        hashtags,
+        videoBase64: req.body.videoBase64
+      });
 
-} else {
-  // ── Imagine sau text ──
-  let imagePath = null;
+    } else {
+      // ── Imagine sau text ──
+      let imagePath = null;
 
-  if (imageBase64 && imageBase64.startsWith('data:image')) {
-    imagePath = saveBase64Image(imageBase64, 'publish');
-  }
+      if (imageBase64 && imageBase64.startsWith('data:image')) {
+        imagePath = saveBase64Image(imageBase64, 'publish');
+      }
 
-  const postObj = {
-    content,
-    hashtags,
-    imageBase64: imageBase64 || null,
-    imageUrl: imagePath || imageUrl || null
-  };
+      const postObj = {
+        content,
+        hashtags,
+        imageBase64: imageBase64 || null,
+        imageUrl: imagePath || imageUrl || null
+      };
 
-  result = await facebookService.publishPost(postObj);
+      result = await facebookService.publishPost(postObj);
 
-  if (imagePath && fs.existsSync(imagePath)) {
-    try { fs.unlinkSync(imagePath); } catch (e) {}
-  }
-}
-
-    // Cleanup imagine temporară
-    if (imagePath && fs.existsSync(imagePath)) {
-      try { fs.unlinkSync(imagePath); } catch (e) {}
+      // Cleanup în același scope unde e declarată
+      if (imagePath && fs.existsSync(imagePath)) {
+        try { fs.unlinkSync(imagePath); } catch (e) {}
+      }
     }
 
     await Post.create({
-      content, hashtags,
+      content,
+      hashtags,
       imageUrl: imageUrl || null,
-      platform, tema, verset,
+      platform,
+      tema,
+      verset,
       status: 'published',
       publishedAt: new Date(),
       socialPostId: result.postId,
@@ -120,6 +119,7 @@ if (req.body.videoBase64 && req.body.videoBase64.startsWith('data:video')) {
       message: '✅ Publicat pe Facebook!',
       ...result
     });
+
   } catch (error) {
     console.error('❌ Publish error:', error.message);
     res.status(400).json({ success: false, error: error.message });
