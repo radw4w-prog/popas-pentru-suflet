@@ -1,13 +1,12 @@
 {
-  "headers": [
+  "rewrites": [
     {
       "source": "/sitemap.xml",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/xml"
-        }
-      ]
+      "destination": "https://popas-pentru-suflet-backend.onrender.com/sitemap.xml"
+    },
+    {
+      "source": "/((?!sitemap\\.xml).*)",
+      "destination": "/index.html"
     }
   ]
 }
