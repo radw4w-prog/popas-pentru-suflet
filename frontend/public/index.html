@@ -19,16 +19,18 @@
   <meta property="og:title" content="Popas pentru Suflet - Aplicație creștină gratuită" />
   <meta property="og:description" content="Citește Biblia Cornilescu, roagă-te zilnic și creează conținut creștin inspirațional. Gratuit, online și pe telefon." />
   <meta property="og:url" content="https://popas-pentru-suflet.vercel.app/" />
-  <meta property="og:image" content="https://popas-pentru-suflet.vercel.app/icons/icon-512.png" />
-  <meta property="og:image:width" content="512" />
-  <meta property="og:image:height" content="512" />
+  <meta property="og:image" content="https://popas-pentru-suflet-backend.onrender.com/api/og-image" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="Popas pentru Suflet – versetul zilei" />
   <meta property="og:locale" content="ro_RO" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Popas pentru Suflet - Aplicație creștină" />
   <meta name="twitter:description" content="Biblia online, versete zilnice și rugăciuni. Gratuit." />
-  <meta name="twitter:image" content="https://popas-pentru-suflet.vercel.app/icons/icon-512.png" />
+  <meta name="twitter:image" content="https://popas-pentru-suflet-backend.onrender.com/api/og-image" />
 
   <!-- Structured Data - Schema.org -->
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Popas pentru Suflet","url":"https://popas-pentru-suflet.vercel.app","description":"Aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional.","applicationCategory":"LifestyleApplication","operatingSystem":"Android, iOS, Web","inLanguage":"ro-RO","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RON"},"author":{"@type":"Organization","name":"Popas pentru Suflet"}}</script>
@@ -54,65 +56,36 @@
   <!-- Google Fonts - ASYNC -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="preload"
-    as="style"
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
-  />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
-    media="print"
-    onload="this.media='all'"
-  />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" media="print" onload="this.media='all'" />
   <noscript>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
-    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" />
   </noscript>
 
   <!-- Critical CSS inline -->
   <style>
     body { margin:0; font-family: -apple-system,'Inter', sans-serif; }
-    html, body {
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100%;
-    }
+    html, body { overflow-x: hidden; width: 100%; max-width: 100%; }
     * { box-sizing: border-box; }
-    [data-theme="dark"] body {
-      background: #0a0a0f;
-      color: #f0f0f0;
-    }
-    [data-theme="light"] body {
-      background: #f8f5ee;
-      color: #1a1a2e;
-    }
-    /* Loading screen elegant */
+    [data-theme="dark"] body { background: #0a0a0f; color: #f0f0f0; }
+    [data-theme="light"] body { background: #f8f5ee; color: #1a1a2e; }
     #root:empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: #0a0a0f;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #0a0a0f;
     }
     #root:empty::after {
       content: '';
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       border: 3px solid rgba(212,175,55,0.2);
       border-top-color: #d4af37;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <noscript>Trebuie să activezi JavaScript pentru a folosi această aplicație.</noscript>
   <div id="root"></div>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a00e02026f97c9d3',t:'MTc3OTY0MzYxMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a00e325dec8db9e7',t:'MTc3OTY0NTU5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

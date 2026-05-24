@@ -116,6 +116,7 @@ app.use('/api/audio-bible', require('./routes/audioBible'));
 app.use('/api/journey', require('./routes/spiritualJourney'));
 app.use('/api/journal', require('./routes/journal'));
 app.use('/api/profile', require('./routes/profile'));
+app.use('/api/og-image', require('./routes/ogImage'));
 
 // ═══════════════════════════════════════
 // SCHEDULER
