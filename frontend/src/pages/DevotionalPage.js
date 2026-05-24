@@ -1,8 +1,12 @@
+
+
+
 // frontend/src/pages/DevotionalPage.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_TEMPLATES } from '../data/templates';
+import { uploadOgImage } from '../services/ogImageService';
 
 const APP_URL = 'https://popas-pentru-suflet.vercel.app';
 const APP_NAME = 'Popas pentru Suflet';
@@ -416,6 +420,14 @@ export default function DevotionalPage() {
       genereazaImagine();
     }
   }, [devotional, template]);
+  
+  
+  useEffect(() => {
+  if (imagine && devotional) {
+    // Trimite silențios la backend ca OG Image — o dată pe zi
+    uploadOgImage(imagine);
+  }
+}, [imagine]);
 
   // Regenerează când se schimbă stilul
   useEffect(() => {
