@@ -3,14 +3,10 @@ const express = require('express');
 const router = express.Router();
 const cloudinary = require('cloudinary').v2;
 
-// Configurare Cloudinary la pornirea modulului
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Cloudinary se configurează automat din CLOUDINARY_URL
+// Format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+// Nu mai e nevoie de config manual dacă CLOUDINARY_URL e setat în env
 
-// URL curent în memorie
 let currentOgImageUrl = null;
 
 // ══════════════════════════════════════════════════════
@@ -23,7 +19,7 @@ router.get('/', (req, res) => {
   res.setHeader('Content-Type', 'image/svg+xml');
   res.send(`<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="630" fill="#0a0a0f"/>
-    <text x="600" y="315" font-family="serif" font-size="48" fill="#d4af37" text-anchor="middle">🕊️ Popas pentru Suflet</text>
+    <text x="600" y="315" font-family="serif" font-size="48" fill="#d4af37" text-anchor="middle">Popas pentru Suflet</text>
   </svg>`);
 });
 
@@ -33,20 +29,12 @@ router.get('/', (req, res) => {
 router.post('/upload', async (req, res) => {
   try {
     console.log('📸 OG Image upload primit');
-    console.log('Cloudinary config:', {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY ? '✅ setat' : '❌ lipsă',
-      api_secret: process.env.CLOUDINARY_API_SECRET ? '✅ setat' : '❌ lipsă'
-    });
+    console.log('CLOUDINARY_URL setat:', !!process.env.CLOUDINARY_URL);
 
     const { image } = req.body;
 
-    if (!image) {
-      return res.status(400).json({ success: false, error: 'Imagine lipsă' });
-    }
-
-    if (!image.startsWith('data:image')) {
-      return res.status(400).json({ success: false, error: 'Format invalid' });
+    if (!image || !image.startsWith('data:image')) {
+      return res.status(400).json({ success: false, error: 'Imagine lipsă sau format invalid' });
     }
 
     const result = await cloudinary.uploader.upload(image, {
@@ -64,11 +52,11 @@ router.post('/upload', async (req, res) => {
     res.json({ success: true, url: currentOgImageUrl });
 
   } catch (err) {
-    console.error('❌ Cloudinary error detaliat:', err);
+    console.error('❌ Cloudinary error:', err.message, err.http_code);
     res.status(500).json({
       success: false,
       error: err.message,
-      details: err.error || err.http_code || 'unknown'
+      http_code: err.http_code
     });
   }
 });
