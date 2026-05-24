@@ -11,29 +11,18 @@ const app = express();
 // ═══════════════════════════════════════
 app.use(cors({
   origin: function(origin, callback) {
-    // Permite fără origin (Postman, mobile)
     if (!origin) return callback(null, true);
-    
-    // Permite orice Netlify
     if (origin.endsWith('.netlify.app')) return callback(null, true);
-    
-    // Permite orice Vercel
     if (origin.endsWith('.vercel.app')) return callback(null, true);
-    
-    // Permite localhost
     if (origin.startsWith('http://localhost')) return callback(null, true);
-
-    // Permite specific
     const allowed = [
       'https://popas-pentru-suflet.vercel.app',
       'https://serene-khapse-8c6464.netlify.app',
       'https://sweet-axolotl-c510b8.netlify.app',
     ];
     if (allowed.includes(origin)) return callback(null, true);
-
-    // Log și permite oricum (temporar pentru debug)
     console.log('⚠️ CORS origin necunoscut (permis temporar):', origin);
-    return callback(null, true); // ← temporar permite TOT
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -49,6 +38,64 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ═══════════════════════════════════════
 const connectDB = require('./config/database');
 connectDB();
+
+// ═══════════════════════════════════════
+// SITEMAP.XML — înainte de toate rutele API
+// ═══════════════════════════════════════
+app.get('/sitemap.xml', (req, res) => {
+  const baseUrl = 'https://popas-pentru-suflet.vercel.app';
+  const azi = new Date().toISOString().split('T')[0];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/dashboard</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/devotional</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/biblia</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/audio</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/reading</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/generate</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/rugaciuni</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>`;
+
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(xml);
+});
 
 // ═══════════════════════════════════════
 // ROUTES
@@ -76,7 +123,6 @@ app.use('/api/profile', require('./routes/profile'));
 const schedulerService = require('./services/schedulerService');
 schedulerService.init();
 
-// Pre-încarcă modelul ReadingPlan
 require('./models/ReadingPlan');
 
 // ═══════════════════════════════════════
@@ -99,7 +145,6 @@ app.get('/health', (req, res) => {
 app.get('/test-ai', async (req, res) => {
   try {
     const geminiService = require('./services/geminiService');
-    
     if (!geminiService.isConfigured()) {
       return res.status(400).json({
         success: false,
@@ -108,14 +153,10 @@ app.get('/test-ai', async (req, res) => {
         key_length: process.env.GEMINI_API_KEY?.length || 0
       });
     }
-    
     const result = await geminiService.testConnection();
     res.json(result);
   } catch(e) {
-    res.status(500).json({ 
-      success: false, 
-      error: e.message 
-    });
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
@@ -128,16 +169,13 @@ app.get('/test-gemini-models', async (req, res) => {
     const models = r.data.models
       .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
       .map(m => m.name);
-    res.json({ 
+    res.json({
       models,
       key_exists: !!process.env.GEMINI_API_KEY,
       key_preview: process.env.GEMINI_API_KEY?.substring(0, 15) + '...'
     });
   } catch (e) {
-    res.json({ 
-      error: e.response?.data || e.message,
-      key_exists: !!process.env.GEMINI_API_KEY
-    });
+    res.json({ error: e.response?.data || e.message, key_exists: !!process.env.GEMINI_API_KEY });
   }
 });
 
@@ -193,12 +231,12 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log('');
-  console.log('🕊️  ════════════════════════════════');
-  console.log('🕊️  Popas pentru Suflet API');
-  console.log(`🕊️  http://localhost:${PORT}`);
-  console.log(`🕊️  Mediu: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🕊️  Gemini: ${process.env.GEMINI_API_KEY ? '✅ Configurat' : '❌ Lipsă KEY'}`);
-  console.log(`🕊️  MongoDB: ${process.env.MONGODB_URI ? '✅ URI setat' : '❌ Lipsă URI'}`);
-  console.log('🕊️  ════════════════════════════════');
+  console.log('🕊️ ════════════════════════════════');
+  console.log('🕊️ Popas pentru Suflet API');
+  console.log(`🕊️ http://localhost:${PORT}`);
+  console.log(`🕊️ Mediu: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🕊️ Gemini: ${process.env.GEMINI_API_KEY ? '✅ Configurat' : '❌ Lipsă KEY'}`);
+  console.log(`🕊️ MongoDB: ${process.env.MONGODB_URI ? '✅ URI setat' : '❌ Lipsă URI'}`);
+  console.log('🕊️ ════════════════════════════════');
   console.log('');
 });
