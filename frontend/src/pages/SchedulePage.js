@@ -17,6 +17,13 @@ const getImageUrl = (post) => {
   return `${API}/uploads/generated/${filename}`;
 };
 
+const getTipMedia = (post) => post.tipMedia || 'image';
+
+const getThumbnail = (post) => {
+  if (getTipMedia(post) === 'video') return null; // video fără thumbnail
+  return getImageUrl(post);
+};
+
 const SchedulePage = () => {
   const [scheduledPosts, setScheduledPosts] = useState([]);
   const [historyPosts, setHistoryPosts] = useState([]);
@@ -436,32 +443,43 @@ const SchedulePage = () => {
                     onClick={() => setPreviewPost(post)}
                     title="Click pentru preview"
                   >
-                    {getImageUrl(post) ? (
-                      <img
-                        src={getImageUrl(post)}
-                        alt=""
-                        style={{
-                          width: '100%', height: '100%',
-                          objectFit: 'cover', display: 'block',
-                          minHeight: 110
-                        }}
-                        onError={e => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%', height: '100%', minHeight: 110,
-                        display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', flexDirection: 'column',
-                        gap: '0.25rem', color: 'var(--text-muted)', padding: '0.5rem'
-                      }}>
-                        <span style={{ fontSize: '1.5rem', opacity: 0.4 }}>🖼️</span>
-                        <span style={{ fontSize: '0.6rem', textAlign: 'center' }}>
-                          Fără imagine
-                        </span>
-                      </div>
-                    )}
+                    {getTipMedia(post) === 'video' ? (
+  <div style={{
+    width: '100%', height: '100%', minHeight: 110,
+    display: 'flex', alignItems: 'center',
+    justifyContent: 'center', flexDirection: 'column',
+    gap: '0.25rem', color: 'var(--text-muted)',
+    background: 'rgba(108,99,255,0.1)'
+  }}>
+    <span style={{ fontSize: '1.8rem' }}>🎬</span>
+    <span style={{ fontSize: '0.6rem', textAlign: 'center', color: '#a78bfa' }}>
+      Reel Video
+    </span>
+  </div>
+) : getImageUrl(post) ? (
+  <img
+    src={getImageUrl(post)}
+    alt=""
+    style={{
+      width: '100%', height: '100%',
+      objectFit: 'cover', display: 'block',
+      minHeight: 110
+    }}
+    onError={e => { e.target.style.display = 'none'; }}
+  />
+) : (
+  <div style={{
+    width: '100%', height: '100%', minHeight: 110,
+    display: 'flex', alignItems: 'center',
+    justifyContent: 'center', flexDirection: 'column',
+    gap: '0.25rem', color: 'var(--text-muted)', padding: '0.5rem'
+  }}>
+    <span style={{ fontSize: '1.5rem', opacity: 0.4 }}>🖼️</span>
+    <span style={{ fontSize: '0.6rem', textAlign: 'center' }}>
+      Fără imagine
+    </span>
+  </div>
+)}
                     {/* Overlay hover */}
                     <div style={{
                       position: 'absolute', inset: 0,
@@ -499,6 +517,17 @@ const SchedulePage = () => {
                       <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
                         📘 {post.platform}
                       </span>
+					  {getTipMedia(post) === 'video' && (
+  <span className="badge" style={{
+    fontSize: '0.68rem',
+    background: 'rgba(108,99,255,0.1)',
+    color: '#a78bfa',
+    border: '1px solid rgba(108,99,255,0.2)'
+  }}>
+    🎬 Reel
+  </span>
+)}
+					  
                       {post.tema && (
                         <span className="badge badge-gold" style={{ fontSize: '0.68rem' }}>
                           🎯 {post.tema}

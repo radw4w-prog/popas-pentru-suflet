@@ -184,6 +184,7 @@ router.get('/scheduled', async (req, res) => {
   try {
     const posts = await Post.find({ status: 'scheduled' })
       .sort({ scheduledDate: 1 })
+      .select('-imageBase64 -videoBase64')
       .lean();
     res.json(posts);
   } catch (error) {
@@ -199,6 +200,7 @@ router.get('/history', async (req, res) => {
     })
       .sort({ updatedAt: -1 })
       .limit(100)
+      .select('-imageBase64 -videoBase64')
       .lean();
     res.json(posts);
   } catch (error) {
