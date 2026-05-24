@@ -11,15 +11,15 @@
   <meta name="keywords" content="aplicatie crestina, Biblia online, citire Biblie, versete biblice, Biblia Cornilescu, rugaciune zilnica, inspiratie crestina, Dumnezeu, continut crestin, versetul zilei, plan citire Biblie" />
   <meta name="author" content="Popas pentru Suflet" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://serene-khapse-8c6464.netlify.app/" />
+  <link rel="canonical" href="https://popas-pentru-suflet.vercel.app/" />
 
   <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Popas pentru Suflet" />
   <meta property="og:title" content="Popas pentru Suflet - Aplicație creștină gratuită" />
   <meta property="og:description" content="Citește Biblia Cornilescu, roagă-te zilnic și creează conținut creștin inspirațional. Gratuit, online și pe telefon." />
-  <meta property="og:url" content="https://serene-khapse-8c6464.netlify.app/" />
-  <meta property="og:image" content="https://serene-khapse-8c6464.netlify.app/icons/icon-512.png" />
+  <meta property="og:url" content="https://popas-pentru-suflet.vercel.app/" />
+  <meta property="og:image" content="https://popas-pentru-suflet.vercel.app/icons/icon-512.png" />
   <meta property="og:image:width" content="512" />
   <meta property="og:image:height" content="512" />
   <meta property="og:locale" content="ro_RO" />
@@ -28,10 +28,10 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Popas pentru Suflet - Aplicație creștină" />
   <meta name="twitter:description" content="Biblia online, versete zilnice și rugăciuni. Gratuit." />
-  <meta name="twitter:image" content="https://serene-khapse-8c6464.netlify.app/icons/icon-512.png" />
+  <meta name="twitter:image" content="https://popas-pentru-suflet.vercel.app/icons/icon-512.png" />
 
   <!-- Structured Data - Schema.org -->
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Popas pentru Suflet","url":"https://serene-khapse-8c6464.netlify.app","description":"Aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional.","applicationCategory":"LifestyleApplication","operatingSystem":"Android, iOS, Web","inLanguage":"ro-RO","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RON"},"author":{"@type":"Organization","name":"Popas pentru Suflet"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Popas pentru Suflet","url":"https://popas-pentru-suflet.vercel.app","description":"Aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional.","applicationCategory":"LifestyleApplication","operatingSystem":"Android, iOS, Web","inLanguage":"ro-RO","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"RON"},"author":{"@type":"Organization","name":"Popas pentru Suflet"}}</script>
 
   <!-- PWA -->
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
@@ -51,10 +51,9 @@
   <meta name="msapplication-TileColor" content="#0a0a0f" />
   <meta name="msapplication-TileImage" content="%PUBLIC_URL%/icons/icon-144.png" />
 
-  <!-- Google Fonts - Fonturi principale ASYNC -->
+  <!-- Google Fonts - ASYNC -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
   <link
     rel="preload"
     as="style"
@@ -73,21 +72,15 @@
     />
   </noscript>
 
-  <!-- Fonturi extra generator - ASYNC -->
-
-
   <!-- Critical CSS inline -->
   <style>
-    body { margin: 0; font-family: -apple-system, 'Inter', sans-serif; }
-	html, body {
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  * {
-    box-sizing: border-box;
-
+    body { margin:0; font-family: -apple-system,'Inter', sans-serif; }
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+    * { box-sizing: border-box; }
     [data-theme="dark"] body {
       background: #0a0a0f;
       color: #f0f0f0;
@@ -96,47 +89,30 @@
       background: #f8f5ee;
       color: #1a1a2e;
     }
-
     /* Loading screen elegant */
     #root:empty {
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      flex-direction: column;
-      gap: 1rem;
+      background: #0a0a0f;
     }
-
-    #root:empty::before {
-      content: '🕊️';
-      font-size: 3.5rem;
-      animation: rootPulse 2s ease-in-out infinite;
-    }
-
     #root:empty::after {
-      content: 'Popas pentru Suflet';
-      font-size: 0.9rem;
-      opacity: 0.4;
-      letter-spacing: 0.05em;
+      content: '';
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(212,175,55,0.2);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
-
-    @keyframes rootPulse {
-      0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
-      50% { transform: scale(1.08) translateY(-4px); opacity: 0.75; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
-
-  <!-- Tema + fontSize instant (fără flash) -->
-  <script>
-    (function() {
-      var theme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
-      var fontSize = localStorage.getItem('fontSize') || 'medium';
-      document.documentElement.setAttribute('data-fontsize', fontSize);
-    })();
-  </script>
 </head>
 <body>
+  <noscript>Trebuie să activezi JavaScript pentru a folosi această aplicație.</noscript>
   <div id="root"></div>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a00e02026f97c9d3',t:'MTc3OTY0MzYxMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
