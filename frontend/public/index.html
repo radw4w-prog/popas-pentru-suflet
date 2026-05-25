@@ -81,36 +81,31 @@
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 
-  <!-- Service Worker cleanup INLINE - rulează imediat, înainte de orice -->
+  <!-- SW Killer: înregistrează un SW nou care șterge tot și se dezactivează -->
   <script>
-    // sw-cleanup.js
-// Șterge orice Service Worker și cache vechi
-// Rezolvă eroarea: main.js Unexpected token '<'
+    if ('serviceWorker' in navigator) {
+      // Înregistrează SW-ul killer
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(function(reg) {
+          console.log('[App] SW Killer înregistrat');
+        })
+        .catch(function(err) {
+          console.warn('[App] SW register failed:', err);
+        });
 
-(function () {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function (registrations) {
-      registrations.forEach(function (reg) {
-        reg.unregister();
-        console.log('🗑️ SW dezregistrat:', reg.scope);
+      // Dezregistrează orice alt SW înregistrat pe alte scope-uri
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(reg) {
+          if (!reg.active || !reg.active.scriptURL.includes('service-worker.js')) {
+            reg.unregister();
+          }
+        });
       });
-    });
-  }
-
-  if ('caches' in window) {
-    caches.keys().then(function (keys) {
-      keys.forEach(function (key) {
-        caches.delete(key);
-        console.log('🗑️ Cache șters:', key);
-      });
-    });
-  }
-})();
-
+    }
   </script>
 </head>
 <body>
   <noscript>Trebuie să activezi JavaScript pentru a folosi această aplicație.</noscript>
   <div id="root"></div>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0130198ceef6243',t:'MTc3OTY5NjAyNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a013118d98146256',t:'MTc3OTY5NjY3OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
