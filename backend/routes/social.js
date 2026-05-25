@@ -198,11 +198,13 @@ router.get('/history', async (req, res) => {
     const posts = await Post.find({
       status: { $in: ['published', 'failed'] }
     })
-      .sort({ updatedAt: -1 })
-      .limit(50)
+      .limit(30)
       .select('-imageBase64 -videoBase64')
-      .lean()
-      .allowDiskUse(true);
+      .lean();
+
+    // Sortăm în JS după ce am luat datele — evităm limita MongoDB
+    posts.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
     res.json(posts);
   } catch (error) {
     res.status(500).json({ error: error.message });
