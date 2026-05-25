@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>Popas pentru Suflet - Aplicație creștină | Biblia online, versete și rugăciuni zilnice</title>
-  <meta name="description" content="Popas pentru Suflet este o aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional." />
+  <meta name="description" content="Popas pentru Suflet este o aplicație creștină gratuită pentru citirea Bibliei Cornilescu, rugăciune zilnică și generare de conținut creștin inspirațional. Descoperă versete biblice, planuri de citire și apropie-te de Dumnezeu." />
   <meta name="keywords" content="aplicatie crestina, Biblia online, citire Biblie, versete biblice, Biblia Cornilescu, rugaciune zilnica, inspiratie crestina, Dumnezeu, versetul zilei, plan citire Biblie" />
   <meta name="author" content="Popas pentru Suflet" />
   <meta name="robots" content="index, follow" />
@@ -80,9 +80,25 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+
+  <!-- Service Worker cleanup INLINE - rulează imediat, înainte de orice -->
+  <script>
+    (function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) { reg.unregister(); });
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
+        });
+      }
+    })();
+  </script>
 </head>
 <body>
   <noscript>Trebuie să activezi JavaScript pentru a folosi această aplicație.</noscript>
   <div id="root"></div>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a01277f668d5e4b5',t:'MTc3OTY5MDM4Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0130198ceef6243',t:'MTc3OTY5NjAyNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
