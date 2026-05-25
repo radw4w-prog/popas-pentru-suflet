@@ -20,23 +20,80 @@ app.use(helmet({
 }));
 
 // ═══════════════════════════════════════
+// TRUST PROXY — necesar pentru Render
+// ═══════════════════════════════════════
+app.set('trust proxy', 1);
+
+// ═══════════════════════════════════════
 // RATE LIMITING
 // ═══════════════════════════════════════
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
+  // Folosim email din body pentru auth, altfel IP
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+      || req.socket?.remoteAddress
+      || 'unknown';
+  },
   message: { success: false, error: 'Prea multe cereri. Încearcă din nou în 15 minute.' }
 });
 app.use(globalLimiter);
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { success: false, error: 'Prea multe încercări. Încearcă din nou în 15 minute.' },
-  skipSuccessfulRequests: true
-});
+// Rate limit auth bazat pe EMAIL (nu IP) — mai precis
+const authAttempts = new Map(); // email -> { count, firstAttempt }
+
+const authLimiter = (req, res, next) => {
+  const email = req.body?.email?.toLowerCase() || req.ip;
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minute
+  const maxAttempts = 10;
+
+  const record = authAttempts.get(email);
+
+  if (record) {
+    // Resetează dacă a trecut fereastra de timp
+    if (now - record.firstAttempt > windowMs) {
+      authAttempts.delete(email);
+    } else if (record.count >= maxAttempts) {
+      const remainingMs = windowMs - (now - record.firstAttempt);
+      const remainingMin = Math.ceil(remainingMs / 60000);
+      return res.status(429).json({
+        success: false,
+        message: `Prea multe încercări pentru acest email. Încearcă din nou în ${remainingMin} minute.`
+      });
+    }
+  }
+
+  // Continuă - contorizează doar la eșec (în route handler)
+  req._authEmail = email;
+  req._authAttempts = authAttempts;
+  next();
+};
+
+// Middleware pentru a înregistra eșecul de auth
+const recordAuthFailure = (email, authAttempts) => {
+  const now = Date.now();
+  const record = authAttempts.get(email);
+  if (!record) {
+    authAttempts.set(email, { count: 1, firstAttempt: now });
+  } else {
+    record.count++;
+  }
+};
+
+// Curăță Map-ul la fiecare 30 minute
+setInterval(() => {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  for (const [key, value] of authAttempts.entries()) {
+    if (now - value.firstAttempt > windowMs) {
+      authAttempts.delete(key);
+    }
+  }
+}, 30 * 60 * 1000);
 
 const generateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -74,7 +131,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ═══════════════════════════════════════
-// SANITIZARE INPUT — după body parsing
+// SANITIZARE INPUT
 // ═══════════════════════════════════════
 app.use(sanitizeMongo);
 app.use(sanitizeXss);
@@ -111,6 +168,10 @@ app.get('/sitemap.xml', (req, res) => {
 // ═══════════════════════════════════════
 // ROUTES
 // ═══════════════════════════════════════
+// Exportăm recordAuthFailure pentru auth route
+app.locals.recordAuthFailure = recordAuthFailure;
+app.locals.authAttempts = authAttempts;
+
 app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/generate', generateLimiter, require('./routes/generate'));
 app.use('/api/og-image', require('./routes/ogImage'));
@@ -185,9 +246,6 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ success: false, message });
 });
 
-// ═══════════════════════════════════════
-// 404
-// ═══════════════════════════════════════
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Resursă negăsită.' });
 });
