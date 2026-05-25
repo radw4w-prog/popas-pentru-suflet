@@ -26,6 +26,9 @@ const isTokenExpired = (token) => {
   return decoded.exp * 1000 < Date.now();
 };
 
+// Flag global — previne bucla logout → 401 → logout
+let isLoggingOut = false;
+
 // Facebook SDK
 let facebookSDKPromise = null;
 const loadFacebookSDK = (appId) => {
@@ -65,15 +68,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(() => {
-    console.log('🔒 Logout apelat');
+    if (isLoggingOut) return; // previne bucla
+    isLoggingOut = true;
+
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = null;
     }
+
     clearToken();
     setAuthHeader(null);
     setUser(null);
-    axios.post(`${API_URL}/api/auth/logout`).catch(() => {});
+
+    // Notify backend — folosim fetch nativ, nu axios (evităm interceptorul)
+    fetch(`${API_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(() => {}).finally(() => {
+      isLoggingOut = false;
+    });
   }, [setAuthHeader]);
 
   const scheduleTokenRefresh = useCallback((token) => {
@@ -97,16 +110,18 @@ export const AuthProvider = ({ children }) => {
     }, refreshIn);
   }, [logout]);
 
-  // Interceptor 401
+  // Interceptor 401 — cu protecție anti-buclă
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.log('🔴 Axios error interceptat:', error.response?.status, error.response?.data?.code);
-        if (error.response?.status === 401) {
+        if (
+          error.response?.status === 401 &&
+          !isLoggingOut &&
+          error.config?.url !== `${API_URL}/api/auth/logout`
+        ) {
           const code = error.response?.data?.code;
           if (code === 'TOKEN_EXPIRED' || code === 'TOKEN_INVALID') {
-            console.log('🔒 401 cu cod - logout automat');
             logout();
           }
         }
@@ -119,21 +134,14 @@ export const AuthProvider = ({ children }) => {
   // Init auth
   useEffect(() => {
     const initAuth = async () => {
-      console.log('🚀 initAuth pornit');
       const savedToken = getToken();
-      console.log('📦 Token în localStorage:', !!savedToken);
 
       if (!savedToken) {
-        console.log('❌ Fără token - loading false');
         setLoading(false);
         return;
       }
 
-      const expired = isTokenExpired(savedToken);
-      console.log('⏰ Token expirat?', expired);
-
-      if (expired) {
-        console.log('🔒 Token expirat local - logout');
+      if (isTokenExpired(savedToken)) {
         clearToken();
         setAuthHeader(null);
         setLoading(false);
@@ -141,26 +149,20 @@ export const AuthProvider = ({ children }) => {
       }
 
       setAuthHeader(savedToken);
-      console.log('📡 Fac request la /api/auth/me...');
 
       try {
         const res = await axios.get(`${API_URL}/api/auth/me`);
-        console.log('✅ /api/auth/me răspuns:', res.status, res.data.success);
         if (res.data.success) {
           setUser(res.data.user);
           scheduleTokenRefresh(savedToken);
         } else {
-          console.log('❌ /api/auth/me success=false - logout');
           logout();
         }
       } catch (error) {
-        console.log('❌ /api/auth/me eroare:', error.response?.status, error.message);
         if (error.response?.status === 401) {
-          console.log('🔒 401 de la /me - logout');
           logout();
         } else {
-          // Eroare de rețea — păstrăm sesiunea
-          console.log('⚠️ Eroare rețea - păstrăm sesiunea din token');
+          // Eroare rețea — păstrăm sesiunea
           const decoded = decodeToken(savedToken);
           if (decoded) {
             setUser({ _id: decoded.id, id: decoded.id });
