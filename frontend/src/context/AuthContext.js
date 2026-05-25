@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import axios from 'axios';
 
 const AuthContext = createContext(null);
+
+// URL absolut — evităm probleme cu baseURL setat în api.js
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const FACEBOOK_APP_ID = process.env.REACT_APP_FACEBOOK_APP_ID || '';
 
@@ -26,7 +28,13 @@ const isTokenExpired = (token) => {
   return decoded.exp * 1000 < Date.now();
 };
 
-// Flag global — previne bucla logout → 401 → logout
+// Instanță axios separată DOAR pentru auth — nu e afectată de api.js
+const authAxios = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' }
+});
+
 let isLoggingOut = false;
 
 // Facebook SDK
@@ -61,14 +69,17 @@ export const AuthProvider = ({ children }) => {
 
   const setAuthHeader = useCallback((token) => {
     if (token) {
+      // Setăm pe ambele instanțe
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      authAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
       delete axios.defaults.headers.common['Authorization'];
+      delete authAxios.defaults.headers.common['Authorization'];
     }
   }, []);
 
   const logout = useCallback(() => {
-    if (isLoggingOut) return; // previne bucla
+    if (isLoggingOut) return;
     isLoggingOut = true;
 
     if (refreshTimerRef.current) {
@@ -80,13 +91,10 @@ export const AuthProvider = ({ children }) => {
     setAuthHeader(null);
     setUser(null);
 
-    // Notify backend — folosim fetch nativ, nu axios (evităm interceptorul)
-    fetch(`${API_URL}/api/auth/logout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    }).catch(() => {}).finally(() => {
-      isLoggingOut = false;
-    });
+    // fetch nativ — evităm orice interceptor axios
+    fetch(`${API_URL}/api/auth/logout`, { method: 'POST' })
+      .catch(() => {})
+      .finally(() => { isLoggingOut = false; });
   }, [setAuthHeader]);
 
   const scheduleTokenRefresh = useCallback((token) => {
@@ -95,10 +103,10 @@ export const AuthProvider = ({ children }) => {
     if (!decoded?.exp) return;
     const expiresIn = decoded.exp * 1000 - Date.now();
     const refreshIn = Math.max(expiresIn - 5 * 60 * 1000, 60 * 1000);
-    console.log(`🔄 Token refresh programat în ${Math.round(refreshIn / 60000)} minute`);
     refreshTimerRef.current = setTimeout(async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/auth/me`);
+        // Folosim authAxios — instanță separată
+        const res = await authAxios.get('/api/auth/me');
         if (res.data.success) {
           scheduleTokenRefresh(token);
         } else {
@@ -108,27 +116,6 @@ export const AuthProvider = ({ children }) => {
         logout();
       }
     }, refreshIn);
-  }, [logout]);
-
-  // Interceptor 401 — cu protecție anti-buclă
-  useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (
-          error.response?.status === 401 &&
-          !isLoggingOut &&
-          error.config?.url !== `${API_URL}/api/auth/logout`
-        ) {
-          const code = error.response?.data?.code;
-          if (code === 'TOKEN_EXPIRED' || code === 'TOKEN_INVALID') {
-            logout();
-          }
-        }
-        return Promise.reject(error);
-      }
-    );
-    return () => axios.interceptors.response.eject(interceptor);
   }, [logout]);
 
   // Init auth
@@ -143,7 +130,6 @@ export const AuthProvider = ({ children }) => {
 
       if (isTokenExpired(savedToken)) {
         clearToken();
-        setAuthHeader(null);
         setLoading(false);
         return;
       }
@@ -151,7 +137,8 @@ export const AuthProvider = ({ children }) => {
       setAuthHeader(savedToken);
 
       try {
-        const res = await axios.get(`${API_URL}/api/auth/me`);
+        // Folosim authAxios — instanță separată, fără interferențe
+        const res = await authAxios.get('/api/auth/me');
         if (res.data.success) {
           setUser(res.data.user);
           scheduleTokenRefresh(savedToken);
@@ -162,7 +149,7 @@ export const AuthProvider = ({ children }) => {
         if (error.response?.status === 401) {
           logout();
         } else {
-          // Eroare rețea — păstrăm sesiunea
+          // Eroare rețea — păstrăm sesiunea din token
           const decoded = decodeToken(savedToken);
           if (decoded) {
             setUser({ _id: decoded.id, id: decoded.id });
@@ -180,9 +167,30 @@ export const AuthProvider = ({ children }) => {
     return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); };
   }, [setAuthHeader, logout, scheduleTokenRefresh]);
 
+  // Interceptor pe axios global — doar pentru erori 401 cu cod specific
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (
+          !isLoggingOut &&
+          error.response?.status === 401 &&
+          error.config?.url !== `${API_URL}/api/auth/logout`
+        ) {
+          const code = error.response?.data?.code;
+          if (code === 'TOKEN_EXPIRED' || code === 'TOKEN_INVALID') {
+            logout();
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, [logout]);
+
   const login = async (email, parola) => {
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, { email, parola });
+      const res = await authAxios.post('/api/auth/login', { email, parola });
       if (res.data.success) {
         const { token, user: userData } = res.data;
         saveToken(token);
@@ -199,7 +207,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (nume, email, parola) => {
     try {
-      const res = await axios.post(`${API_URL}/api/auth/register`, { nume, email, parola });
+      const res = await authAxios.post('/api/auth/register', { nume, email, parola });
       if (res.data.success) {
         const { token, user: userData } = res.data;
         saveToken(token);
@@ -221,7 +229,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithFacebookToken = useCallback(async (accessToken, userID = null) => {
     try {
-      const res = await axios.post(`${API_URL}/api/auth/facebook`, { accessToken, userID });
+      const res = await authAxios.post('/api/auth/facebook', { accessToken, userID });
       if (res.data.success) {
         const { token, user: userData } = res.data;
         saveToken(token);
