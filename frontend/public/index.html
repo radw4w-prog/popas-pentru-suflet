@@ -83,18 +83,30 @@
 
   <!-- Service Worker cleanup INLINE - rulează imediat, înainte de orice -->
   <script>
-    (function () {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (reg) { reg.unregister(); });
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then(function (keys) {
-          keys.forEach(function (k) { caches.delete(k); });
-        });
-      }
-    })();
+    // sw-cleanup.js
+// Șterge orice Service Worker și cache vechi
+// Rezolvă eroarea: main.js Unexpected token '<'
+
+(function () {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      registrations.forEach(function (reg) {
+        reg.unregister();
+        console.log('🗑️ SW dezregistrat:', reg.scope);
+      });
+    });
+  }
+
+  if ('caches' in window) {
+    caches.keys().then(function (keys) {
+      keys.forEach(function (key) {
+        caches.delete(key);
+        console.log('🗑️ Cache șters:', key);
+      });
+    });
+  }
+})();
+
   </script>
 </head>
 <body>
