@@ -5,7 +5,7 @@
       "destination": "https://popas-pentru-suflet-backend.onrender.com/sitemap.xml"
     },
     {
-      "source": "/((?!sitemap\\.xml).*)",
+      "source": "/((?!static/|icons/|audio/|screenshots/|logo\\.png|manifest\\.json|robots\\.txt|sitemap\\.xml|service-worker\\.js|offline\\.html|favicon\\.ico).*)",
       "destination": "/index.html"
     }
   ]
