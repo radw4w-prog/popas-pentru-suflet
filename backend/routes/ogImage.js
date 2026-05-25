@@ -4,9 +4,6 @@ const router = express.Router();
 
 let currentOgImageUrl = null;
 
-// ══════════════════════════════════════════════════════
-// GET /api/og-image
-// ══════════════════════════════════════════════════════
 router.get('/', (req, res) => {
   if (currentOgImageUrl) {
     return res.redirect(302, currentOgImageUrl);
@@ -18,14 +15,11 @@ router.get('/', (req, res) => {
   </svg>`);
 });
 
-// ══════════════════════════════════════════════════════
-// POST /api/og-image/upload
-// ══════════════════════════════════════════════════════
 router.post('/upload', async (req, res) => {
   try {
-    const cloudName  = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey     = process.env.CLOUDINARY_API_KEY;
-    const apiSecret  = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey    = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
     console.log('📸 OG upload — env check:', {
       cloudName,
@@ -33,25 +27,26 @@ router.post('/upload', async (req, res) => {
       apiSecret: apiSecret ? '✅ ' + apiSecret.length + ' chars' : '❌ lipsă'
     });
 
-    const { image } = req.body;
+    const { image, date } = req.body;
     if (!image || !image.startsWith('data:image')) {
       return res.status(400).json({ success: false, error: 'Imagine lipsă' });
     }
 
-    // Folosim axios pentru upload direct via REST API Cloudinary
-    // Evităm problemele cu SDK-ul și semnătura
-    const crypto = require('crypto');
-    const axios  = require('axios');
+    const crypto   = require('crypto');
+    const axios    = require('axios');
     const FormData = require('form-data');
 
+    // Public ID cu data zilei — URL nou în fiecare zi = Facebook nu cachează
+    const azi = date || new Date().toISOString().split('T')[0];
+    const publicId = `popas-og-${azi}`;
+
     const timestamp = Math.round(Date.now() / 1000);
-    const paramsToSign = `folder=popas-pentru-suflet&overwrite=true&public_id=popas-og-image&timestamp=${timestamp}`;
+    const paramsToSign = `folder=popas-pentru-suflet&overwrite=true&public_id=${publicId}&timestamp=${timestamp}`;
     const signature = crypto
       .createHash('sha256')
       .update(paramsToSign + apiSecret)
       .digest('hex');
 
-    // Extrage base64
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
     const form = new FormData();
@@ -59,7 +54,7 @@ router.post('/upload', async (req, res) => {
     form.append('api_key', apiKey);
     form.append('timestamp', timestamp);
     form.append('signature', signature);
-    form.append('public_id', 'popas-og-image');
+    form.append('public_id', publicId);
     form.append('folder', 'popas-pentru-suflet');
     form.append('overwrite', 'true');
 
