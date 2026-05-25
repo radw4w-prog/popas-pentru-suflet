@@ -31,12 +31,7 @@ const loadFacebookSDK = (appId) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // State combinat — user și loading într-un singur obiect
-  // Previne fereastra în care loading=false și user=null simultan
-  const [authState, setAuthState] = useState({
-    user: null,
-    loading: true
-  });
+  const [authState, setAuthState] = useState({ user: null, loading: true });
   const initDoneRef = useRef(false);
 
   const setAuthHeader = useCallback((tok) => {
@@ -51,7 +46,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('token_expiry');
     setAuthHeader(null);
-    // Setăm user și loading simultan
     setAuthState({ user: null, loading: false });
   }, [setAuthHeader]);
 
@@ -60,12 +54,9 @@ export const AuthProvider = ({ children }) => {
     initDoneRef.current = true;
 
     const initAuth = async () => {
-      console.log('[Auth] initAuth START');
       const savedToken = localStorage.getItem('token');
-      console.log('[Auth] token exists:', !!savedToken);
 
       if (!savedToken) {
-        console.log('[Auth] no token → done');
         setAuthState({ user: null, loading: false });
         return;
       }
@@ -73,33 +64,22 @@ export const AuthProvider = ({ children }) => {
       setAuthHeader(savedToken);
 
       try {
-        console.log('[Auth] calling /api/auth/me...');
         const res = await axios.get(`${API_URL}/api/auth/me`);
-        console.log('[Auth] response:', res.status, res.data.success);
-
         if (res.data.success && res.data.user) {
-          console.log('[Auth] user OK → setAuthState logat');
-          // ATOMIC: user și loading setate simultan
           setAuthState({ user: res.data.user, loading: false });
         } else {
-          console.log('[Auth] no user → logout');
           localStorage.removeItem('token');
           setAuthHeader(null);
           setAuthState({ user: null, loading: false });
         }
       } catch (error) {
-        console.log('[Auth] error:', error.response?.status, error.message);
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           setAuthHeader(null);
           setAuthState({ user: null, loading: false });
         } else {
-          // Eroare rețea — rămânem logați cu token existent
-          console.log('[Auth] network error → rămânem logați');
-          setAuthState({
-            user: { _fromToken: true },
-            loading: false
-          });
+          // Eroare rețea — păstrăm sesiunea
+          setAuthState({ user: { _fromToken: true }, loading: false });
         }
       }
     };

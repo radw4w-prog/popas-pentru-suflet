@@ -21,16 +21,8 @@ export const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  console.log('[ProtectedRoute] loading:', loading, 'isAuthenticated:', isAuthenticated);
-
-  // Cât timp loading — nu face niciun redirect
   if (loading) return <LoadingScreen />;
-
-  if (!isAuthenticated) {
-    console.log('[ProtectedRoute] → redirect la /login');
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
   return children;
 };
 
@@ -41,7 +33,6 @@ export const AdminRoute = ({ children }) => {
   if (loading) return <LoadingScreen />;
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
   if (!isAdmin) return <Navigate to="/dashboard" replace />;
-
   return children;
 };
 
@@ -50,6 +41,5 @@ export const PublicRoute = ({ children }) => {
 
   if (loading) return <LoadingScreen />;
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-
   return children;
 };
