@@ -8,25 +8,34 @@ const FACEBOOK_APP_ID = process.env.REACT_APP_FACEBOOK_APP_ID || '';
 
 // ── Token utils ───────────────────────────────────────────────
 const TOKEN_KEY = 'token';
-const TOKEN_EXPIRY_KEY = 'token_expiry';
-const TOKEN_DURATION = 24 * 60 * 60 * 1000; // 24 ore în ms
 
 const saveToken = (token) => {
   localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(TOKEN_EXPIRY_KEY, Date.now() + TOKEN_DURATION);
 };
 
 const getToken = () => localStorage.getItem(TOKEN_KEY);
 
-const isTokenExpired = () => {
-  const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-  if (!expiry) return true;
-  return Date.now() > parseInt(expiry);
-};
-
 const clearToken = () => {
   localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(TOKEN_EXPIRY_KEY);
+};
+
+// Decodează JWT fără librărie externă
+const decodeToken = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded;
+  } catch {
+    return null;
+  }
+};
+
+const isTokenExpired = (token) => {
+  if (!token) return true;
+  const decoded = decodeToken(token);
+  if (!decoded || !decoded.exp) return true;
+  // exp e în secunde, Date.now() în ms
+  return decoded.exp * 1000 < Date.now();
 };
 
 // ── Facebook SDK ──────────────────────────────────────────────
@@ -83,17 +92,14 @@ export const AuthProvider = ({ children }) => {
 
   // ── Logout sigur ──────────────────────────────────────────
   const logout = useCallback(() => {
-    // Oprește timer-ul de refresh
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = null;
     }
-
     clearToken();
     setAuthHeader(null);
     setUser(null);
-
-    // Notify backend (best effort)
+    // Notify backend best effort
     axios.post(`${API_URL}/api/auth/logout`).catch(() => {});
   }, [setAuthHeader]);
 
@@ -101,15 +107,20 @@ export const AuthProvider = ({ children }) => {
   const scheduleTokenRefresh = useCallback((token) => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
 
-    // Refresh cu 30 minute înainte de expirare
-    const refreshIn = TOKEN_DURATION - 30 * 60 * 1000;
+    const decoded = decodeToken(token);
+    if (!decoded?.exp) return;
+
+    const expiresIn = decoded.exp * 1000 - Date.now();
+    // Refresh cu 5 minute înainte de expirare
+    const refreshIn = Math.max(expiresIn - 5 * 60 * 1000, 60 * 1000);
+
+    console.log(`🔄 Token refresh programat în ${Math.round(refreshIn / 60000)} minute`);
 
     refreshTimerRef.current = setTimeout(async () => {
       try {
         const res = await axios.get(`${API_URL}/api/auth/me`);
         if (res.data.success) {
-          // Token-ul e valid — salvăm expiry-ul nou
-          saveToken(token);
+          // Token-ul e încă valid — re-programează refresh
           scheduleTokenRefresh(token);
           console.log('✅ Token refresh reușit');
         } else {
@@ -135,7 +146,6 @@ export const AuthProvider = ({ children }) => {
         return Promise.reject(error);
       }
     );
-
     return () => axios.interceptors.response.eject(interceptor);
   }, [logout]);
 
@@ -149,8 +159,9 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Verifică dacă token-ul e expirat local
-      if (isTokenExpired()) {
+      // Verifică expirat din JWT payload direct
+      if (isTokenExpired(savedToken)) {
+        console.log('🔒 Token expirat - logout automat');
         clearToken();
         setAuthHeader(null);
         setLoading(false);
@@ -167,8 +178,20 @@ export const AuthProvider = ({ children }) => {
         } else {
           logout();
         }
-      } catch {
-        logout();
+      } catch (error) {
+        // Dacă e eroare de rețea (nu 401) — păstrăm userul logat
+        if (error.response?.status === 401) {
+          logout();
+        } else {
+          // Eroare de rețea — folosim token-ul existent
+          const decoded = decodeToken(savedToken);
+          if (decoded) {
+            setUser({ id: decoded.id });
+            scheduleTokenRefresh(savedToken);
+          } else {
+            logout();
+          }
+        }
       }
 
       setLoading(false);
@@ -176,7 +199,6 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Cleanup la unmount
     return () => {
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
@@ -186,7 +208,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, parola) => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, { email, parola });
-
       if (res.data.success) {
         const { token, user: userData } = res.data;
         saveToken(token);
@@ -195,7 +216,6 @@ export const AuthProvider = ({ children }) => {
         scheduleTokenRefresh(token);
         return { success: true, user: userData };
       }
-
       return { success: false, message: 'Autentificare eșuată.' };
     } catch (error) {
       return {
@@ -209,7 +229,6 @@ export const AuthProvider = ({ children }) => {
   const register = async (nume, email, parola) => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/register`, { nume, email, parola });
-
       if (res.data.success) {
         const { token, user: userData } = res.data;
         saveToken(token);
@@ -218,7 +237,6 @@ export const AuthProvider = ({ children }) => {
         scheduleTokenRefresh(token);
         return { success: true, user: userData };
       }
-
       return { success: false, message: 'Înregistrare eșuată.' };
     } catch (error) {
       return {
@@ -228,7 +246,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ── Facebook SDK ──────────────────────────────────────────
+  // ── Facebook ──────────────────────────────────────────────
   const ensureFacebookSDK = useCallback(async () => {
     if (!FACEBOOK_APP_ID) throw new Error('Lipsește REACT_APP_FACEBOOK_APP_ID');
     return await loadFacebookSDK(FACEBOOK_APP_ID);
@@ -237,7 +255,6 @@ export const AuthProvider = ({ children }) => {
   const loginWithFacebookToken = useCallback(async (accessToken, userID = null) => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/facebook`, { accessToken, userID });
-
       if (res.data.success) {
         const { token, user: userData } = res.data;
         saveToken(token);
@@ -246,7 +263,6 @@ export const AuthProvider = ({ children }) => {
         scheduleTokenRefresh(token);
         return { success: true, user: userData };
       }
-
       return { success: false, message: 'Autentificarea cu Facebook a eșuat.' };
     } catch (error) {
       return {
@@ -259,7 +275,6 @@ export const AuthProvider = ({ children }) => {
   const loginWithFacebook = useCallback(async () => {
     try {
       const FB = await ensureFacebookSDK();
-
       return await new Promise((resolve) => {
         FB.login(
           function (response) {
@@ -287,12 +302,6 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => setUser(prev => ({ ...prev, ...userData }));
 
-  // ── Verifică dacă sesiunea e activă ──────────────────────
-  const isSessionValid = () => {
-    const token = getToken();
-    return !!token && !isTokenExpired();
-  };
-
   return (
     <AuthContext.Provider value={{
       user,
@@ -304,8 +313,7 @@ export const AuthProvider = ({ children }) => {
       register,
       loginWithFacebook,
       loginWithFacebookToken,
-      updateUser,
-      isSessionValid
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>
