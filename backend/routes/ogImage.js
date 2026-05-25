@@ -1,11 +1,6 @@
 // backend/routes/ogImage.js
 const express = require('express');
 const router = express.Router();
-const cloudinary = require('cloudinary').v2;
-
-// Cloudinary se configurează automat din CLOUDINARY_URL
-// Format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-// Nu mai e nevoie de config manual dacă CLOUDINARY_URL e setat în env
 
 let currentOgImageUrl = null;
 
@@ -28,36 +23,61 @@ router.get('/', (req, res) => {
 // ══════════════════════════════════════════════════════
 router.post('/upload', async (req, res) => {
   try {
-    console.log('📸 OG Image upload primit');
-    console.log('CLOUDINARY_URL setat:', !!process.env.CLOUDINARY_URL);
+    const cloudName  = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey     = process.env.CLOUDINARY_API_KEY;
+    const apiSecret  = process.env.CLOUDINARY_API_SECRET;
 
-    const { image } = req.body;
-
-    if (!image || !image.startsWith('data:image')) {
-      return res.status(400).json({ success: false, error: 'Imagine lipsă sau format invalid' });
-    }
-
-    const result = await cloudinary.uploader.upload(image, {
-      public_id: 'popas-og-image',
-      overwrite: true,
-      folder: 'popas-pentru-suflet',
-      format: 'jpg',
-      quality: 85,
-      transformation: [{ width: 1200, height: 630, crop: 'fill' }]
+    console.log('📸 OG upload — env check:', {
+      cloudName,
+      apiKey: apiKey ? apiKey.substring(0, 6) + '...' : '❌ lipsă',
+      apiSecret: apiSecret ? '✅ ' + apiSecret.length + ' chars' : '❌ lipsă'
     });
 
-    currentOgImageUrl = result.secure_url;
-    console.log('✅ Cloudinary upload reușit:', currentOgImageUrl);
+    const { image } = req.body;
+    if (!image || !image.startsWith('data:image')) {
+      return res.status(400).json({ success: false, error: 'Imagine lipsă' });
+    }
+
+    // Folosim axios pentru upload direct via REST API Cloudinary
+    // Evităm problemele cu SDK-ul și semnătura
+    const crypto = require('crypto');
+    const axios  = require('axios');
+    const FormData = require('form-data');
+
+    const timestamp = Math.round(Date.now() / 1000);
+    const paramsToSign = `folder=popas-pentru-suflet&overwrite=true&public_id=popas-og-image&timestamp=${timestamp}`;
+    const signature = crypto
+      .createHash('sha256')
+      .update(paramsToSign + apiSecret)
+      .digest('hex');
+
+    // Extrage base64
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+
+    const form = new FormData();
+    form.append('file', `data:image/jpeg;base64,${base64Data}`);
+    form.append('api_key', apiKey);
+    form.append('timestamp', timestamp);
+    form.append('signature', signature);
+    form.append('public_id', 'popas-og-image');
+    form.append('folder', 'popas-pentru-suflet');
+    form.append('overwrite', 'true');
+
+    const response = await axios.post(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      form,
+      { headers: form.getHeaders() }
+    );
+
+    currentOgImageUrl = response.data.secure_url;
+    console.log('✅ Upload reușit:', currentOgImageUrl);
 
     res.json({ success: true, url: currentOgImageUrl });
 
   } catch (err) {
-    console.error('❌ Cloudinary error:', err.message, err.http_code);
-    res.status(500).json({
-      success: false,
-      error: err.message,
-      http_code: err.http_code
-    });
+    const errMsg = err.response?.data || err.message;
+    console.error('❌ Upload error:', JSON.stringify(errMsg));
+    res.status(500).json({ success: false, error: JSON.stringify(errMsg) });
   }
 });
 
