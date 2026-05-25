@@ -34,6 +34,51 @@ function saveBase64Image(imageBase64, prefix = 'generated') {
   }
 }
 
+
+
+async function uploadToCloudinary(imageBase64, prefix = 'post') {
+  try {
+    const crypto   = require('crypto');
+    const axios    = require('axios');
+    const FormData = require('form-data');
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey    = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) return null;
+
+    const publicId  = `${prefix}_${Date.now()}`;
+    const timestamp = Math.round(Date.now() / 1000);
+    const paramsToSign = `folder=popas-pentru-suflet&overwrite=true&public_id=${publicId}&timestamp=${timestamp}`;
+    const signature = crypto.createHash('sha256').update(paramsToSign + apiSecret).digest('hex');
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    const form = new FormData();
+    form.append('file', `data:image/jpeg;base64,${base64Data}`);
+    form.append('api_key', apiKey);
+    form.append('timestamp', timestamp);
+    form.append('signature', signature);
+    form.append('public_id', publicId);
+    form.append('folder', 'popas-pentru-suflet');
+    form.append('overwrite', 'true');
+
+    const response = await axios.post(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      form,
+      { headers: form.getHeaders(), timeout: 30000 }
+    );
+
+    console.log('✅ Imagine uploadată Cloudinary:', response.data.secure_url);
+    return response.data.secure_url;
+  } catch (err) {
+    console.error('❌ Cloudinary error:', err.response?.data || err.message);
+    return null;
+  }
+}
+
+
+
 // GET /api/social/status
 router.get('/status', async (req, res) => {
   try {
@@ -154,19 +199,24 @@ router.post('/schedule', async (req, res) => {
       return res.status(400).json({ error: 'Data trebuie să fie în viitor!' });
     }
 
-    const post = await Post.create({
-      content,
-      hashtags,
-      imageUrl: (imageBase64 || videoBase64) ? null : (imageUrl || null),
-      imageBase64: imageBase64 || null,
-      videoBase64: videoBase64 || null,
-      tipMedia: tipMedia || (videoBase64 ? 'video' : 'image'),
-      platform,
-      tema,
-      verset,
-      status: 'scheduled',
-      scheduledDate: dateObj
-    });
+    // Upload imagine pe Cloudinary
+let finalImageUrl = imageUrl || null;
+if (imageBase64 && imageBase64.startsWith('data:image')) {
+  const cloudUrl = await uploadToCloudinary(imageBase64, 'scheduled');
+  if (cloudUrl) finalImageUrl = cloudUrl;
+}
+
+const post = await Post.create({
+  content,
+  hashtags,
+  imageUrl: finalImageUrl,
+  imageBase64: null,        // nu mai stocăm base64
+  videoBase64: videoBase64 || null,
+  tipMedia: tipMedia || (videoBase64 ? 'video' : 'image'),
+  platform, tema, verset,
+  status: 'scheduled',
+  scheduledDate: dateObj
+});
 
     res.json({
       success: true,
