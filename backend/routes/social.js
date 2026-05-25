@@ -199,9 +199,10 @@ router.get('/history', async (req, res) => {
       status: { $in: ['published', 'failed'] }
     })
       .sort({ updatedAt: -1 })
-      .limit(100)
+      .limit(50)
       .select('-imageBase64 -videoBase64')
-      .lean();
+      .lean()
+      .allowDiskUse(true);
     res.json(posts);
   } catch (error) {
     res.status(500).json({ error: error.message });
