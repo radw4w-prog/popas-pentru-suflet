@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { sanitizeMongo, sanitizeXss } = require('./middleware/sanitize');
 require('dotenv').config();
 
 const app = express();
@@ -13,40 +14,38 @@ const isProd = process.env.NODE_ENV === 'production';
 // SECURITY HEADERS — helmet
 // ═══════════════════════════════════════
 app.use(helmet({
-  contentSecurityPolicy: false, // dezactivat pentru că avem CDN-uri externe (Fonts, Cloudinary)
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
 // ═══════════════════════════════════════
-// RATE LIMITING GLOBAL
+// RATE LIMITING
 // ═══════════════════════════════════════
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minute
-  max: 300, // max 300 requests per IP per 15 min
+  windowMs: 15 * 60 * 1000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Prea multe cereri. Încearcă din nou în 15 minute.' }
 });
 app.use(globalLimiter);
 
-// Rate limit strict pentru auth
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // max 10 încercări de login per 15 min
-  message: { success: false, error: 'Prea multe încercări de autentificare. Încearcă din nou în 15 minute.' },
-  skipSuccessfulRequests: true // nu numără request-urile reușite
+  max: 10,
+  message: { success: false, error: 'Prea multe încercări. Încearcă din nou în 15 minute.' },
+  skipSuccessfulRequests: true
 });
 
-// Rate limit pentru generate (AI)
 const generateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 oră
-  max: 30, // max 30 generări per oră
+  windowMs: 60 * 60 * 1000,
+  max: 30,
   message: { success: false, error: 'Limită de generări atinsă. Încearcă din nou în 1 oră.' }
 });
 
 // ═══════════════════════════════════════
-// CORS — strict în producție
+// CORS
 // ═══════════════════════════════════════
 const ALLOWED_ORIGINS = [
   'https://popas-pentru-suflet.vercel.app',
@@ -56,35 +55,30 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permite request-uri fără origin (mobile apps, Postman în dev)
-    if (!origin) {
-      if (!isProd) return callback(null, true);
-      return callback(null, true); // permite și în prod pentru mobile PWA
-    }
-
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // În development permite localhost
-    if (!isProd && origin.startsWith('http://localhost')) {
-      return callback(null, true);
-    }
-
-    console.warn('⚠️ CORS blocat pentru origin:', origin);
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    if (!isProd && origin.startsWith('http://localhost')) return callback(null, true);
+    console.warn('⚠️ CORS blocat:', origin);
     return callback(new Error('CORS: Origin nepermis'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400 // cache preflight 24h
+  maxAge: 86400
 }));
 
 // ═══════════════════════════════════════
-// BODY PARSING — limite rezonabile
+// BODY PARSING
 // ═══════════════════════════════════════
-app.use(express.json({ limit: '10mb' })); // redus de la 50mb
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ═══════════════════════════════════════
+// SANITIZARE INPUT — după body parsing
+// ═══════════════════════════════════════
+app.use(sanitizeMongo);
+app.use(sanitizeXss);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ═══════════════════════════════════════
@@ -99,7 +93,6 @@ connectDB();
 app.get('/sitemap.xml', (req, res) => {
   const baseUrl = 'https://popas-pentru-suflet.vercel.app';
   const azi = new Date().toISOString().split('T')[0];
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${baseUrl}/dashboard</loc><lastmod>${azi}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
@@ -110,14 +103,13 @@ app.get('/sitemap.xml', (req, res) => {
   <url><loc>${baseUrl}/generate</loc><lastmod>${azi}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>${baseUrl}/rugaciuni</loc><lastmod>${azi}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
 </urlset>`;
-
   res.setHeader('Content-Type', 'application/xml; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.send(xml);
 });
 
 // ═══════════════════════════════════════
-// ROUTES — cu rate limiting aplicat
+// ROUTES
 // ═══════════════════════════════════════
 app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/generate', generateLimiter, require('./routes/generate'));
@@ -145,13 +137,10 @@ schedulerService.init();
 require('./models/ReadingPlan');
 
 // ═══════════════════════════════════════
-// HEALTH CHECK — info minimă în producție
+// HEALTH CHECK
 // ═══════════════════════════════════════
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ═══════════════════════════════════════
@@ -163,21 +152,7 @@ if (!isProd) {
       const geminiService = require('./services/geminiService');
       const result = await geminiService.testConnection();
       res.json(result);
-    } catch(e) {
-      res.status(500).json({ success: false, error: e.message });
-    }
-  });
-
-  app.get('/test-gemini-models', async (req, res) => {
-    const axios = require('axios');
-    try {
-      const r = await axios.get(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
-      );
-      res.json({ models: r.data.models.map(m => m.name) });
-    } catch (e) {
-      res.json({ error: e.message });
-    }
+    } catch(e) { res.status(500).json({ error: e.message }); }
   });
 
   app.get('/test-notif', async (req, res) => {
@@ -185,54 +160,42 @@ if (!isProd) {
       const { runNotificationsJob } = require('./services/notificationService');
       await runNotificationsJob();
       res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
+    } catch (error) { res.status(500).json({ message: error.message }); }
   });
 }
 
 // ═══════════════════════════════════════
-// KEEP-ALIVE pentru Render free tier
+// KEEP-ALIVE
 // ═══════════════════════════════════════
 if (isProd && process.env.RENDER_EXTERNAL_URL) {
   const axios = require('axios');
   setInterval(async () => {
     try {
       await axios.get(`${process.env.RENDER_EXTERNAL_URL}/health`);
-      console.log('💓 Keep-alive OK');
-    } catch (e) {
-      console.log('💓 Keep-alive failed:', e.message);
-    }
+    } catch (e) {}
   }, 14 * 60 * 1000);
 }
 
 // ═══════════════════════════════════════
-// ERROR HANDLER GLOBAL
+// ERROR HANDLER
 // ═══════════════════════════════════════
 app.use((err, req, res, next) => {
-  // Nu expune detalii interne în producție
   const message = isProd ? 'Eroare internă server.' : err.message;
-  console.error('❌ Eroare globală:', err.message);
+  console.error('❌ Eroare:', err.message);
   res.status(err.status || 500).json({ success: false, message });
 });
 
 // ═══════════════════════════════════════
-// 404 HANDLER
+// 404
 // ═══════════════════════════════════════
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Resursă negăsită.' });
 });
 
 // ═══════════════════════════════════════
-// START SERVER
+// START
 // ═══════════════════════════════════════
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log('');
-  console.log('🕊️ ════════════════════════════════');
-  console.log('🕊️ Popas pentru Suflet API');
-  console.log(`🕊️ Port: ${PORT}`);
-  console.log(`🕊️ Mediu: ${process.env.NODE_ENV || 'development'}`);
-  console.log('🕊️ ════════════════════════════════');
-  console.log('');
+  console.log(`🕊️ Server pornit pe portul ${PORT} (${process.env.NODE_ENV || 'development'})`);
 });
