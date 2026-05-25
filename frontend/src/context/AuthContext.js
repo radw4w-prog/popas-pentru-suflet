@@ -179,20 +179,21 @@ export const AuthProvider = ({ children }) => {
           logout();
         }
       } catch (error) {
-        // Dacă e eroare de rețea (nu 401) — păstrăm userul logat
-        if (error.response?.status === 401) {
-          logout();
-        } else {
-          // Eroare de rețea — folosim token-ul existent
-          const decoded = decodeToken(savedToken);
-          if (decoded) {
-            setUser({ id: decoded.id });
-            scheduleTokenRefresh(savedToken);
-          } else {
-            logout();
-          }
-        }
-      }
+  console.log('❌ /api/auth/me error:', error.response?.status, error.response?.data);
+  console.log('❌ Error message:', error.message);
+  // Dacă e eroare de rețea (nu 401) — păstrăm userul logat
+  if (error.response?.status === 401) {
+    logout();
+  } else {
+    const decoded = decodeToken(savedToken);
+    if (decoded) {
+      setUser({ id: decoded.id });
+      scheduleTokenRefresh(savedToken);
+    } else {
+      logout();
+    }
+  }
+}
 
       setLoading(false);
     };
