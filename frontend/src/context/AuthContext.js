@@ -31,7 +31,6 @@ const loadFacebookSDK = (appId) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  // Pornește cu loading=true ÎNTOTDEAUNA
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const initDoneRef = useRef(false);
@@ -49,22 +48,19 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token_expiry');
     setAuthHeader(null);
     setUser(null);
-    // Nu setăm loading=false aici — deja e false
   }, [setAuthHeader]);
 
   useEffect(() => {
-    // Previne dubla execuție în React StrictMode
     if (initDoneRef.current) return;
     initDoneRef.current = true;
 
     const initAuth = async () => {
-      console.log('[Auth] initAuth START, loading=true');
-      
+      console.log('[Auth] initAuth START');
       const savedToken = localStorage.getItem('token');
-      console.log('[Auth] token în localStorage:', !!savedToken);
+      console.log('[Auth] token exists:', !!savedToken);
 
       if (!savedToken) {
-        console.log('[Auth] fără token → loading=false, user=null');
+        console.log('[Auth] no token → loading=false');
         setLoading(false);
         return;
       }
@@ -72,31 +68,29 @@ export const AuthProvider = ({ children }) => {
       setAuthHeader(savedToken);
 
       try {
-        console.log('[Auth] request /api/auth/me...');
+        console.log('[Auth] calling /api/auth/me...');
         const res = await axios.get(`${API_URL}/api/auth/me`);
-        console.log('[Auth] /api/auth/me răspuns:', res.status, res.data.success);
-        
+        console.log('[Auth] /api/auth/me:', res.status, res.data.success);
         if (res.data.success) {
-          console.log('[Auth] user setat:', res.data.user?.email);
+          console.log('[Auth] user set:', res.data.user?.email);
           setUser(res.data.user);
         } else {
           console.log('[Auth] success=false → logout');
           logout();
         }
       } catch (error) {
-        console.log('[Auth] eroare /api/auth/me:', error.response?.status, error.message);
+        console.log('[Auth] error:', error.response?.status, error.message);
         if (error.response?.status === 401) {
           logout();
         }
-        // Altfel ignorăm — eroare de rețea
       } finally {
-        console.log('[Auth] initAuth DONE → loading=false');
+        console.log('[Auth] DONE → loading=false');
         setLoading(false);
       }
     };
 
     initAuth();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [setAuthHeader, logout]);
 
   const login = async (email, parola) => {
     try {
@@ -173,7 +167,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [ensureFacebookSDK, loginWithFacebookToken]);
 
-  const updateUser = (userData) => setUser(prev => ({ ...prev, ...userData }));
+  const updateUser = useCallback((userData) => {
+    setUser(prev => ({ ...prev, ...userData }));
+  }, []);
 
   return (
     <AuthContext.Provider value={{
