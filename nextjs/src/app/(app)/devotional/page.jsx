@@ -15,3 +15,5 @@ export async function generateMetadata() {
   return { title: 'Devotional zilnic - Meditatie crestina' };
 }
 export default function Devotional() { return <DevotionalPage />; }
+
+export const dynamic = 'force-dynamic';
