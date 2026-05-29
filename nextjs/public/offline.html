@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popas pentru Suflet - Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 380px;
+    }
+
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      display: block;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #d4af37;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      color: #a0a0b0;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .verse {
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      font-style: italic;
+      color: #f0f0f0;
+      line-height: 1.7;
+    }
+
+    .verse-ref {
+      color: #d4af37;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      display: block;
+      font-style: normal;
+    }
+
+    button {
+      background: linear-gradient(135deg, #d4af37, #b8960c);
+      color: #0a0a0f;
+      border: none;
+      border-radius: 14px;
+      padding: 0.875rem 2rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .status {
+      font-size: 0.8rem;
+      color: #6b6b80;
+      margin-top: 1rem;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="icon">🕊️</span>
+
+    <h1>Popas pentru Suflet</h1>
+    <p>Se pare că nu ești conectat la internet.</p>
+
+    <div class="verse">
+      „Eu sunt pâinea vieții. Cine vine la Mine, nu va flămânzi niciodată."
+      <span class="verse-ref">— Ioan 6:35</span>
+    </div>
+
+    <p>Verifică conexiunea la internet și încearcă din nou.</p>
+
+    <button onclick="window.location.reload()">
+      🔄 Încearcă din nou
+    </button>
+
+    <button onclick="window.location.href='/'" style="
+      background: transparent;
+      border: 1px solid rgba(212,175,55,0.3);
+      color: #d4af37;
+      margin-top: 0.5rem;
+    ">
+      🏠 Pagina principală
+    </button>
+
+    <p class="status">
+      <span class="dot"></span>
+      Offline
+    </p>
+  </div>
+
+  <script>
+    // Auto-reload când revine conexiunea
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

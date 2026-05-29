@@ -1,0 +1,99 @@
+/* ═══════════════════════════════════════════════
+   PREMIUM.CSS - Override-uri pentru toate paginile
+   Folosește !important pentru a suprascrie inline styles
+═══════════════════════════════════════════════ */
+
+/* ─── GENERATE PAGE ─── */
+.animate-in .card {
+  border-radius: 20px !important;
+}
+
+.animate-in .card-gold {
+  border-radius: 20px !important;
+}
+
+/* Template cards */
+[style*="aspectRatio:'4/5'"],
+[style*="aspectRatio: '4/5'"] {
+  border-radius: 16px !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Steps bar */
+[style*="overflowX: 'auto'"][style*="background: 'var(--bg-card)'"] {
+  border-radius: 20px !important;
+}
+
+/* ─── SETTINGS PAGE ─── */
+.grid-2 .card,
+.grid-2 .card-gold {
+  border-radius: 20px !important;
+}
+
+/* ─── ADMIN PAGE ─── */
+[style*="padding: '1rem'"][style*="color: 'var(--text-primary)'"] h1 {
+  font-family: 'Playfair Display', serif !important;
+}
+
+/* ─── GLOBAL TOUCH FEEDBACK ─── */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+  opacity: 0.85;
+}
+
+/* ─── MOBILE GENERATE ─── */
+@media (max-width: 768px) {
+  [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '1.5rem'"] {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  [style*="gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))'"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  [style*="gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  [style*="gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))'"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+/* ═══════════════════════════════════════════════
+   📅 SCHEDULE PAGE PREMIUM
+═══════════════════════════════════════════════ */
+
+/* Thumbnail hover overlay */
+.thumb-overlay {
+  opacity: 0 !important;
+  transition: opacity 0.2s !important;
+}
+
+[style*="width: 90"][style*="cursor: 'pointer'"]:hover .thumb-overlay {
+  opacity: 1 !important;
+}
+
+/* Mobile schedule */
+@media (max-width: 768px) {
+  /* Thumbnail mai mic pe mobile */
+  [style*="width: 90"][style*="flexShrink: 0"] {
+    width: 70px !important;
+  }
+
+  /* Butoane verticale mai mici */
+  [style*="padding: '0.45rem 0.7rem'"][style*="borderRadius: '10px'"] {
+    padding: 0.4rem 0.55rem !important;
+    font-size: 0.75rem !important;
+  }
+}

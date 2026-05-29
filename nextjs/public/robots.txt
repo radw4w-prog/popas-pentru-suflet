@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /dashboard
+Allow: /verses
+Allow: /generate
+
+Disallow: /admin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://popas-pentru-suflet-backend.onrender.com/sitemap.xml
