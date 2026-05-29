@@ -483,7 +483,7 @@ router.get('/', async (req, res) => {
     const filter = {};
 
     if (testament && testament !== 'all') filter.testament = testament;
-    if (carte && carte !== 'all') filter.carte = new RegExp(carte, 'i');
+    if (carte && carte !== 'all') filter.carte = carte; // match exact, nu regex
     if (capitol) filter.capitol = parseInt(capitol);
     if (favorit === 'true') filter.favorit = true;
 
