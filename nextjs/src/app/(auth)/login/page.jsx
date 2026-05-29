@@ -1,4 +1,4 @@
-import LoginPage from '@/pages/LoginPage';
+import LoginPage from '@/views/LoginPage';
 export const metadata = { title: 'Autentificare' };
 export default function Login() { return <LoginPage />; }
 

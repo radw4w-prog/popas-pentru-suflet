@@ -1,4 +1,4 @@
-import DevotionalPage from '@/pages/DevotionalPage';
+import DevotionalPage from '@/views/DevotionalPage';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet-backend.onrender.com';
 export async function generateMetadata() {
   try {

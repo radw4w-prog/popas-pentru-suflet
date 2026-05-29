@@ -1,4 +1,4 @@
-import SchedulePage from '@/pages/SchedulePage';
+import SchedulePage from '@/views/SchedulePage';
 export const metadata = { title: 'Postari programate' };
 export default function Schedule() { return <SchedulePage />; }
 

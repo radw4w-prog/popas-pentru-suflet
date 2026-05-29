@@ -1,4 +1,4 @@
-import PrayerPage from '@/pages/PrayerPage';
+import PrayerPage from '@/views/PrayerPage';
 export const metadata = { title: 'Rugaciuni zilnice' };
 export default function Rugaciuni() { return <PrayerPage />; }
 

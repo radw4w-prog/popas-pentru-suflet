@@ -1,4 +1,4 @@
-import RegisterPage from '@/pages/RegisterPage';
+import RegisterPage from '@/views/RegisterPage';
 export const metadata = { title: 'Inregistrare' };
 export default function Register() { return <RegisterPage />; }
 
