@@ -105,7 +105,8 @@ const generateLimiter = rateLimit({
 // CORS
 // ═══════════════════════════════════════
 const ALLOWED_ORIGINS = [
-  'https://popas-pentru-suflet.vercel.app',
+  'https://popas-pentru-suflet.vercel.app',        // vechiul frontend CRA
+  'https://popas-pentru-suflet-9515.vercel.app',   // noul frontend Next.js
   'http://localhost:3000',
   'http://localhost:3001'
 ];
