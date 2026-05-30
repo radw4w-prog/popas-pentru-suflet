@@ -1,7 +1,8 @@
 'use client';
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '../context/AuthContext';
+import { useFontSize } from '../context/FontSizeContext';
+
 import { createPortal } from 'react-dom';
 import NotificationBell from './NotificationBell';
 
@@ -26,6 +27,9 @@ const pageTitles = {
   '/journey': { title: 'Călătoria spirituală', subtitle: 'Streak, badge-uri și progres spiritual' },
   '/journal': { title: 'Jurnal Spiritual', subtitle: 'Gânduri, rugăciuni și pași cu Dumnezeu' },
 };
+
+const { fontSize, setFontSize } = useFontSize();
+
 
 const Header = ({ theme, toggleTheme }) => {
   const pathname = usePathname();
