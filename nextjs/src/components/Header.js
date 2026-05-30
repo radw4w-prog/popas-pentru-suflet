@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext, createContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { createPortal } from 'react-dom';
+import NotificationBell from './NotificationBell';
 
 export const FontSizeContext = createContext({ fontSize: 'medium', setFontSize: () => {} });
 
@@ -164,6 +165,7 @@ const Header = ({ theme, toggleTheme }) => {
 
 
       <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+	  {isAuthenticated && <NotificationBell />}
         {/* Font size — doar desktop */}
         {mounted && !isMobile && (
           <div style={{ display: 'flex', gap: '4px' }}>
