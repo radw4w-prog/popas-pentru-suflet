@@ -976,9 +976,7 @@ const ReelSection = () => (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input type="checkbox" id="citat" checked={afiseazaCitat} onChange={e => { setAfiseazaCitat(e.target.checked); if (e.target.checked) setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)]); }} />
                 <label htmlFor="citat" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>Adaugă citat teolog (Luther, Calvin, Spurgeon...)</label>
-              </div>
-			  
-			  <div>
+              <div>
       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
         Mărime font citat: {citatFontSize}px
       </label>
@@ -991,6 +989,10 @@ const ReelSection = () => (
     </div>
   </>
 )}
+			  
+			  </div>
+			  
+			  
 
               {afiseazaCitat && citatSelectat && (
                 <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '0.75rem', fontSize: '0.78rem' }}>
