@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
+import { FontSizeProvider } from '@/components/Header';
 
 export default function AppLayout({ children }) {
   const [theme, setTheme] = useState('dark');
@@ -27,30 +28,15 @@ export default function AppLayout({ children }) {
   };
 
   return (
-    <AuthProvider>
-      {/* Sidebar fix — position: fixed, nu afectează flow-ul */}
+  <AuthProvider>
+    <FontSizeProvider>
       <Sidebar theme={theme} />
-
-      {/* Header sticky */}
       <Header theme={theme} toggleTheme={toggleTheme} />
-
-      {/* Main content — margin-left egal cu lățimea sidebar-ului */}
-      <div
-        className="main-content"
-        style={{
-          marginLeft: 'var(--sidebar-width, 280px)',
-          minHeight: '100vh',
-          width: 'calc(100% - var(--sidebar-width, 280px))',
-          boxSizing: 'border-box',
-        }}
-      >
-        <div className="page-content">
-          {children}
-        </div>
+      <div className="main-content" style={{ marginLeft: 'var(--sidebar-width, 280px)', minHeight: '100vh', width: 'calc(100% - var(--sidebar-width, 280px))', boxSizing: 'border-box' }}>
+        <div className="page-content">{children}</div>
       </div>
-
-      {/* Bottom Nav */}
       {mounted && <BottomNav />}
-    </AuthProvider>
-  );
+    </FontSizeProvider>
+  </AuthProvider>
+);
 }
