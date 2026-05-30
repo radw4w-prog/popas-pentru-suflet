@@ -983,10 +983,8 @@ const ReelSection = () => (
                   <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>„{citatSelectat.text.substring(0, 80)}..."</div>
                   <div style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>— {citatSelectat.autor}</div>
                   <button onClick={() => setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)])} style={{ marginTop: '0.5rem', padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem' }}>🔄 Alt citat</button>
-                </div>
-              )}
-            </div>
-			<div>
+                {/* Slider font citat */}
+    <div>
       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
         Mărime font citat: {citatFontSize}px
       </label>
@@ -999,6 +997,8 @@ const ReelSection = () => (
     </div>
   </>
 )}
+            </div>
+			
 
             {/* Butoane generate */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
