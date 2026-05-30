@@ -707,6 +707,30 @@ const GeneratePage = () => {
     );
   };
 
+
+const [showReel, setShowReel] = useState(false);
+
+const ReelSection = () => (
+  <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem' }}>
+    <button
+      onClick={() => setShowReel(p => !p)}
+      style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: showReel ? 'rgba(99,102,241,0.1)' : 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+    >
+      <span>🎬 Generează Reel — Video 15s · 1080×1920 · Optim Facebook/Instagram</span>
+      <span>{showReel ? '▲' : '▼'}</span>
+    </button>
+    {showReel && (
+      <div style={{ marginTop: '1rem' }}>
+        <ReelGenerator />
+      </div>
+    )}
+  </div>
+);
+
+
+
+
+
   return (
     <div className="animate-in" style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
 
@@ -1041,23 +1065,6 @@ const GeneratePage = () => {
 };
 
 
-const [showReel, setShowReel] = useState(false);
 
-const ReelSection = () => (
-  <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem' }}>
-    <button
-      onClick={() => setShowReel(p => !p)}
-      style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: showReel ? 'rgba(99,102,241,0.1)' : 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-    >
-      <span>🎬 Generează Reel — Video 15s · 1080×1920 · Optim Facebook/Instagram</span>
-      <span>{showReel ? '▲' : '▼'}</span>
-    </button>
-    {showReel && (
-      <div style={{ marginTop: '1rem' }}>
-        <ReelGenerator />
-      </div>
-    )}
-  </div>
-);
 
 export default GeneratePage;
