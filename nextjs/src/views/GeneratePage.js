@@ -360,7 +360,7 @@ if (citat && afiseazaCitat) {
   ctx.save();
   
   // Text citat — fără fundal
-  ctx.font = `italic ${Math.round(fz * 0.42)}px '${stilText.font}', Georgia, serif`;
+  ctx.font = `italic ${citatFontSize * 2}px '${stilText.font}', Georgia, serif`;
   ctx.fillStyle = 'rgba(255,255,255,0.82)';
   ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(0,0,0,0.9)';
@@ -370,14 +370,14 @@ if (citat && afiseazaCitat) {
   
   const citLines = wrapLines(`„${citat.text}"`, W * 0.78, 2);
   citLines.forEach((line, i) => {
-    ctx.fillText(line, W / 2, citY + i * Math.round(fz * 0.55));
-  });
+  ctx.fillText(line, W / 2, citY + i * Math.round(citatFontSize * 2.4));
+});
   
   // Autor
-  ctx.font = `600 ${Math.round(fz * 0.36)}px 'Inter', Arial, sans-serif`;
+  ctx.font = `600 ${Math.round(citatFontSize * 1.6)}px 'Inter', Arial, sans-serif`;
   ctx.fillStyle = '#D4AF37';
   ctx.shadowBlur = 12;
-  ctx.fillText(`— ${citat.autor}`, W / 2, citY + citLines.length * Math.round(fz * 0.55) + 20);
+  ctx.fillText(`— ${citat.autor}`, W / 2, citY + citLines.length * Math.round(citatFontSize * 2.4) + 24);
   
   ctx.restore();
 }
