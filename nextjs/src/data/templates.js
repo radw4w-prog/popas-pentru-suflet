@@ -1,93 +1,5 @@
 // src/data/templates.js
-// Template-uri premium pentru generare imagini cu versete
-
-export const CITATE_TEOLOGI = [
-  { text: 'Cel ce a gustat harul lui Hristos nu poate refuza harul aproapelui.', autor: 'Martin Luther' },
-  { text: 'Rugăciunea este respirația sufletului.', autor: 'John Calvin' },
-  { text: 'Dragostea lui Dumnezeu este oceanul în care toate greșelile noastre pot fi înecate.', autor: 'Charles Spurgeon' },
-  { text: 'Nu există furtună prea mare atunci când Dumnezeu este refugiul tău.', autor: 'John Wesley' },
-  { text: 'Dumnezeu nu ne iubește pentru că suntem vrednici, ci ne face vrednici pentru că ne iubește.', autor: 'C.S. Lewis' },
-  { text: 'Credința nu este a vedea, ci a merge acolo unde Dumnezeu conduce.', autor: 'Oswald Chambers' },
-  { text: 'Cel ce intră în apă moare cu Hristos, și cel ce iese înviază cu El.', autor: 'Grigorie de Nyssa' },
-  { text: 'Nimic nu se întâmplă la întâmplare; fiecare pas al omului este rânduit de providența lui Dumnezeu.', autor: 'John Calvin' },
-  { text: 'Fă tot binele pe care îl poți, în toate felurile în care poți, cât timp poți.', autor: 'John Wesley' },
-  { text: 'Inima noastră este neliniștită până nu se odihnește în Tine, Doamne.', autor: 'Augustin de Hipona' },
-  { text: 'Un creștin este un om care poate să se bucure chiar și în mijlocul suferinței.', autor: 'Dietrich Bonhoeffer' },
-  { text: 'Dacă vrei să mergi repede, mergi singur. Dacă vrei să mergi departe, mergi împreună.', autor: 'Proverbul creștin' },
-  { text: 'Rugăciunea schimbă lucrurile, dar mai ales îl schimbă pe cel care se roagă.', autor: 'Charles Spurgeon' },
-  { text: 'Nu există om fără speranță atunci când Dumnezeu este în poveste.', autor: 'Warren Wiersbe' },
-  { text: 'Sfintele Scripturi sunt hrana sufletului, lumina pașilor noștri și harta drumului spre cer.', autor: 'Ioan Gură de Aur' },
-];
-
-// ══════════════════════════════════════════════
-// TEMPLATE-URI PREMIUM
-// ══════════════════════════════════════════════
-
-export const DEFAULT_TEMPLATES = [
-
-  // ═══ APUSURI DRAMATICE ═══
-  { id: 't001', name: 'Apus de Aur', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't002', name: 'Apus Portocaliu', url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't003', name: 'Apus Câmp', url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't004', name: 'Apus Mare', url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't005', name: 'Apus Violet', url: 'https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't006', name: 'Apus Montan', url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't007', name: 'Apus Roz', url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-  { id: 't008', name: 'Apus Foc', url: 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
-
-  // ═══ SPIRITUAL / CREȘTIN ═══
-  { id: 't020', name: 'Cruce Furtună', url: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't021', name: 'Lumină Divină', url: 'https://images.unsplash.com/photo-1531844251246-9a1bfaae09fc?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1531844251246-9a1bfaae09fc?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't022', name: 'Rugăciune', url: 'https://images.unsplash.com/photo-1478719059408-592965723cbc?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1478719059408-592965723cbc?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't023', name: 'Mâini Dumnezeu', url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't024', name: 'Cer Deschis', url: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't025', name: 'Lumânări', url: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't026', name: 'Biblie Veche', url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-  { id: 't027', name: 'Cruce Apus', url: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
-
-  // ═══ NATURĂ / MUNȚI ═══
-  { id: 't030', name: 'Munți Maiestuoși', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
-  { id: 't031', name: 'Munte Zăpadă', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
-  { id: 't032', name: 'Vale Verde', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
-  { id: 't033', name: 'Lacul Liniștit', url: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
-  { id: 't034', name: 'Pădure Lumină', url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=500&fit=crop&q=60', categorie: 'padure' },
-  { id: 't035', name: 'Pădure Ceață', url: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=400&h=500&fit=crop&q=60', categorie: 'padure' },
-  { id: 't036', name: 'Fag Auriu', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&q=60', categorie: 'padure' },
-
-  // ═══ MARE / APĂ ═══
-  { id: 't040', name: 'Mare Senină', url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=500&fit=crop&q=60', categorie: 'mare' },
-  { id: 't041', name: 'Valuri Putere', url: 'https://images.unsplash.com/photo-1468581264429-2548ef9eb732?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1468581264429-2548ef9eb732?w=400&h=500&fit=crop&q=60', categorie: 'mare' },
-  { id: 't042', name: 'Răsărit Mare', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=500&fit=crop&q=60', categorie: 'mare' },
-
-  // ═══ FLORI / PRIMĂVARĂ ═══
-  { id: 't050', name: 'Flori de Câmp', url: 'https://images.unsplash.com/photo-1490750967868-88df5691cc43?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1490750967868-88df5691cc43?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
-  { id: 't051', name: 'Cireș Înflorit', url: 'https://images.unsplash.com/photo-1522748906645-95d8adfd52c7?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1522748906645-95d8adfd52c7?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
-  { id: 't052', name: 'Lavandă', url: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
-  { id: 't053', name: 'Flori Albe', url: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
-  { id: 't054', name: 'Trandafir Roz', url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
-
-  // ═══ IARNĂ ═══
-  { id: 't060', name: 'Iarnă Albă', url: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=400&h=500&fit=crop&q=60', categorie: 'iarna' },
-  { id: 't061', name: 'Noapte Stele', url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=500&fit=crop&q=60', categorie: 'iarna' },
-
-  // ═══ CER / LUMINĂ ═══
-  { id: 't070', name: 'Cer Dramatic', url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
-  { id: 't071', name: 'Nori Aurii', url: 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
-  { id: 't072', name: 'Raze de Soare', url: 'https://images.unsplash.com/photo-1536514498073-50e69d39c6cf?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1536514498073-50e69d39c6cf?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
-  { id: 't073', name: 'Furtună Putere', url: 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
-
-  // ═══ MINIMALIST / ABSTRACT ═══
-  { id: 't080', name: 'Auriu Elegant', url: 'https://images.unsplash.com/photo-1557683311-eac922347aa1?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1557683311-eac922347aa1?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
-  { id: 't081', name: 'Marmură Albă', url: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
-  { id: 't082', name: 'Crem Cald', url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
-  { id: 't083', name: 'Negru Elegant', url: 'https://images.unsplash.com/photo-1550537687-c91072c4792d?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1550537687-c91072c4792d?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
-
-  // ═══ RĂSĂRITURI ═══
-  { id: 't090', name: 'Răsărit Montan', url: 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
-  { id: 't091', name: 'Răsărit Roz', url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
-  { id: 't092', name: 'Răsărit Ocean', url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
-  { id: 't093', name: 'Răsărit Câmp', url: 'https://images.unsplash.com/photo-1490049350474-498de43bc885?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1490049350474-498de43bc885?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
-];
+export { CITATE_TEOLOGI } from './quotes';
 
 export const CATEGORII_TEMPLATE = [
   { id: 'all', label: '📋 Toate' },
@@ -101,4 +13,51 @@ export const CATEGORII_TEMPLATE = [
   { id: 'cer', label: '☁️ Cer' },
   { id: 'minimalist', label: '🖤 Minimalist' },
   { id: 'iarna', label: '❄️ Iarnă' },
+];
+
+export const DEFAULT_TEMPLATES = [
+  { id: 't001', name: 'Apus de Aur', url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't002', name: 'Apus Portocaliu', url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't003', name: 'Apus Câmp', url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't004', name: 'Apus Mare', url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't005', name: 'Apus Violet', url: 'https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't006', name: 'Apus Montan', url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't007', name: 'Apus Roz', url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't008', name: 'Apus Foc', url: 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't009', name: 'Apus Nori', url: 'https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't010', name: 'Apus Lac', url: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't011', name: 'Apus Dramatic', url: 'https://images.unsplash.com/photo-1501179691627-eeaa65ea017c?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1501179691627-eeaa65ea017c?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't012', name: 'Apus Câmp 2', url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=400&h=500&fit=crop&q=60', categorie: 'apus' },
+  { id: 't020', name: 'Cruce Furtună', url: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't021', name: 'Lumină Divină', url: 'https://images.unsplash.com/photo-1531844251246-9a1bfaae09fc?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1531844251246-9a1bfaae09fc?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't022', name: 'Rugăciune', url: 'https://images.unsplash.com/photo-1478719059408-592965723cbc?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1478719059408-592965723cbc?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't023', name: 'Biblie Veche', url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't024', name: 'Cer Deschis', url: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't025', name: 'Cruce Apus', url: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't026', name: 'Lumânări', url: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=500&fit=crop&q=60', categorie: 'spiritual' },
+  { id: 't030', name: 'Munți Maiestuoși', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
+  { id: 't031', name: 'Vale Verde', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
+  { id: 't032', name: 'Lac de Munte', url: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400&h=500&fit=crop&q=60', categorie: 'munte' },
+  { id: 't033', name: 'Pădure Lumină', url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=500&fit=crop&q=60', categorie: 'padure' },
+  { id: 't034', name: 'Pădure Ceață', url: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=400&h=500&fit=crop&q=60', categorie: 'padure' },
+  { id: 't040', name: 'Mare Senină', url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&h=500&fit=crop&q=60', categorie: 'mare' },
+  { id: 't041', name: 'Valuri Putere', url: 'https://images.unsplash.com/photo-1468581264429-2548ef9eb732?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1468581264429-2548ef9eb732?w=400&h=500&fit=crop&q=60', categorie: 'mare' },
+  { id: 't042', name: 'Răsărit Mare', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=500&fit=crop&q=60', categorie: 'mare' },
+  { id: 't050', name: 'Flori de Câmp', url: 'https://images.unsplash.com/photo-1490750967868-88df5691cc43?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1490750967868-88df5691cc43?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
+  { id: 't051', name: 'Cireș Înflorit', url: 'https://images.unsplash.com/photo-1522748906645-95d8adfd52c7?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1522748906645-95d8adfd52c7?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
+  { id: 't052', name: 'Lavandă', url: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
+  { id: 't053', name: 'Flori Albe', url: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=400&h=500&fit=crop&q=60', categorie: 'flori' },
+  { id: 't060', name: 'Noapte Stele', url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=500&fit=crop&q=60', categorie: 'iarna' },
+  { id: 't061', name: 'Iarnă Albă', url: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=400&h=500&fit=crop&q=60', categorie: 'iarna' },
+  { id: 't070', name: 'Cer Dramatic', url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
+  { id: 't071', name: 'Nori Aurii', url: 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
+  { id: 't072', name: 'Raze de Soare', url: 'https://images.unsplash.com/photo-1536514498073-50e69d39c6cf?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1536514498073-50e69d39c6cf?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
+  { id: 't073', name: 'Furtună Putere', url: 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=400&h=500&fit=crop&q=60', categorie: 'cer' },
+  { id: 't080', name: 'Marmură Aurie', url: 'https://images.unsplash.com/photo-1557683311-eac922347aa1?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1557683311-eac922347aa1?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
+  { id: 't081', name: 'Marmură Albă', url: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
+  { id: 't082', name: 'Negru Elegant', url: 'https://images.unsplash.com/photo-1550537687-c91072c4792d?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1550537687-c91072c4792d?w=400&h=500&fit=crop&q=60', categorie: 'minimalist' },
+  { id: 't090', name: 'Răsărit Montan', url: 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
+  { id: 't091', name: 'Răsărit Roz', url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
+  { id: 't092', name: 'Răsărit Ocean', url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
+  { id: 't093', name: 'Răsărit Câmp', url: 'https://images.unsplash.com/photo-1490049350474-498de43bc885?w=1080&h=1350&fit=crop&q=85', thumbnail: 'https://images.unsplash.com/photo-1490049350474-498de43bc885?w=400&h=500&fit=crop&q=60', categorie: 'rasarit' },
 ];

@@ -490,42 +490,45 @@ router.get('/', async (req, res) => {
     if (search && search.trim()) {
       const ref = parseReference(search);
 
-      if (ref.isReference) {
-        const conditions = [];
+      // Fix pentru căutarea în versete
+// Înlocuiește în backend/routes/verses.js secțiunea cu ref.isReference
 
-        if (ref.verset) {
-          conditions.push({
-            carte: new RegExp(ref.carte, 'i'),
-            capitol: ref.capitol,
-            verset: ref.verset
-          });
-          conditions.push({
-            abreviere: new RegExp(ref.carte, 'i'),
-            capitol: ref.capitol,
-            verset: ref.verset
-          });
-        }
+// PROBLEMA: new RegExp('Ioan', 'i') prinde și '1 Ioan', '2 Ioan', '3 Ioan'
+// FIX: match exact pe carte folosind ^ și $ în regex
 
-        conditions.push({
-          carte: new RegExp(ref.carte, 'i'),
-          capitol: ref.capitol
-        });
-        conditions.push({
-          abreviere: new RegExp(ref.carte, 'i'),
-          capitol: ref.capitol
-        });
-        conditions.push({ referinta: new RegExp(search.trim(), 'i') });
-        conditions.push({ text: new RegExp(search.trim(), 'i') });
+if (ref.isReference) {
+  const conditions = [];
 
-        filter.$or = conditions;
-      } else {
-        filter.$or = [
-          { text: new RegExp(search.trim(), 'i') },
-          { referinta: new RegExp(search.trim(), 'i') },
-          { carte: new RegExp(search.trim(), 'i') },
-          { abreviere: new RegExp(search.trim(), 'i') }
-        ];
-      }
+  // Match EXACT pe nume carte (cu ^ și $)
+  const carteRegexExact = new RegExp(`^${ref.carte}$`, 'i');
+  // Match și pe abreviere
+  const abrevRegex = new RegExp(ref.carte, 'i');
+
+  if (ref.verset) {
+    conditions.push({
+      carte: carteRegexExact,
+      capitol: ref.capitol,
+      verset: ref.verset
+    });
+    conditions.push({
+      abreviere: abrevRegex,
+      capitol: ref.capitol,
+      verset: ref.verset
+    });
+  }
+
+  conditions.push({ carte: carteRegexExact, capitol: ref.capitol });
+  conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
+  conditions.push({ referinta: new RegExp(search.trim(), 'i') });
+
+  filter.$or = conditions;
+} else {
+  // Căutare text liber — caută în text și referință
+  filter.$or = [
+    { text: new RegExp(search.trim(), 'i') },
+    { referinta: new RegExp(search.trim(), 'i') },
+  ];
+}
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
