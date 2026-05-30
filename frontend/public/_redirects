@@ -1,3 +1,1 @@
-/api/* https://popas-pentru-suflet-backend.onrender.com/api/:splat 200
-/auth/facebook/callback /index.html 200
-/* /index.html 200
+/* https://popas-pentru-suflet-9515.vercel.app/:splat 301
