@@ -141,7 +141,7 @@ const GeneratePage = () => {
           ctx.save();
           ctx.translate(x, y);
           ctx.rotate(-0.35);
-          ctx.fillText('popaspentrusuflet.ro', 0, 0);
+          ctx.fillText('PopaspentruSuflet', 0, 0);
           ctx.restore();
         }
       }
@@ -470,7 +470,7 @@ if (citat && afiseazaCitat) {
     img.src = src;
     img.onload = () => { loadedImgRef.current = img; drawOnCanvas(img); };
     img.onerror = () => console.error('Eroare încărcare imagine template');
-  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat]);
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat, citatFontSize]);
 
   // Helper rounded rect
   function roundRect(ctx, x, y, w, h, r) {
