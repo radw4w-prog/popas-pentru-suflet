@@ -76,7 +76,7 @@ const GeneratePage = () => {
   const canvasRef = useRef(null);
   const loadedImgRef = useRef(null);
   const loadedLogoRef = useRef(null);
-  const [citatFontSize, setCitatFontSize] = useState(14);
+  const [citatFontSize, setCitatFontSize] = useState(24);
 
   // Preload logo
   useEffect(() => {
@@ -360,7 +360,7 @@ if (citat && afiseazaCitat) {
   ctx.save();
   
   // Text citat — fără fundal
-  ctx.font = `italic ${citatFontSize}px '${stilText.font}', Georgia, serif`;
+  ctx.font = `italic ${citatFontSize * 1.5}px '${stilText.font}', Georgia, serif`;
   ctx.fillStyle = 'rgba(255,255,255,0.82)';
   ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(0,0,0,0.9)';
@@ -370,14 +370,14 @@ if (citat && afiseazaCitat) {
   
   const citLines = wrapLines(`„${citat.text}"`, W * 0.80, 4);
   citLines.forEach((line, i) => {
-  ctx.fillText(line, W / 2, citY + i * Math.round(citatFontSize * 1.4));
+  ctx.fillText(line, W / 2, citY + i * Math.round(citatFontSize * 2.1));
 });
   
   // Autor
-  ctx.font = `600 ${Math.round(citatFontSize * 0.85)}px 'Inter', Arial, sans-serif`;
+  ctx.font = `600 ${Math.round(citatFontSize * 1.2)}px 'Inter', Arial, sans-serif`;
   ctx.fillStyle = '#D4AF37';
   ctx.shadowBlur = 12;
-  ctx.fillText(`— ${citat.autor}`, W / 2, citY + citLines.length * Math.round(citatFontSize * 1.4) + 18);
+  ctx.fillText(`— ${citat.autor}`, W / 2, citY + citLines.length * Math.round(citatFontSize * 2.1) + 22);
   
   ctx.restore();
 }
@@ -1018,8 +1018,7 @@ const ReelSection = () => (
           >−</button>
           <input
             type="range"
-            min="12"
-			max="22"
+            min="16" max="36"
             step="1"
             value={citatFontSize}
             onChange={e => setCitatFontSize(+e.target.value)}
