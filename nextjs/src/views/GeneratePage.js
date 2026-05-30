@@ -960,48 +960,86 @@ const ReelSection = () => (
               </div>
             </div>
 
-            {/* Design avansat */}
-            <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>✝️ Design avansat:</div>
+           {/* Design avansat */}
+<div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>✝️ Design avansat:</div>
 
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Simbol sus:</label>
-                <div style={{ display: 'flex', gap: '0.35rem' }}>
-                  {[{ id: 'cruce', label: '✝️ Cruce' }, { id: 'porumbel', label: '🕊️ Porumbel' }, { id: 'stea', label: '✦ Stea' }, { id: 'none', label: '✕ Fără' }].map(s => (
-                    <button key={s.id} onClick={() => setAfiseazaSimbol(s.id)} style={{ flex: 1, padding: '0.35rem 0.25rem', borderRadius: '8px', border: `1px solid ${afiseazaSimbol === s.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`, background: afiseazaSimbol === s.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)', color: afiseazaSimbol === s.id ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem' }}>{s.label}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input type="checkbox" id="citat" checked={afiseazaCitat} onChange={e => { setAfiseazaCitat(e.target.checked); if (e.target.checked) setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)]); }} />
-                <label htmlFor="citat" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>Adaugă citat teolog (Luther, Calvin, Spurgeon...)</label>
-              <div>
-      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
-        Mărime font citat: {citatFontSize}px
-      </label>
-      <input
-        type="range" min="16" max="32" step="1"
-        value={citatFontSize}
-        onChange={e => setCitatFontSize(+e.target.value)}
-        style={{ width: '100%' }}
-      />
+  {/* Simbol sus */}
+  <div>
+    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Simbol sus:</label>
+    <div style={{ display: 'flex', gap: '0.35rem' }}>
+      {[{ id: 'cruce', label: '✝️ Cruce' }, { id: 'porumbel', label: '🕊️ Porumbel' }, { id: 'stea', label: '✦ Stea' }, { id: 'none', label: '✕ Fără' }].map(s => (
+        <button key={s.id} onClick={() => setAfiseazaSimbol(s.id)} style={{ flex: 1, padding: '0.35rem 0.25rem', borderRadius: '8px', border: `1px solid ${afiseazaSimbol === s.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`, background: afiseazaSimbol === s.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)', color: afiseazaSimbol === s.id ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem' }}>{s.label}</button>
+      ))}
     </div>
-  </>
-)}
-			  
-			  </div>
-			  
-			  
+  </div>
 
-              {afiseazaCitat && citatSelectat && (
-                <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '0.75rem', fontSize: '0.78rem' }}>
-                  <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>„{citatSelectat.text.substring(0, 80)}..."</div>
-                  <div style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>— {citatSelectat.autor}</div>
-                  <button onClick={() => setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)])} style={{ marginTop: '0.5rem', padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem' }}>🔄 Alt citat</button>
-                </div>
-              )}
-            </div>
+  {/* Citat teolog */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <input
+      type="checkbox"
+      id="citat"
+      checked={afiseazaCitat}
+      onChange={e => {
+        setAfiseazaCitat(e.target.checked);
+        if (e.target.checked) setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)]);
+      }}
+    />
+    <label htmlFor="citat" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+      Adaugă citat teolog (Luther, Calvin, Spurgeon...)
+    </label>
+  </div>
+
+  {afiseazaCitat && citatSelectat && (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {/* Preview citat */}
+      <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '0.75rem', fontSize: '0.78rem' }}>
+        <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+          „{citatSelectat.text.substring(0, 80)}..."
+        </div>
+        <div style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>— {citatSelectat.autor}</div>
+        <button
+          onClick={() => setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)])}
+          style={{ marginTop: '0.5rem', padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem' }}
+        >
+          🔄 Alt citat
+        </button>
+      </div>
+
+      {/* Slider font size citat */}
+      <div>
+        <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+          Mărime font citat: {citatFontSize}px
+        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            onClick={() => setCitatFontSize(p => Math.max(14, p - 2))}
+            style={{ width: 28, height: 28, borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >−</button>
+          <input
+            type="range"
+            min="14"
+            max="32"
+            step="1"
+            value={citatFontSize}
+            onChange={e => setCitatFontSize(+e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button
+            onClick={() => setCitatFontSize(p => Math.min(32, p + 2))}
+            style={{ width: 28, height: 28, borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >+</button>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+          <span>Mic (14)</span>
+          <span style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>{citatFontSize}px</span>
+          <span>Mare (32)</span>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
 			
 
             {/* Butoane generate */}
