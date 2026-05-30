@@ -4,47 +4,25 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import ReelGenerator from '../components/ReelGenerator';
-
+import { DEFAULT_TEMPLATES, CATEGORII_TEMPLATE, CITATE_TEOLOGI } from '../data/templates';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
-
-import { DEFAULT_TEMPLATES } from '../data/templates';
-
-const CATEGORII = [
-  { id: 'all', label: '📋 Toate' },
-  { id: 'apus', label: '🌅 Apusuri' },
-  { id: 'rasarit', label: '🌄 Răsărituri' },
-  { id: 'cer', label: '☁️ Cer' },
-  { id: 'nori', label: '🌤️ Nori' },
-  { id: 'stele', label: '⭐ Stele' },
-  { id: 'luna', label: '🌙 Lună' },
-  { id: 'munte', label: '🏔️ Munți' },
-  { id: 'padure', label: '🌲 Păduri' },
-  { id: 'mare', label: '🌊 Mare' },
-  { id: 'lac', label: '💧 Lac' },
-  { id: 'cascada', label: '🏞️ Cascade' },
-  { id: 'rau', label: '🏞️ Râuri' },
-  { id: 'flori', label: '🌸 Flori' },
-  { id: 'natura', label: '🌿 Natură' },
-  { id: 'dimineata', label: '🌅 Dimineață' },
-  { id: 'ceata', label: '🌫️ Ceață' },
-  { id: 'lumina', label: '☀️ Lumină' },
-  { id: 'spiritual', label: '✝️ Spiritual' },
-  { id: 'biserica', label: '⛪ Biserică' },
-  { id: 'minimalist', label: '🖤 Minimalist' },
-  { id: 'iarna', label: '❄️ Iarnă' },
-  { id: 'toamna', label: '🍂 Toamnă' },
-  { id: 'primavara', label: '🌱 Primăvară' },
-  { id: 'vara', label: '☀️ Vară' },
-  { id: 'custom', label: '📁 Ale mele' },
-];
+const CATEGORII = CATEGORII_TEMPLATE;
 
 const FONTURI = [
   { group: 'Elegante', opts: ['Playfair Display', 'Cinzel', 'Cormorant Garamond', 'EB Garamond', 'Libre Baskerville'] },
-  { group: 'Romantice', opts: ['Great Vibes', 'Dancing Script'] },
+  { group: 'Caligrafice', opts: ['Great Vibes', 'Dancing Script'] },
   { group: 'Clasice', opts: ['Lora', 'Merriweather', 'Georgia', 'Times New Roman'] },
   { group: 'Moderne', opts: ['Inter', 'Arial'] },
+];
+
+// Cuvinte care primesc culoarea aurie pe imagine
+const CUVINTE_CHEIE_AURII = [
+  'Dumnezeu', 'Domnul', 'Hristos', 'Isus', 'Iisus', 'Tatăl', 'Duhul', 'Sfânt',
+  'iubire', 'dragoste', 'har', 'credință', 'nădejde', 'pace', 'bucurie',
+  'mântuire', 'viață', 'adevăr', 'lumină', 'putere', 'slavă', 'veșnic',
+  'iertare', 'binecuvântare', 'Sfântul', 'Domnului', 'Dumnezeului', 'Tatălui'
 ];
 
 const GeneratePage = () => {
@@ -75,7 +53,7 @@ const GeneratePage = () => {
   const [scheduleResult, setScheduleResult] = useState(null);
   const [categorieFiltre, setCategorieFiltre] = useState('all');
   const [paginaCurenta, setPaginaCurenta] = useState(1);
-const TEMPLATES_PER_PAGINA = 24;
+  const TEMPLATES_PER_PAGINA = 24;
   const [generatedImageBase64, setGeneratedImageBase64] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [stilText, setStilText] = useState({
@@ -86,16 +64,20 @@ const TEMPLATES_PER_PAGINA = 24;
   const [limitLoading, setLimitLoading] = useState(true);
   const [renderKey, setRenderKey] = useState(0);
   const [aiResult, setAiResult] = useState(null);
-const [generatingAI, setGeneratingAI] = useState(false);
-const [aiTab, setAiTab] = useState('normal');
-const [aiVarianta, setAiVarianta] = useState(0);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiTab, setAiTab] = useState('normal');
+  const [aiVarianta, setAiVarianta] = useState(0);
+  // Opțiuni design avansate
+  const [afiseazaCitat, setAfiseazaCitat] = useState(false);
+  const [afiseazaSimbol, setAfiseazaSimbol] = useState('cruce');
+  const [citatSelectat, setCitatSelectat] = useState(null);
 
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
   const loadedImgRef = useRef(null);
   const loadedLogoRef = useRef(null);
 
-  // ═══ PRELOAD LOGO ═══
+  // Preload logo
   useEffect(() => {
     const logo = new Image();
     logo.crossOrigin = 'anonymous';
@@ -104,22 +86,23 @@ const [aiVarianta, setAiVarianta] = useState(0);
     logo.onerror = () => { loadedLogoRef.current = null; };
   }, []);
 
-  // ═══ EFFECTS ═══
   useEffect(() => {
     fetchTemplates();
     fetchTeme();
     fetchLimitStatus();
   }, []);
 
-  // ═══ CANVAS RENDER ═══
+  // ═══ CANVAS RENDER PREMIUM ═══
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !templateSelectat) return;
 
     const textDePus = versetEditat || versetSelectat?.text;
     const refDePus = referintaEditata || versetSelectat?.referintaCompleta || versetSelectat?.referinta;
-
     if (!textDePus) return;
+
+    const gandZilei2 = generated?.gand?.text || '';
+    const citat = citatSelectat || (afiseazaCitat ? CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)] : null);
 
     const drawOnCanvas = (img) => {
       const ctx = canvas.getContext('2d');
@@ -128,322 +111,313 @@ const [aiVarianta, setAiVarianta] = useState(0);
       canvas.width = W;
       canvas.height = H;
 
-      // Cover crop
-      // ══════════════════════════════════════════════════════════════
-// ÎNLOCUIEȘTE tot conținutul funcției drawOnCanvas din GeneratePage.js
-// De la "const ctx = canvas.getContext('2d');" până la "saveCanvasImage();"
-// ══════════════════════════════════════════════════════════════
+      // ── Cover crop ──
+      const imgR = img.width / img.height;
+      const canR = W / H;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
+      else { sh = img.width / canR; sy = (img.height - sh) / 2; }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 
-const ctx = canvas.getContext('2d');
-const W = 1080;
-const H = 1350;
-canvas.width = W;
-canvas.height = H;
+      // ── Overlay gradient dramatic ──
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, 'rgba(0,0,0,0.08)');
+      grad.addColorStop(0.15, 'rgba(0,0,0,0.28)');
+      grad.addColorStop(0.45, 'rgba(0,0,0,0.52)');
+      grad.addColorStop(0.72, 'rgba(0,0,0,0.72)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.92)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-// ── Cover crop ──
-const imgR = img.width / img.height;
-const canR = W / H;
-let sx = 0, sy = 0, sw = img.width, sh = img.height;
-if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
-else { sh = img.width / canR; sy = (img.height - sh) / 2; }
-ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      // ── Watermark repetat discret ──
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.font = '700 22px Inter, Arial, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      for (let y = 60; y < H; y += 120) {
+        for (let x = 80; x < W; x += 380) {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(-0.35);
+          ctx.fillText('popaspentrusuflet.ro', 0, 0);
+          ctx.restore();
+        }
+      }
+      ctx.restore();
 
-// ── Overlay gradient dramatic ──
-const grad = ctx.createLinearGradient(0, 0, 0, H);
-grad.addColorStop(0, 'rgba(0,0,0,0.08)');
-grad.addColorStop(0.15, 'rgba(0,0,0,0.25)');
-grad.addColorStop(0.45, 'rgba(0,0,0,0.5)');
-grad.addColorStop(0.72, 'rgba(0,0,0,0.72)');
-grad.addColorStop(1, 'rgba(0,0,0,0.92)');
-ctx.fillStyle = grad;
-ctx.fillRect(0, 0, W, H);
+      // ── Helper: separator auriu ──
+      const drawSep = (y, w = 120, opacity = 0.6) => {
+        const sg = ctx.createLinearGradient(W/2 - w, 0, W/2 + w, 0);
+        sg.addColorStop(0, 'transparent');
+        sg.addColorStop(0.3, `rgba(212,175,55,${opacity})`);
+        sg.addColorStop(0.7, `rgba(212,175,55,${opacity})`);
+        sg.addColorStop(1, 'transparent');
+        ctx.strokeStyle = sg;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(W/2 - w, y);
+        ctx.lineTo(W/2 + w, y);
+        ctx.stroke();
+      };
 
-// ── Watermark repetat discret ──
-ctx.save();
-ctx.globalAlpha = 0.04;
-ctx.font = '700 22px Inter, Arial, sans-serif';
-ctx.fillStyle = '#FFFFFF';
-ctx.textAlign = 'center';
-for (let y = 60; y < H; y += 120) {
-  for (let x = 80; x < W; x += 380) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(-0.35);
-    ctx.fillText('popaspentrusuflet.ro', 0, 0);
-    ctx.restore();
-  }
-}
-ctx.restore();
+      // ── Helper: wrap text ──
+      const wrapLines = (text, maxW, maxL = 8) => {
+        const words = text.split(' ');
+        const lines = [];
+        let cur = '';
+        for (const w of words) {
+          const t = cur + w + ' ';
+          if (ctx.measureText(t).width > maxW && cur) {
+            lines.push(cur.trim());
+            cur = w + ' ';
+            if (lines.length >= maxL - 1) break;
+          } else { cur = t; }
+        }
+        lines.push(cur.trim());
+        return lines.slice(0, maxL);
+      };
 
-// ── Helper: separator auriu ──
-const drawSep = (y, w = 120, opacity = 0.6) => {
-  const sg = ctx.createLinearGradient(W/2 - w, 0, W/2 + w, 0);
-  sg.addColorStop(0, 'transparent');
-  sg.addColorStop(0.3, `rgba(212,175,55,${opacity})`);
-  sg.addColorStop(0.7, `rgba(212,175,55,${opacity})`);
-  sg.addColorStop(1, 'transparent');
-  ctx.strokeStyle = sg;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(W/2 - w, y);
-  ctx.lineTo(W/2 + w, y);
-  ctx.stroke();
-};
+      // ── ORNAMENTE COLȚURI ──
+      const drawColt = (x, y, dx, dy) => {
+        ctx.strokeStyle = 'rgba(212,175,55,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x + dx * 42, y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x, y + dy * 42);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(212,175,55,0.55)';
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      drawColt(55, 55, 1, 1);
+      drawColt(W-55, 55, -1, 1);
+      drawColt(55, H-55, 1, -1);
+      drawColt(W-55, H-55, -1, -1);
 
-// ── Helper: wrap text ──
-const wrapLines = (text, maxW, maxL = 8) => {
-  const words = text.split(' ');
-  const lines = [];
-  let cur = '';
-  for (const w of words) {
-    const t = cur + w + ' ';
-    if (ctx.measureText(t).width > maxW && cur) {
-      lines.push(cur.trim());
-      cur = w + ' ';
-      if (lines.length >= maxL - 1) break;
-    } else { cur = t; }
-  }
-  lines.push(cur.trim());
-  return lines.slice(0, maxL);
-};
+      // Linie decorativă sus
+      drawSep(88, 200, 0.3);
 
-const fz = Math.round(stilText.fontSize * 2);
-const lh = fz * 1.55;
-const maxW = W * 0.82;
+      // ── SIMBOL CREȘTIN SUS ──
+      if (afiseazaSimbol === 'cruce') {
+        ctx.save();
+        ctx.shadowColor = 'rgba(212,175,55,0.7)';
+        ctx.shadowBlur = 30;
+        const cY = 168, cHh = 68, cWw = 14, bW = 46, bH = 14;
+        ctx.fillStyle = '#D4AF37';
+        ctx.fillRect(W/2 - cWw/2, cY - cHh/2, cWw, cHh);
+        ctx.fillRect(W/2 - bW/2, cY - cHh*0.15, bW, bH);
+        ctx.restore();
+      } else if (afiseazaSimbol === 'porumbel') {
+        ctx.save();
+        ctx.font = '65px serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(212,175,55,0.6)';
+        ctx.shadowBlur = 20;
+        ctx.fillText('🕊️', W/2, 185);
+        ctx.restore();
+      } else if (afiseazaSimbol === 'stea') {
+        ctx.save();
+        ctx.font = 'bold 60px serif';
+        ctx.fillStyle = '#D4AF37';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(212,175,55,0.7)';
+        ctx.shadowBlur = 25;
+        ctx.fillText('✦', W/2, 185);
+        ctx.restore();
+      }
 
-// ── ORNAMENTE COLȚURI ──
-const drawColt = (x, y, dx, dy) => {
-  ctx.strokeStyle = 'rgba(212,175,55,0.5)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x + dx * 40, y);
-  ctx.lineTo(x, y);
-  ctx.lineTo(x, y + dy * 40);
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(212,175,55,0.5)';
-  ctx.beginPath();
-  ctx.arc(x, y, 3, 0, Math.PI * 2);
-  ctx.fill();
-};
-drawColt(55, 55, 1, 1);
-drawColt(W-55, 55, -1, 1);
-drawColt(55, H-55, 1, -1);
-drawColt(W-55, H-55, -1, -1);
+      // ── TEXT VERSET PRINCIPAL ──
+      const fz = Math.round(stilText.fontSize * 2);
+      const lh = fz * 1.55;
+      const maxW = W * 0.82;
 
-// Linie decorativă sus
-drawSep(90, 180, 0.35);
+      const versetText2 = `\u201C${textDePus}\u201D`;
+      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+      const lines = wrapLines(versetText2, maxW, 8);
+      const totalH = lines.length * lh;
 
-// ── CRUCE SUS (simbol creștin) ──
-ctx.save();
-ctx.shadowColor = 'rgba(212,175,55,0.6)';
-ctx.shadowBlur = 25;
-const cY = 170, cH = 65, cW2 = 14, bW = 44, bH = 13;
-ctx.fillStyle = '#D4AF37';
-ctx.fillRect(W/2 - cW2/2, cY - cH/2, cW2, cH);
-ctx.fillRect(W/2 - bW/2, cY - cH*0.15, bW, bH);
-ctx.restore();
+      let startY;
+      if (stilText.pozitie === 'top') startY = 280;
+      else if (stilText.pozitie === 'bottom') startY = H - totalH - 280;
+      else startY = Math.max(280, (H - totalH) / 2 - 50);
 
-// ── TITLU (dacă există) ──
-if (titlu) {
-  ctx.save();
-  ctx.font = `600 24px '${stilText.font}', Georgia, serif`;
-  ctx.fillStyle = '#D4AF37';
-  ctx.textAlign = 'center';
-  ctx.letterSpacing = '2px';
-  ctx.shadowColor = 'rgba(0,0,0,0.9)';
-  ctx.shadowBlur = 15;
-  const titluLines = wrapLines(titlu.toUpperCase(), W * 0.75, 2);
-  let tY = 240;
-  titluLines.forEach(line => { ctx.fillText(line, W/2, tY); tY += 32; });
-  ctx.restore();
-}
+      // Separator sus verset
+      drawSep(startY - 32, 110, 0.5);
 
-// ── TEXT VERSET PRINCIPAL ──
-const versetText2 = `\u201C${textDePus}\u201D`;
-ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-const lines = wrapLines(versetText2, maxW, 8);
-const totalH = lines.length * lh;
+      // Ghilimele decorative
+      ctx.save();
+      ctx.globalAlpha = 0.07;
+      ctx.font = 'bold 170px Georgia, serif';
+      ctx.fillStyle = '#D4AF37';
+      ctx.textAlign = 'left';
+      ctx.fillText('\u201C', 35, startY + 90);
+      ctx.restore();
 
-let startY;
-if (stilText.pozitie === 'top') startY = 300;
-else if (stilText.pozitie === 'bottom') startY = H - totalH - 280;
-else startY = Math.max(300, (H - totalH) / 2 - 60);
+      // ── Cuvinte cheie COLORATE ──
+      if (stilText.umbra) {
+        ctx.shadowColor = 'rgba(0,0,0,0.95)';
+        ctx.shadowBlur = 28;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 3;
+      }
 
-// Separator sus verset
-ctx.save();
-ctx.shadowColor = 'rgba(0,0,0,0.8)';
-ctx.shadowBlur = 20;
-drawSep(startY - 30, 100, 0.5);
+      lines.forEach((line, i) => {
+        const y = startY + i * lh;
+        const words2 = line.split(' ');
 
-// Ghilimele decorative mari
-ctx.save();
-ctx.globalAlpha = 0.08;
-ctx.font = 'bold 160px Georgia, serif';
-ctx.fillStyle = '#D4AF37';
-ctx.textAlign = 'left';
-ctx.fillText('\u201C', 40, startY + 80);
-ctx.restore();
+        const areCuvantCheie = words2.some(w =>
+          CUVINTE_CHEIE_AURII.some(ck =>
+            w.replace(/[„""''.,;:!?]/g, '').toLowerCase() === ck.toLowerCase()
+          )
+        );
 
-// ── Cuvinte cheie COLORATE ──
-const CUVINTE_CHEIE_AURII = [
-  'Dumnezeu', 'Domnul', 'Hristos', 'Isus', 'Iisus', 'Tatăl', 'Duhul', 'Sfânt',
-  'iubire', 'dragoste', 'har', 'credință', 'nădejde', 'pace', 'bucurie',
-  'mântuire', 'viață', 'adevăr', 'lumină', 'putere', 'slavă', 'veșnic',
-  'iertare', 'binecuvântare', 'Sfântul', 'Domnului', 'Dumnezeului'
-];
+        if (areCuvantCheie && words2.length <= 5) {
+          ctx.font = `bold italic ${Math.round(fz * 1.06)}px '${stilText.font}', Georgia, serif`;
+          ctx.fillStyle = '#F4D03F';
+        } else {
+          ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+          ctx.fillStyle = stilText.culoare;
+        }
+        ctx.textAlign = 'center';
+        ctx.fillText(line, W/2, y);
+      });
 
-if (stilText.umbra) {
-  ctx.shadowColor = 'rgba(0,0,0,0.95)';
-  ctx.shadowBlur = 28;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 3;
-}
+      const afterVerset = startY + totalH;
+      ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
 
-lines.forEach((line, i) => {
-  const y = startY + i * lh;
-  const words2 = line.split(' ');
+      // Separator jos verset
+      drawSep(afterVerset + 20, 110, 0.5);
 
-  // Verifică dacă linia conține cuvinte cheie
-  const areCuvantCheie = words2.some(w =>
-    CUVINTE_CHEIE_AURII.some(ck =>
-      w.replace(/[„""''.,;:!?]/g, '').toLowerCase() === ck.toLowerCase()
-    )
-  );
+      // Referință
+      ctx.save();
+      ctx.font = `bold ${Math.round(fz * 0.44)}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = '#D4AF37';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.9)';
+      ctx.shadowBlur = 15;
+      ctx.fillText(`\u2014 ${refDePus} \u2014`, W/2, afterVerset + 60);
+      ctx.restore();
 
-  if (areCuvantCheie && words2.length <= 4) {
-    // Linie scurtă cu cuvânt cheie — toată linia în auriu + bold
-    ctx.font = `bold italic ${Math.round(fz * 1.05)}px '${stilText.font}', Georgia, serif`;
-    ctx.fillStyle = '#F4D03F';
-    ctx.textAlign = 'center';
-    ctx.fillText(line, W/2, y);
-    ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-  } else {
-    // Linie normală — culoarea selectată
-    ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-    ctx.fillStyle = stilText.culoare;
-    ctx.textAlign = 'center';
-    ctx.fillText(line, W/2, y);
-  }
-});
+      // ── GÂNDUL ZILEI ──
+      if (gandZilei2 && afterVerset + 120 < H - 320) {
+        const gY = afterVerset + 115;
+        drawSep(gY, 85, 0.25);
+        ctx.save();
+        ctx.font = `500 30px 'Inter', Arial, sans-serif`;
+        ctx.fillStyle = 'rgba(212,175,55,0.9)';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 10;
+        ctx.fillText('✦ Gândul zilei ✦', W/2, gY + 35);
+        ctx.font = `italic 32px Georgia, serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        const gandLines = wrapLines(gandZilei2, W * 0.75, 3);
+        gandLines.forEach((line, i) => { ctx.fillText(line, W/2, gY + 80 + i * 42); });
+        ctx.restore();
+      }
 
-const afterVerset = startY + totalH;
+      // ── CITAT TEOLOG ──
+      if (citat && afiseazaCitat) {
+        const citY = H - 240;
+        ctx.save();
+        // Fundal
+        ctx.fillStyle = 'rgba(0,0,0,0.38)';
+        roundRect(ctx, W*0.07, citY - 18, W*0.86, 115, 14);
+        ctx.fill();
+        // Text citat
+        ctx.font = `italic 27px '${stilText.font}', Georgia, serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+        ctx.shadowBlur = 8;
+        const citLines = wrapLines(`„${citat.text}"`, W * 0.78, 2);
+        citLines.forEach((line, i) => { ctx.fillText(line, W/2, citY + 25 + i * 36); });
+        // Autor
+        ctx.font = `600 23px 'Inter', Arial, sans-serif`;
+        ctx.fillStyle = '#D4AF37';
+        ctx.fillText(`— ${citat.autor}`, W/2, citY + 100);
+        ctx.restore();
+      }
 
-// Separator jos verset
-ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-drawSep(afterVerset + 18, 100, 0.5);
+      // Separator jos
+      drawSep(H - 168, 210, 0.28);
 
-// Referință
-ctx.save();
-ctx.font = `bold ${Math.round(fz * 0.44)}px '${stilText.font}', Georgia, serif`;
-ctx.fillStyle = '#D4AF37';
-ctx.textAlign = 'center';
-ctx.shadowColor = 'rgba(0,0,0,0.9)';
-ctx.shadowBlur = 15;
-ctx.fillText(`\u2014 ${refDePus} \u2014`, W/2, afterVerset + 58);
-ctx.restore();
+      // ── BRANDING / LOGO ──
+      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+      const logo = loadedLogoRef.current;
+      const wmY = H - 145;
 
-// ── GÂNDUL ZILEI (dacă există) ──
-if (gandZilei2 && afterVerset < H - 350) {
-  const gY = afterVerset + 110;
-  drawSep(gY - 10, 80, 0.25);
-  ctx.save();
-  ctx.font = `500 32px 'Inter', Arial, sans-serif`;
-  ctx.fillStyle = 'rgba(212,175,55,0.85)';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = 'rgba(0,0,0,0.8)';
-  ctx.shadowBlur = 10;
-  ctx.fillText('✦ Gândul zilei ✦', W/2, gY + 30);
+      if (logo) {
+        const logoH = 70;
+        const logoX = W/2 - 35;
+        const logoY = wmY;
 
-  ctx.font = `italic 34px Georgia, serif`;
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  const gandLines = wrapLines(gandZilei2, W * 0.75, 3);
-  gandLines.forEach((line, i) => {
-    ctx.fillText(line, W/2, gY + 80 + i * 44);
-  });
-  ctx.restore();
-}
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        const glowG = ctx.createRadialGradient(W/2, logoY+logoH/2, logoH/2, W/2, logoY+logoH/2, logoH/2+28);
+        glowG.addColorStop(0, 'rgba(212,175,55,0.4)');
+        glowG.addColorStop(1, 'rgba(212,175,55,0)');
+        ctx.beginPath();
+        ctx.arc(W/2, logoY+logoH/2, logoH/2+28, 0, Math.PI*2);
+        ctx.fillStyle = glowG;
+        ctx.fill();
+        ctx.restore();
 
-// Separator jos
-drawSep(H - 165, 200, 0.3);
+        ctx.beginPath();
+        ctx.arc(W/2, logoY+logoH/2, logoH/2+4, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(212,175,55,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-// ── BRANDING / LOGO ──
-ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-const logo2 = loadedLogoRef.current;
-const wmY = H - 140;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(W/2, logoY+logoH/2, logoH/2, 0, Math.PI*2);
+        ctx.clip();
+        ctx.drawImage(logo, logoX, logoY, logoH, logoH);
+        ctx.restore();
 
-if (logo2) {
-  const logoH = 70;
-  const logoX = W/2 - 35;
-  const logoY = wmY;
+        ctx.globalAlpha = 0.75;
+        ctx.font = '600 22px Inter, Arial, sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText('Popas pentru Suflet', W/2, logoY+logoH+28);
 
-  ctx.save();
-  ctx.globalAlpha = 0.12;
-  const glowG = ctx.createRadialGradient(W/2, logoY+logoH/2, logoH/2, W/2, logoY+logoH/2, logoH/2+28);
-  glowG.addColorStop(0, 'rgba(212,175,55,0.4)');
-  glowG.addColorStop(1, 'rgba(212,175,55,0)');
-  ctx.beginPath();
-  ctx.arc(W/2, logoY+logoH/2, logoH/2+28, 0, Math.PI*2);
-  ctx.fillStyle = glowG;
-  ctx.fill();
-  ctx.restore();
+        ctx.globalAlpha = 0.3;
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(W/2-90, logoY+logoH+40);
+        ctx.lineTo(W/2+90, logoY+logoH+40);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.globalAlpha = 0.6;
+        ctx.font = '700 26px Inter, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.textAlign = 'center';
+        ctx.fillText('🕊️ Popas pentru Suflet', W/2, H-50);
+        ctx.globalAlpha = 1;
+      }
 
-  ctx.beginPath();
-  ctx.arc(W/2, logoY+logoH/2, logoH/2+4, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(212,175,55,0.5)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+      // Watermark colțuri
+      ctx.save();
+      ctx.globalAlpha = 0.055;
+      ctx.font = '600 15px Inter, Arial, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'left'; ctx.fillText('popaspentrusuflet.ro', 15, 24);
+      ctx.textAlign = 'right'; ctx.fillText('popaspentrusuflet.ro', W-15, 24);
+      ctx.textAlign = 'left'; ctx.fillText('popaspentrusuflet.ro', 15, H-12);
+      ctx.textAlign = 'right'; ctx.fillText('popaspentrusuflet.ro', W-15, H-12);
+      ctx.restore();
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(W/2, logoY+logoH/2, logoH/2, 0, Math.PI*2);
-  ctx.clip();
-  ctx.drawImage(logo2, logoX, logoY, logoH, logoH);
-  ctx.restore();
-
-  ctx.globalAlpha = 0.75;
-  ctx.font = '600 22px Inter, Arial, sans-serif';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'center';
-  ctx.fillText('Popas pentru Suflet', W/2, logoY+logoH+28);
-
-  ctx.globalAlpha = 0.3;
-  ctx.strokeStyle = '#D4AF37';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(W/2-90, logoY+logoH+40);
-  ctx.lineTo(W/2+90, logoY+logoH+40);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-} else {
-  ctx.globalAlpha = 0.6;
-  ctx.font = '700 26px Inter, Arial, sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.textAlign = 'center';
-  ctx.fillText('🕊️ Popas pentru Suflet', W/2, H-50);
-  ctx.globalAlpha = 1;
-}
-
-// Watermark colțuri
-ctx.save();
-ctx.globalAlpha = 0.055;
-ctx.font = '600 15px Inter, Arial, sans-serif';
-ctx.fillStyle = '#FFFFFF';
-ctx.textAlign = 'left'; ctx.fillText('popaspentrusuflet.ro', 15, 24);
-ctx.textAlign = 'right'; ctx.fillText('popaspentrusuflet.ro', W-15, 24);
-ctx.textAlign = 'left'; ctx.fillText('popaspentrusuflet.ro', 15, H-12);
-ctx.textAlign = 'right'; ctx.fillText('popaspentrusuflet.ro', W-15, H-12);
-ctx.restore();
-      // Salvare
-saveCanvasImage();
-
-
-
-     
+      saveCanvasImage();
     };
 
-    // Dacă imaginea e deja încărcată
     if (loadedImgRef.current && loadedImgRef.current._src === (templateSelectat.url || templateSelectat.thumbnail)) {
       drawOnCanvas(loadedImgRef.current);
       return;
@@ -454,25 +428,33 @@ saveCanvasImage();
     const src = templateSelectat.url || templateSelectat.thumbnail;
     img._src = src;
     img.src = src;
-
-    img.onload = () => {
-      loadedImgRef.current = img;
-      drawOnCanvas(img);
-    };
-
+    img.onload = () => { loadedImgRef.current = img; drawOnCanvas(img); };
     img.onerror = () => console.error('Eroare încărcare imagine template');
-  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText]);
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat]);
 
-  // Trigger renderCanvas când se schimbă parametrii
+  // Helper rounded rect
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+  }
+
   useEffect(() => {
     const textExists = versetEditat || versetSelectat?.text;
     if (templateSelectat && textExists && (step === 2 || step === 3)) {
-      const timeout = setTimeout(() => renderCanvas(), 100);
+      const timeout = setTimeout(() => renderCanvas(), 150);
       return () => clearTimeout(timeout);
     }
-  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, step, renderKey, renderCanvas]);
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, step, renderKey, afiseazaCitat, afiseazaSimbol, citatSelectat, renderCanvas]);
 
-  // Când se selectează un verset, populează editarea
   useEffect(() => {
     if (versetSelectat) {
       setVersetEditat(versetSelectat.text);
@@ -480,7 +462,6 @@ saveCanvasImage();
     }
   }, [versetSelectat]);
 
-  // ═══ FETCH LIMIT STATUS ═══
   const fetchLimitStatus = async () => {
     try {
       setLimitLoading(true);
@@ -488,22 +469,16 @@ saveCanvasImage();
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const r = await axios.get(`${API}/api/generate/limit-status`, { headers });
       setLimitStatus(r.data);
-    } catch (e) {
-      console.error('Eroare la limit-status:', e);
-    } finally {
-      setLimitLoading(false);
-    }
+    } catch (e) { console.error('Eroare la limit-status:', e); }
+    finally { setLimitLoading(false); }
   };
 
-  // ═══ FETCH ═══
   const fetchTemplates = async () => {
     try {
       const r = await axios.get(`${API}/api/generate/templates`);
       const builtIn = r.data?.builtIn?.length > 0 ? r.data.builtIn : DEFAULT_TEMPLATES;
       setTemplates({ builtIn, uploadate: r.data?.uploadate || [] });
-    } catch (e) {
-      setTemplates({ builtIn: DEFAULT_TEMPLATES, uploadate: [] });
-    }
+    } catch (e) { setTemplates({ builtIn: DEFAULT_TEMPLATES, uploadate: [] }); }
   };
 
   const fetchTeme = async () => {
@@ -517,36 +492,22 @@ saveCanvasImage();
     if (!versetSearch.trim()) return;
     setSearching(true);
     try {
-      const r = await axios.get(
-        `${API}/api/verses?search=${encodeURIComponent(versetSearch)}&limit=50`
-      );
+      const r = await axios.get(`${API}/api/verses?search=${encodeURIComponent(versetSearch)}&limit=50`);
       setVerseteGasite(r.data.versete || []);
-    } catch (e) {
-      console.error('Search error:', e);
-    } finally {
-      setSearching(false);
-    }
+    } catch (e) { console.error('Search error:', e); }
+    finally { setSearching(false); }
   };
 
-  // ═══ UPLOAD ═══
   const handleUpload = async (file) => {
     if (!file) return;
     setUploading(true);
     const formData = new FormData();
     formData.append('template', file);
     try {
-      const r = await axios.post(`${API}/api/generate/upload`, formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } });
-      if (r.data.success) {
-        await fetchTemplates();
-        setTemplateSelectat(r.data.file);
-        setStep(2);
-      }
-    } catch (e) {
-      alert('Eroare upload!');
-    } finally {
-      setUploading(false);
-    }
+      const r = await axios.post(`${API}/api/generate/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if (r.data.success) { await fetchTemplates(); setTemplateSelectat(r.data.file); setStep(2); }
+    } catch (e) { alert('Eroare upload!'); }
+    finally { setUploading(false); }
   };
 
   const handleDeleteTemplate = async (filename) => {
@@ -558,286 +519,128 @@ saveCanvasImage();
     } catch (e) {}
   };
 
-  // ═══ GENERATE ═══
   const handleGenerate = async () => {
     if (!isAdmin && limitStatus && limitStatus.remaining <= 0) {
       if (limitStatus.type === 'guest') {
-        const ok = window.confirm(
-          'Ai atins limita de 3 generări/zi pentru vizitatori.\n\nCreează un cont gratuit pentru 5 generări/oră!'
-        );
+        const ok = window.confirm('Ai atins limita de 3 generări/zi pentru vizitatori.\n\nCreează un cont gratuit pentru 5 generări/oră!');
         if (ok) router.push('/register');
-      } else {
-        alert('Ai atins limita de 5 generări/oră. Încearcă din nou mai târziu.');
-      }
+      } else { alert('Ai atins limita de 5 generări/oră. Încearcă din nou mai târziu.'); }
       return;
     }
-
-    setGenerating(true);
-    setGenerated(null);
-    setVariantaActiva(0);
-    setPublishResult(null);
-    setScheduleResult(null);
-
+    setGenerating(true); setGenerated(null); setVariantaActiva(0); setPublishResult(null); setScheduleResult(null);
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const r = await axios.post(
-        `${API}/api/generate`,
-        {
-          tema,
-          platform,
-          versetCustom: versetSelectat || null
-        },
-        { headers }
-      );
-
+      const r = await axios.post(`${API}/api/generate`, { tema, platform, versetCustom: versetSelectat || null }, { headers });
       if (r.data.success) {
-        setGenerated(r.data);
-        setVariantaActiva(0);
-
-        // Dacă nu era verset selectat, setează cel generat
+        setGenerated(r.data); setVariantaActiva(0);
         if (!versetSelectat && r.data.verset) {
           setVersetSelectat(r.data.verset);
           setVersetEditat(r.data.verset.text);
           setReferintaEditata(r.data.verset.referintaCompleta || r.data.verset.referinta || '');
         }
-
-        if (r.data.limitInfo) {
-          setLimitStatus(prev => ({
-            ...prev,
-            used: r.data.limitInfo.used,
-            remaining: r.data.limitInfo.remaining
-          }));
-        } else {
-          await fetchLimitStatus();
-        }
-
-        // Force re-render canvas
-        setRenderKey(k => k + 1);
-        setStep(3);
+        if (r.data.limitInfo) { setLimitStatus(prev => ({ ...prev, used: r.data.limitInfo.used, remaining: r.data.limitInfo.remaining })); }
+        else { await fetchLimitStatus(); }
+        setRenderKey(k => k + 1); setStep(3);
       }
     } catch (error) {
       if (error.response?.status === 429) {
         const msg = error.response?.data?.message || 'Limită atinsă.';
         const needAccount = error.response?.data?.needAccount;
-        if (needAccount) {
-          const ok = window.confirm(msg + '\n\nVrei să creezi un cont gratuit?');
-          if (ok) router.push('/register');
-        } else {
-          alert(msg);
-        }
+        if (needAccount) { const ok = window.confirm(msg + '\n\nVrei să creezi un cont gratuit?'); if (ok) router.push('/register'); }
+        else { alert(msg); }
         await fetchLimitStatus();
-      } else {
-        alert('Eroare la generare: ' + (error.response?.data?.error || error.message));
-      }
-    } finally {
-      setGenerating(false);
-    }
+      } else { alert('Eroare la generare: ' + (error.response?.data?.error || error.message)); }
+    } finally { setGenerating(false); }
   };
 
-
-
-const handleGenerateAI = async () => {
-  if (!isAdmin && limitStatus && limitStatus.remaining <= 0) {
-    if (limitStatus.type === 'guest') {
-      const ok = window.confirm('Ai atins limita. Creează un cont gratuit!');
-      if (ok) router.push('/register');
-    } else {
-      alert('Ai atins limita de generări/oră.');
+  const handleGenerateAI = async () => {
+    if (!isAdmin && limitStatus && limitStatus.remaining <= 0) {
+      if (limitStatus.type === 'guest') { const ok = window.confirm('Ai atins limita. Creează un cont gratuit!'); if (ok) router.push('/register'); }
+      else { alert('Ai atins limita de generări/oră.'); }
+      return;
     }
-    return;
-  }
+    setGeneratingAI(true); setAiResult(null); setPublishResult(null); setScheduleResult(null);
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const r = await axios.post(`${API}/api/generate/ai`, { tema, platform, versetCustom: versetSelectat || null }, { headers });
+      if (r.data.success) {
+        setAiResult(r.data.ai); setAiVarianta(0);
+        if (!versetSelectat && r.data.verset) {
+          setVersetSelectat(r.data.verset);
+          setVersetEditat(r.data.verset.text);
+          setReferintaEditata(r.data.verset.referintaCompleta || r.data.verset.referinta || '');
+        }
+        const ai = r.data.ai;
+        const hook = ai.hook ? `${ai.hook}\n\n` : '';
+        const cta = ai.cta ? `\n\n${ai.cta}` : '';
+        const varianteComplete = [
+          ai.descriere ? (hook + ai.descriere + cta) : null,
+          ai.variantaCalda ? (hook + ai.variantaCalda + cta) : null,
+          ai.variantaPuternica ? (hook + ai.variantaPuternica + cta) : null
+        ].filter(Boolean);
+        setGenerated({ ...r.data, descriere: varianteComplete[0] || ai.descriere || '', variante: varianteComplete, hashtags: ai.hashtags || r.data.hashtags || '' });
+        if (r.data.limitInfo) { setLimitStatus(prev => ({ ...prev, used: r.data.limitInfo.used, remaining: r.data.limitInfo.remaining })); }
+        setRenderKey(k => k + 1); setStep(3); setAiTab('ai');
+      }
+    } catch (error) { alert('Eroare AI: ' + (error.response?.data?.error || error.message)); }
+    finally { setGeneratingAI(false); }
+  };
 
-  setGeneratingAI(true);
-  setAiResult(null);
-  setPublishResult(null);
-  setScheduleResult(null);
-
-  try {
-    const token = localStorage.getItem('token');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    const r = await axios.post(
-      `${API}/api/generate/ai`,
-      {
-        tema,
-        platform,
-        versetCustom: versetSelectat || null
-      },
-      { headers }
-    );
-
-    if (r.data.success) {
-  setAiResult(r.data.ai);
-  setAiVarianta(0);
-
-  // Setează versetul
-  if (!versetSelectat && r.data.verset) {
-    setVersetSelectat(r.data.verset);
-    setVersetEditat(r.data.verset.text);
-    setReferintaEditata(r.data.verset.referintaCompleta || r.data.verset.referinta || '');
-  }
-
-  // Construiește variante COMPLETE cu hook + descriere + cta
-  const ai = r.data.ai;
-  const hook = ai.hook ? `${ai.hook}\n\n` : '';
-  const cta = ai.cta ? `\n\n${ai.cta}` : '';
-
-  const varianteComplete = [
-    ai.descriere ? (hook + ai.descriere + cta) : null,
-    ai.variantaCalda ? (hook + ai.variantaCalda + cta) : null,
-    ai.variantaPuternica ? (hook + ai.variantaPuternica + cta) : null
-  ].filter(Boolean);
-
-  setGenerated({
-    ...r.data,
-    descriere: varianteComplete[0] || ai.descriere || '',
-    variante: varianteComplete,
-    hashtags: ai.hashtags || r.data.hashtags || ''
-  });
-
-  if (r.data.limitInfo) {
-    setLimitStatus(prev => ({
-      ...prev,
-      used: r.data.limitInfo.used,
-      remaining: r.data.limitInfo.remaining
-    }));
-  }
-
-  setRenderKey(k => k + 1);
-  setStep(3);
-  setAiTab('ai');
-}
-  } catch (error) {
-    const msg = error.response?.data?.error || error.message;
-    alert('Eroare AI: ' + msg);
-  } finally {
-    setGeneratingAI(false);
-  }
-};
-
-
-
-
-  // ═══ SAVE ═══
   const handleSave = async () => {
     if (!generated) return;
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      await axios.post(
-        `${API}/api/posts`,
-        {
-          content: generated.variante?.[variantaActiva] || generated.descriere,
-          hashtags: generated.hashtags,
-          platform, tema,
-          verset: {
-            text: versetEditat || generated.verset?.text,
-            referinta: referintaEditata || generated.verset?.referinta,
-            referintaCompleta: referintaEditata || generated.verset?.referintaCompleta
-          },
-          status: 'draft'
-        },
-        { headers }
-      );
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (e) {
-      alert('Eroare salvare!');
-    }
+      await axios.post(`${API}/api/posts`, {
+        content: generated.variante?.[variantaActiva] || generated.descriere,
+        hashtags: generated.hashtags, platform, tema,
+        verset: { text: versetEditat || generated.verset?.text, referinta: referintaEditata || generated.verset?.referinta, referintaCompleta: referintaEditata || generated.verset?.referintaCompleta },
+        status: 'draft'
+      }, { headers });
+      setSaved(true); setTimeout(() => setSaved(false), 3000);
+    } catch (e) { alert('Eroare salvare!'); }
   };
 
-  // ═══ PUBLISH (admin only) ═══
   const handlePublish = async () => {
-    if (!isAdmin) {
-      alert('Publicarea pe Facebook este disponibilă doar pentru administratori.');
-      return;
-    }
+    if (!isAdmin) { alert('Publicarea pe Facebook este disponibilă doar pentru administratori.'); return; }
     if (!generated) return;
     if (!window.confirm('Publici pe Facebook?')) return;
-
-    setPublishing(true);
-    setPublishResult(null);
-
+    setPublishing(true); setPublishResult(null);
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-
-      const r = await axios.post(
-        `${API}/api/social/publish-direct`,
-        {
-          content: descriere,
-          hashtags: generated.hashtags,
-          imageBase64: generatedImageBase64 || null,
-          imageUrl: generatedImageBase64 ? null : (templateSelectat?.url || null),
-          platform: 'facebook'
-        },
-        { headers }
-      );
-
-      if (r.data.success) {
-        setPublishResult({ success: true, message: '✅ Publicat pe Facebook!' });
-      }
-    } catch (e) {
-      setPublishResult({
-        success: false,
-        message: '❌ ' + (e.response?.data?.error || e.message)
-      });
-    } finally {
-      setPublishing(false);
-    }
+      const r = await axios.post(`${API}/api/social/publish-direct`, {
+        content: descriere, hashtags: generated.hashtags,
+        imageBase64: generatedImageBase64 || null,
+        imageUrl: generatedImageBase64 ? null : (templateSelectat?.url || null), platform: 'facebook'
+      }, { headers });
+      if (r.data.success) { setPublishResult({ success: true, message: '✅ Publicat pe Facebook!' }); }
+    } catch (e) { setPublishResult({ success: false, message: '❌ ' + (e.response?.data?.error || e.message) }); }
+    finally { setPublishing(false); }
   };
 
-  // ═══ SCHEDULE (admin only) ═══
   const handleSchedule = async () => {
-    if (!isAdmin) {
-      alert('Programarea pe Facebook este disponibilă doar pentru administratori.');
-      return;
-    }
+    if (!isAdmin) { alert('Programarea pe Facebook este disponibilă doar pentru administratori.'); return; }
     if (!generated) { alert('Generează mai întâi!'); return; }
     if (!scheduledAt) { alert('Alege data și ora!'); return; }
-
-    setScheduling(true);
-    setScheduleResult(null);
-
+    setScheduling(true); setScheduleResult(null);
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const descriere = generated.variante?.[variantaActiva] || generated.descriere;
-
-      const r = await axios.post(
-        `${API}/api/social/schedule`,
-        {
-          content: descriere,
-          hashtags: generated.hashtags,
-          imageBase64: generatedImageBase64 || null,
-          imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
-          platform: 'facebook',
-          scheduledDate: new Date(scheduledAt).toISOString(),
-          tema,
-          verset: {
-            text: versetEditat || generated.verset?.text,
-            referinta: referintaEditata || generated.verset?.referinta,
-            referintaCompleta: referintaEditata || generated.verset?.referintaCompleta
-          }
-        },
-        { headers }
-      );
-
-      if (r.data.success) {
-        setScheduleResult({ success: true, message: r.data.message });
-      }
-    } catch (e) {
-      setScheduleResult({
-        success: false,
-        message: '❌ ' + (e.response?.data?.error || e.message)
-      });
-    } finally {
-      setScheduling(false);
-    }
+      const r = await axios.post(`${API}/api/social/schedule`, {
+        content: descriere, hashtags: generated.hashtags,
+        imageBase64: generatedImageBase64 || null,
+        imageUrl: (!generatedImageBase64 && templateSelectat?.url) ? templateSelectat.url : null,
+        platform: 'facebook', scheduledDate: new Date(scheduledAt).toISOString(), tema,
+        verset: { text: versetEditat || generated.verset?.text, referinta: referintaEditata || generated.verset?.referinta, referintaCompleta: referintaEditata || generated.verset?.referintaCompleta }
+      }, { headers });
+      if (r.data.success) { setScheduleResult({ success: true, message: r.data.message }); }
+    } catch (e) { setScheduleResult({ success: false, message: '❌ ' + (e.response?.data?.error || e.message) }); }
+    finally { setScheduling(false); }
   };
 
   const saveCanvasImage = () => {
@@ -860,17 +663,11 @@ const handleGenerateAI = async () => {
       link.download = `popas-suflet-${Date.now()}.jpg`;
       link.href = generatedImageBase64;
       link.click();
-    } else {
-      alert('Nu există imagine de descărcat!');
-    }
+    } else { alert('Nu există imagine de descărcat!'); }
   };
 
-  // Forțează re-render canvas
-  const forceRender = () => {
-    setRenderKey(k => k + 1);
-  };
+  const forceRender = () => setRenderKey(k => k + 1);
 
-  // ═══ COMPUTED ═══
   const allTemplates = [
     ...(templates.builtIn || []),
     ...(templates.uploadate || [])
@@ -879,48 +676,30 @@ const handleGenerateAI = async () => {
     if (categorieFiltre === 'custom') return t.custom;
     return t.categorie === categorieFiltre;
   });
-  
-  
-  const totalTemplates = allTemplates.length;
-const totalPagini = Math.max(1, Math.ceil(totalTemplates / TEMPLATES_PER_PAGINA));
-const startIdx = (paginaCurenta - 1) * TEMPLATES_PER_PAGINA;
-const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PAGINA);
 
-  // ═══ BANNER LIMITĂ ═══
+  const totalTemplates = allTemplates.length;
+  const totalPagini = Math.max(1, Math.ceil(totalTemplates / TEMPLATES_PER_PAGINA));
+  const startIdx = (paginaCurenta - 1) * TEMPLATES_PER_PAGINA;
+  const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PAGINA);
+
   const LimitBanner = () => {
     if (limitLoading || !limitStatus) return null;
-    const isBlocked = !isAdmin && limitStatus.remaining <= 0;
-
     return (
-      <div style={{
-        marginBottom: '1rem', padding: '0.85rem 1rem', borderRadius: '12px',
-        border: `1px solid ${limitStatus.type === 'admin' ? 'rgba(34,197,94,0.3)' : isBlocked ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.2)'}`,
-        background: limitStatus.type === 'admin' ? 'rgba(34,197,94,0.07)' : isBlocked ? 'rgba(239,68,68,0.07)' : 'rgba(99,102,241,0.07)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'
-      }}>
+      <div style={{ padding: '0.65rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         {limitStatus.type === 'admin' ? (
-          <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-            ♾️ <strong>Administrator:</strong> generări nelimitate
-          </span>
+          <span>♾️ <strong>Administrator:</strong> generări nelimitate</span>
         ) : (
           <>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+            <span>
               {limitStatus.type === 'guest' ? '👤 Vizitator' : '🔑 Cont'}{' '}
               — folosite: <strong>{limitStatus.used}</strong> / {limitStatus.limit}
-              {' '}• rămase:{' '}
-              <strong style={{ color: isBlocked ? '#ef4444' : 'var(--text-primary)' }}>
-                {limitStatus.remaining}
-              </strong>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                {limitStatus.type === 'guest' ? ' (reset la miezul nopții)' : ' (reset la fiecare oră)'}
-              </span>
-            </div>
+              {' '}• rămase: <strong style={{ color: limitStatus.remaining > 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>{limitStatus.remaining}</strong>
+              {limitStatus.type === 'guest' ? ' (reset la miezul nopții)' : ' (reset la fiecare oră)'}
+            </span>
             {!isAuthenticated && (
-              <button onClick={() => router.push('/register')} style={{
-                padding: '0.45rem 0.9rem', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff',
-                fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap'
-              }}>✅ Creează cont gratuit</button>
+              <button onClick={() => router.push('/register')} style={{ padding: '0.45rem 0.9rem', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                ✅ Creează cont gratuit
+              </button>
             )}
           </>
         )}
@@ -928,966 +707,337 @@ const templatesPagina = allTemplates.slice(startIdx, startIdx + TEMPLATES_PER_PA
     );
   };
 
-  // ═══════════════════════════════════════
-  // RENDER
-  // ═══════════════════════════════════════
   return (
-    <div className="animate-in">
-      <LimitBanner />
+    <div className="animate-in" style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
 
       {/* ═══ STEPS BAR ═══ */}
-      <div style={{
-        display: 'flex', alignItems: 'center', marginBottom: '1.5rem',
-        background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)',
-        padding: '0.5rem', border: '1px solid var(--border-subtle)', overflowX: 'auto'
-      }}>
-        {[
-          { nr: 1, label: 'Imaginea', icon: '🖼️' },
-          { nr: 2, label: 'Versetul', icon: '📖' },
-          { nr: 3, label: 'Publică', icon: '✨' }
-        ].map((s, idx) => (
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '0.5rem', border: '1px solid var(--border-subtle)', alignItems: 'center' }}>
+        {[{ nr: 1, label: 'Imaginea', icon: '🖼️' }, { nr: 2, label: 'Versetul', icon: '📖' }, { nr: 3, label: 'Publică', icon: '✨' }].map((s, idx) => (
           <React.Fragment key={s.nr}>
-            <div onClick={() => step > s.nr && setStep(s.nr)} style={{
-              flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-lg)',
-              background: step === s.nr ? 'linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05))' : 'transparent',
-              border: step === s.nr ? '1px solid var(--border-color)' : '1px solid transparent',
-              cursor: step > s.nr ? 'pointer' : 'default', transition: 'var(--transition)', minWidth: 'fit-content'
-            }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                background: step > s.nr ? 'var(--accent-green)' : step === s.nr ? 'var(--gold-primary)' : 'var(--bg-input)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.8rem', fontWeight: 700, color: step >= s.nr ? '#000' : 'var(--text-muted)'
-              }}>
+            <div onClick={() => step > s.nr && setStep(s.nr)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-lg)', background: step === s.nr ? 'linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05))' : 'transparent', border: step === s.nr ? '1px solid var(--border-color)' : '1px solid transparent', cursor: step > s.nr ? 'pointer' : 'default', transition: 'var(--transition)', minWidth: 'fit-content' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: step > s.nr ? 'var(--accent-green)' : step === s.nr ? 'var(--gold-primary)' : 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: step >= s.nr ? '#000' : 'var(--text-muted)', flexShrink: 0 }}>
                 {step > s.nr ? '✓' : s.nr}
               </div>
-              <div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Pasul {s.nr}
-                </div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: step === s.nr ? 'var(--gold-primary)' : 'var(--text-secondary)' }}>
-                  {s.icon} {s.label}
-                </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>Pasul {s.nr}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: step === s.nr ? 'var(--gold-primary)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{s.icon} {s.label}</div>
               </div>
             </div>
-            {idx < 2 && <div style={{ width: 20, height: 2, flexShrink: 0, background: step > s.nr ? 'var(--accent-green)' : 'var(--border-subtle)' }} />}
+            {idx < 2 && <div style={{ width: 20, height: 1, background: step > s.nr ? 'var(--accent-green)' : 'var(--border-subtle)', flexShrink: 0 }} />}
           </React.Fragment>
         ))}
       </div>
 
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <LimitBanner />
 
-      {/* ═══ STEP 1 ═══ */}
-{step === 1 && (
-  <div className="card card-gold animate-in">
-    <div className="card-header">
-      <div className="card-title">
-        <span className="icon">🖼️</span> Alege Imaginea
-      </div>
-      <div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          accept="image/*"
-          onChange={e => handleUpload(e.target.files[0])}
-        />
-        <button
-          className="btn btn-gold btn-sm"
-          onClick={() => fileInputRef.current.click()}
-          disabled={uploading}
-        >
-          {uploading ? '⏳...' : '⬆️ Upload'}
-        </button>
-      </div>
-    </div>
+      {/* ═══ STEP 1: ALEGE IMAGINEA ═══ */}
+      {step === 1 && (
+        <div style={{ marginTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'Playfair Display, serif' }}>🖼️ Alege Imaginea de Fundal</h2>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleUpload(e.target.files[0])} />
+            <button onClick={() => fileInputRef.current.click()} disabled={uploading} style={{ padding: '0.5rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem' }}>
+              {uploading ? '⏳...' : '⬆️ Upload imagine proprie'}
+            </button>
+          </div>
 
-    {/* Categorii */}
-    <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '0.35rem',
-      marginBottom: '1.25rem'
-    }}>
-      {CATEGORII.map(c => (
-        <button
-          key={c.id}
-          onClick={() => {
-            setCategorieFiltre(c.id);
-            setPaginaCurenta(1);
-          }}
-          style={{
-            padding: '0.3rem 0.7rem',
-            borderRadius: 20,
-            border: `1px solid ${categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`,
-            background: categorieFiltre === c.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)',
-            color: categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--text-muted)',
-            cursor: 'pointer',
-            fontSize: '0.75rem',
-            fontWeight: 500
-          }}
-        >
-          {c.label}
-        </button>
-      ))}
-    </div>
+          {/* Categorii */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+            {CATEGORII.map(c => (
+              <button key={c.id} onClick={() => { setCategorieFiltre(c.id); setPaginaCurenta(1); }} style={{ padding: '0.3rem 0.7rem', borderRadius: 20, border: `1px solid ${categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`, background: categorieFiltre === c.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)', color: categorieFiltre === c.id ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500 }}>
+                {c.label}
+              </button>
+            ))}
+          </div>
 
-    <div style={{
-      fontSize: '0.78rem',
-      color: 'var(--text-muted)',
-      marginBottom: '1rem'
-    }}>
-      📐 Imagine verticală <strong>1080×1350</strong> — ideal pentru Facebook, Instagram, TikTok
-    </div>
-
-    {/* Info paginare */}
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '0.75rem',
-      flexWrap: 'wrap',
-      gap: '0.5rem'
-    }}>
-      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-        {totalTemplates} template-uri • Pagina {paginaCurenta}/{totalPagini}
-      </span>
-
-      <div style={{ display: 'flex', gap: '0.35rem' }}>
-        <button
-          onClick={() => setPaginaCurenta(p => Math.max(1, p - 1))}
-          disabled={paginaCurenta <= 1}
-          style={{
-            padding: '0.35rem 0.75rem',
-            borderRadius: '8px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-input)',
-            color: 'var(--text-secondary)',
-            cursor: paginaCurenta <= 1 ? 'default' : 'pointer',
-            opacity: paginaCurenta <= 1 ? 0.4 : 1,
-            fontSize: '0.8rem'
-          }}
-        >
-          ← Anterior
-        </button>
-
-        <button
-          onClick={() => setPaginaCurenta(p => Math.min(totalPagini, p + 1))}
-          disabled={paginaCurenta >= totalPagini}
-          style={{
-            padding: '0.35rem 0.75rem',
-            borderRadius: '8px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-input)',
-            color: 'var(--text-secondary)',
-            cursor: paginaCurenta >= totalPagini ? 'default' : 'pointer',
-            opacity: paginaCurenta >= totalPagini ? 0.4 : 1,
-            fontSize: '0.8rem'
-          }}
-        >
-          Următor →
-        </button>
-      </div>
-    </div>
-
-    {/* Grid */}
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-      gap: '0.75rem'
-    }}>
-      {/* Upload card */}
-      <div
-        onClick={() => fileInputRef.current.click()}
-        style={{
-          aspectRatio: '4/5',
-          borderRadius: 'var(--radius-lg)',
-          border: '2px dashed var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          background: 'var(--bg-input)',
-          color: 'var(--text-muted)'
-        }}
-      >
-        <div style={{ fontSize: '2rem' }}>⬆️</div>
-        <div style={{ fontSize: '0.72rem', fontWeight: 600 }}>Upload</div>
-      </div>
-
-      {/* Template-uri pagină curentă */}
-      {templatesPagina.map(t => (
-        <div
-          key={t.id}
-          onClick={() => {
-            setTemplateSelectat(t);
-            setPreviewUrl(null);
-            loadedImgRef.current = null;
-            setStep(2);
-          }}
-          style={{
-            position: 'relative',
-            aspectRatio: '4/5',
-            borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden',
-            cursor: 'pointer',
-            border: templateSelectat?.id === t.id
-              ? '3px solid var(--gold-primary)'
-              : '2px solid var(--border-subtle)',
-            boxShadow: templateSelectat?.id === t.id
-              ? 'var(--shadow-gold)'
-              : 'none'
-          }}
-        >
-          <img
-            src={t.thumbnail}
-            alt={t.name}
-            loading="lazy"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block'
-            }}
-            onError={e => {
-              e.target.style.display = 'none';
-            }}
-          />
-
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent 50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            padding: '0.5rem'
-          }}>
-            <div style={{
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              color: 'white'
-            }}>
-              {t.name}
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <span>📐 Imagine verticală <strong>1080×1350</strong> — ideal pentru Facebook, Instagram, TikTok</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>{totalTemplates} template-uri • Pagina {paginaCurenta}/{totalPagini}</span>
+              <button onClick={() => setPaginaCurenta(p => Math.max(1, p-1))} disabled={paginaCurenta <= 1} style={{ padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: paginaCurenta <= 1 ? 'default' : 'pointer', opacity: paginaCurenta <= 1 ? 0.4 : 1, fontSize: '0.78rem' }}>←</button>
+              <button onClick={() => setPaginaCurenta(p => Math.min(totalPagini, p+1))} disabled={paginaCurenta >= totalPagini} style={{ padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: paginaCurenta >= totalPagini ? 'default' : 'pointer', opacity: paginaCurenta >= totalPagini ? 0.4 : 1, fontSize: '0.78rem' }}>→</button>
             </div>
           </div>
 
-          {templateSelectat?.id === t.id && (
-            <div style={{
-              position: 'absolute',
-              top: 6,
-              right: 6,
-              width: 24,
-              height: 24,
-              background: 'var(--gold-primary)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: '#000'
-            }}>
-              ✓
+          {/* Grid template-uri */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.65rem' }}>
+            {/* Upload card */}
+            <div onClick={() => fileInputRef.current.click()} style={{ aspectRatio: '4/5', borderRadius: 'var(--radius-lg)', border: '2px dashed var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'var(--bg-input)', color: 'var(--text-muted)', gap: '0.4rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>⬆️</span>
+              <span style={{ fontSize: '0.75rem' }}>Upload</span>
+            </div>
+
+            {templatesPagina.map(t => (
+              <div key={t.id} style={{ position: 'relative' }}>
+                <div onClick={() => { setTemplateSelectat(t); setPreviewUrl(null); loadedImgRef.current = null; setStep(2); }} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 'var(--radius-lg)', overflow: 'hidden', cursor: 'pointer', border: templateSelectat?.id === t.id ? '3px solid var(--gold-primary)' : '2px solid var(--border-subtle)', boxShadow: templateSelectat?.id === t.id ? 'var(--shadow-gold)' : 'none', transition: 'all 0.15s' }}>
+                  <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', padding: '0.5rem 0.35rem 0.35rem', fontSize: '0.65rem', color: '#fff', fontWeight: 600 }}>{t.name}</div>
+                  {templateSelectat?.id === t.id && (
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, background: 'var(--gold-primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: '#000' }}>✓</div>
+                  )}
+                </div>
+                {t.custom && (
+                  <button onClick={e => { e.stopPropagation(); handleDeleteTemplate(t.id); }} style={{ position: 'absolute', top: 6, left: 6, width: 22, height: 22, background: 'rgba(239,68,68,0.9)', border: 'none', borderRadius: '50%', color: 'white', cursor: 'pointer', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Paginare jos */}
+          {totalPagini > 1 && (
+            <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
+              {Array.from({ length: totalPagini }, (_, i) => i+1).map(pg => (
+                <button key={pg} onClick={() => setPaginaCurenta(pg)} style={{ width: 32, height: 32, borderRadius: '8px', border: pg === paginaCurenta ? '1px solid var(--gold-primary)' : '1px solid var(--border-color)', background: pg === paginaCurenta ? 'rgba(212,175,55,0.15)' : 'var(--bg-input)', color: pg === paginaCurenta ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: pg === paginaCurenta ? 700 : 400 }}>{pg}</button>
+              ))}
             </div>
           )}
-
-          {t.custom && (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                handleDeleteTemplate(t.id);
-              }}
-              style={{
-                position: 'absolute',
-                top: 6,
-                left: 6,
-                width: 22,
-                height: 22,
-                background: 'rgba(239,68,68,0.9)',
-                border: 'none',
-                borderRadius: '50%',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '0.65rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ✕
-            </button>
-          )}
         </div>
-      ))}
-    </div>
+      )}
 
-    {/* Paginare jos */}
-    {totalPagini > 1 && (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '0.3rem',
-        marginTop: '1rem',
-        flexWrap: 'wrap'
-      }}>
-        {Array.from({ length: totalPagini }, (_, i) => i + 1).map(pg => (
-          <button
-            key={pg}
-            onClick={() => setPaginaCurenta(pg)}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: '8px',
-              border: pg === paginaCurenta
-                ? '1px solid var(--gold-primary)'
-                : '1px solid var(--border-color)',
-              background: pg === paginaCurenta
-                ? 'rgba(212,175,55,0.15)'
-                : 'var(--bg-input)',
-              color: pg === paginaCurenta
-                ? 'var(--gold-primary)'
-                : 'var(--text-muted)',
-              cursor: 'pointer',
-              fontSize: '0.8rem',
-              fontWeight: pg === paginaCurenta ? 700 : 400
-            }}
-          >
-            {pg}
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-)}
-
-      {/* ═══ STEP 2 ═══ */}
+      {/* ═══ STEP 2: VERSET + CANVAS ═══ */}
       {step === 2 && (
-        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="card card-gold">
-              <div className="card-header">
-                <div className="card-title"><span className="icon">📖</span> Alege Versetul</div>
-              </div>
+        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
 
-              <div className="form-label" style={{ marginBottom: '0.5rem' }}>🎯 Tema:</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.4rem', marginBottom: '1rem' }}>
+          {/* Stânga — controale */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'Playfair Display, serif' }}>📖 Personalizează</h2>
+
+            {/* Temă */}
+            <div className="card" style={{ padding: '1rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>🎯 Tema postării:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                 {teme.map(t => (
-                  <button key={t.id} onClick={() => setTema(t.id)} style={{
-                    padding: '0.45rem', borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${tema === t.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`,
-                    background: tema === t.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)',
-                    color: tema === t.id ? 'var(--gold-primary)' : 'var(--text-muted)',
-                    cursor: 'pointer', fontSize: '0.73rem', display: 'flex',
-                    flexDirection: 'column', alignItems: 'center', gap: 2
-                  }}>
-                    <span style={{ fontSize: '1.1rem' }}>{t.icon}</span>
-                    <span>{t.label}</span>
+                  <button key={t.id} onClick={() => setTema(t.id)} style={{ padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-md)', border: `1px solid ${tema === t.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`, background: tema === t.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)', color: tema === t.id ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    {t.icon}{t.label}
                   </button>
                 ))}
               </div>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">🔍 Caută verset:</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" className="form-input" placeholder="Ioan 3:16, dragoste, pace..."
-                    value={versetSearch} onChange={e => setVersetSearch(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && searchVerset()} />
-                  <button className="btn btn-gold" onClick={searchVerset} disabled={searching}>
-                    {searching ? '⏳' : '🔍'}
-                  </button>
-                </div>
+            {/* Căutare verset */}
+            <div className="card" style={{ padding: '1rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>🔍 Caută verset:</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input className="form-input" value={versetSearch} onChange={e => setVersetSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchVerset()} placeholder="ex: Ioan 3:16 sau dragoste..." style={{ flex: 1, fontSize: '0.85rem' }} />
+                <button onClick={searchVerset} disabled={searching} style={{ padding: '0.5rem 0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--gold-primary)', fontWeight: 600 }}>
+                  {searching ? '⏳' : '🔍'}
+                </button>
               </div>
 
               {verseteGasite.length > 0 && (
-                <div style={{ maxHeight: 250, overflowY: 'auto', marginTop: '0.5rem' }}>
+                <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {verseteGasite.map((v, i) => (
-                    <div key={i} onClick={() => {
-                      const vs = {
-                        text: v.text, referinta: v.referinta,
-                        referintaCompleta: `${v.carte} ${v.capitol}:${v.verset}`
-                      };
-                      setVersetSelectat(vs);
-                      setVerseteGasite([]);
-                      setVersetSearch('');
-                    }} style={{
-                      padding: '0.65rem', marginBottom: '0.35rem', background: 'var(--bg-input)',
-                      borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', cursor: 'pointer'
-                    }}>
-                      <div style={{ fontSize: '0.82rem', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: 3, lineHeight: 1.5 }}>
-                        "{v.text.substring(0, 85)}{v.text.length > 85 ? '...' : ''}"
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', fontWeight: 700 }}>
-                        {v.carte} {v.capitol}:{v.verset}
-                      </div>
+                    <div key={i} onClick={() => { const vs = { text: v.text, referinta: v.referinta, referintaCompleta: `${v.carte} ${v.capitol}:${v.verset}` }; setVersetSelectat(vs); setVerseteGasite([]); setVersetSearch(''); }} style={{ padding: '0.65rem', marginBottom: '0.35rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontStyle: 'italic' }}>"{v.text.substring(0, 85)}{v.text.length > 85 ? '...' : ''}"</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', marginTop: '0.25rem', fontWeight: 600 }}>{v.carte} {v.capitol}:{v.verset}</div>
                     </div>
                   ))}
                 </div>
               )}
-
-              {versetSelectat ? (
-                <div style={{ marginTop: '0.75rem', padding: '0.85rem', background: 'rgba(212,175,55,0.06)',
-                  borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', textTransform: 'uppercase',
-                    letterSpacing: 2, fontWeight: 700, marginBottom: '0.4rem' }}>✅ Selectat — editează mai jos</div>
-
-                  {/* EDITARE TEXT VERSET */}
-                  <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                    <label className="form-label" style={{ fontSize: '0.7rem' }}>✏️ Text verset:</label>
-                    <textarea
-                      className="form-input"
-                      value={versetEditat}
-                      onChange={e => setVersetEditat(e.target.value)}
-                      rows={3}
-                      style={{
-                        fontFamily: "'Playfair Display', serif",
-                        fontStyle: 'italic',
-                        fontSize: '0.88rem',
-                        lineHeight: 1.6,
-                        resize: 'vertical'
-                      }}
-                    />
-                  </div>
-
-                  {/* EDITARE REFERINȚĂ */}
-                  <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                    <label className="form-label" style={{ fontSize: '0.7rem' }}>📌 Referință:</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={referintaEditata}
-                      onChange={e => setReferintaEditata(e.target.value)}
-                      style={{ fontWeight: 700, color: 'var(--gold-primary)' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        setVersetSelectat(null);
-                        setVersetEditat('');
-                        setReferintaEditata('');
-                        setPreviewUrl(null);
-                        setGeneratedImageBase64(null);
-                      }}>
-                      ✕ Schimbă
-                    </button>
-                    <button className="btn btn-outline btn-sm" onClick={forceRender}>
-                      🔄 Reîncarcă preview
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ padding: '0.6rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)',
-                  fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  💡 Lasă gol = verset aleatoriu pe baza temei
-                </div>
-              )}
             </div>
 
-            <div className="card">
-  <div className="card-header">
-    <div className="card-title"><span className="icon">📱</span> Platformă</div>
-  </div>
-  <div className="tabs" style={{ marginBottom: '1rem' }}>
-    {[
-      { id: 'facebook', l: '📘 Facebook' },
-      { id: 'instagram', l: '📸 Instagram' },
-      { id: 'tiktok', l: '🎵 TikTok' }
-    ].map(p => (
-      <button key={p.id} className={`tab ${platform === p.id ? 'active' : ''}`}
-        onClick={() => setPlatform(p.id)}>{p.l}</button>
-    ))}
-  </div>
+            {/* Editare text */}
+            {versetSelectat ? (
+              <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent-green)', fontWeight: 600 }}>✅ Selectat — editează mai jos</div>
 
-  {/* Buton AI */}
-  <button
-    className="btn btn-lg btn-block"
-    onClick={handleGenerateAI}
-    disabled={generatingAI || generating || (!isAdmin && limitStatus && limitStatus.remaining <= 0)}
-    style={{
-      background: generatingAI
-        ? 'rgba(99,102,241,0.5)'
-        : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-      border: 'none', borderRadius: '14px',
-      color: 'white', fontWeight: 700,
-      marginBottom: '0.65rem',
-      display: 'flex', alignItems: 'center',
-      justifyContent: 'center', gap: '0.5rem'
-    }}
-  >
-    {generatingAI ? (
-      <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Gemini AI generează...</>
-    ) : (
-      <>🤖 Generează cu AI <span style={{ fontSize: '0.72rem', opacity: 0.8 }}>(Gemini)</span></>
-    )}
-  </button>
-
-  {/* Separator */}
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: '0.75rem',
-    marginBottom: '0.65rem'
-  }}>
-    <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
-    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>sau</span>
-    <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
-  </div>
-
-  {/* Buton normal */}
-  <button
-    className="btn btn-gold btn-lg btn-block"
-    onClick={handleGenerate}
-    disabled={generating || generatingAI || (!isAdmin && limitStatus && limitStatus.remaining <= 0)}
-  >
-    {generating ? (
-      <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Se generează...</>
-    ) : (!isAdmin && limitStatus && limitStatus.remaining <= 0) ? (
-      '🚫 Limită atinsă'
-    ) : (
-      '✨ Generează Standard'
-    )}
-  </button>
-
-  {!isAdmin && limitStatus && limitStatus.remaining <= 0 && (
-    <div style={{
-      marginTop: '0.75rem', padding: '0.75rem', borderRadius: '10px',
-      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-      fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center'
-    }}>
-      {limitStatus.type === 'guest' ? (
-        <>
-          Ai folosit toate cele 3 generări de azi.{' '}
-          <span onClick={() => router.push('/register')}
-            style={{ color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>
-            Creează un cont gratuit
-          </span>{' '}pentru 5 generări/oră!
-        </>
-      ) : (
-        'Ai folosit toate cele 5 generări din această oră. Încearcă din nou mai târziu.'
-      )}
-    </div>
-  )}
-</div>
-          </div>
-
-          {/* Preview */}
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title"><span className="icon">👁️</span> Preview</div>
-              <span className="badge badge-gold">1080×1350</span>
-            </div>
-
-            <div style={{ width: '100%', aspectRatio: '4/5', borderRadius: 'var(--radius-md)',
-              overflow: 'hidden', background: 'var(--bg-input)', marginBottom: '1rem' }}>
-              {previewUrl ? (
-                <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              ) : templateSelectat ? (
-                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                  <img src={templateSelectat.thumbnail} alt="Template" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {!versetEditat && (
-                    <div style={{
-                      position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontSize: '0.88rem', textAlign: 'center', padding: '1rem'
-                    }}>
-                      📖 Selectează un verset<br />pentru preview complet
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                  <div style={{ fontSize: '3rem', opacity: 0.3 }}>🖼️</div>
-                  <div>Nicio imagine</div>
-                </div>
-              )}
-            </div>
-
-            {templateSelectat && (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginBottom: '0.75rem' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.65rem' }}>Mărime: {stilText.fontSize}px</label>
-                    <input type="range" min="16" max="44" step="2" value={stilText.fontSize}
-                      onChange={e => setStilText(p => ({ ...p, fontSize: +e.target.value }))}
-                      style={{ width: '100%', accentColor: 'var(--gold-primary)' }} />
-                  </div>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.65rem' }}>Poziție</label>
-                    <select className="form-select" value={stilText.pozitie}
-                      onChange={e => setStilText(p => ({ ...p, pozitie: e.target.value }))}>
-                      <option value="top">Sus</option>
-                      <option value="center">Centru</option>
-                      <option value="bottom">Jos</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.65rem' }}>Font</label>
-                    <select className="form-select" value={stilText.font}
-                      onChange={e => setStilText(p => ({ ...p, font: e.target.value }))}>
-                      {FONTURI.map(g => (
-                        <optgroup key={g.group} label={g.group}>
-                          {g.opts.map(o => <option key={o} value={o}>{o}</option>)}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.65rem' }}>Culoare</label>
-                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                      {['#FFFFFF', '#F4D03F', '#FFE4E1', '#E8F5E9', '#E3F2FD', '#000000'].map(c => (
-                        <div key={c} onClick={() => setStilText(p => ({ ...p, culoare: c }))} style={{
-                          width: 24, height: 24, borderRadius: '50%', background: c, cursor: 'pointer',
-                          border: stilText.culoare === c ? '3px solid var(--gold-primary)' : '2px solid var(--border-subtle)'
-                        }} />
-                      ))}
-                    </div>
-                  </div>
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>✏️ Text verset:</label>
+                  <textarea className="form-textarea" value={versetEditat} onChange={e => setVersetEditat(e.target.value)} rows={4} style={{ fontSize: '0.85rem', resize: 'vertical' }} />
                 </div>
 
-                <div style={{ padding: '0.5rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)',
-                  fontFamily: stilText.font, fontSize: '0.85rem', fontStyle: 'italic',
-                  color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '0.75rem' }}>
-                  "Domnul este Păstorul meu"
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>📌 Referință:</label>
+                  <input className="form-input" value={referintaEditata} onChange={e => setReferintaEditata(e.target.value)} style={{ fontSize: '0.85rem' }} />
                 </div>
-
-                {versetEditat && (
-                  <button className="btn btn-outline btn-block" onClick={downloadImage}>
-                    ⬇️ Descarcă 1080×1350
-                  </button>
-                )}
-              </>
+              </div>
+            ) : (
+              <div className="card" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                ☝️ Caută și selectează un verset de mai sus
+              </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* ═══ STEP 3 ═══ */}
-      {step === 3 && generated && (
-        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title"><span className="icon">🖼️</span> Imagine Finală</div>
-              <button className="btn btn-gold btn-sm" onClick={downloadImage}>⬇️ Descarcă</button>
+            {/* Stil text */}
+            <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>🎨 Stil text:</div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Mărime: {stilText.fontSize}px</label>
+                <input type="range" min="18" max="40" step="1" value={stilText.fontSize} onChange={e => setStilText(p => ({ ...p, fontSize: +e.target.value }))} style={{ width: '100%' }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Font:</label>
+                <select className="form-select" value={stilText.font} onChange={e => setStilText(p => ({ ...p, font: e.target.value }))} style={{ fontSize: '0.82rem' }}>
+                  {FONTURI.map(g => (
+                    <optgroup key={g.group} label={g.group}>
+                      {g.opts.map(o => <option key={o} value={o}>{o}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Culoare text:</label>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {['#FFFFFF', '#F4D03F', '#FFE4E1', '#E8F5E9', '#E3F2FD', '#000000'].map(c => (
+                    <div key={c} onClick={() => setStilText(p => ({ ...p, culoare: c }))} style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: stilText.culoare === c ? '3px solid var(--gold-primary)' : '2px solid var(--border-color)', cursor: 'pointer' }} />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Poziție:</label>
+                <div style={{ display: 'flex', gap: '0.35rem' }}>
+                  {[{ id: 'top', label: '⬆ Sus' }, { id: 'center', label: '↕ Centru' }, { id: 'bottom', label: '⬇ Jos' }].map(p => (
+                    <button key={p.id} onClick={() => setStilText(prev => ({ ...prev, pozitie: p.id }))} style={{ flex: 1, padding: '0.4rem', borderRadius: '8px', border: `1px solid ${stilText.pozitie === p.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`, background: stilText.pozitie === p.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)', color: stilText.pozitie === p.id ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}>{p.label}</button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div style={{ width: '100%', aspectRatio: '4/5', borderRadius: 'var(--radius-md)',
-              overflow: 'hidden', marginBottom: '1rem' }}>
-              {generatedImageBase64 || previewUrl ? (
-                <img src={generatedImageBase64 || previewUrl} alt="Generated"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              ) : templateSelectat ? (
-                <img src={templateSelectat.thumbnail} alt="Template"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              ) : null}
+            {/* Design avansat */}
+            <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>✝️ Design avansat:</div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Simbol sus:</label>
+                <div style={{ display: 'flex', gap: '0.35rem' }}>
+                  {[{ id: 'cruce', label: '✝️ Cruce' }, { id: 'porumbel', label: '🕊️ Porumbel' }, { id: 'stea', label: '✦ Stea' }, { id: 'none', label: '✕ Fără' }].map(s => (
+                    <button key={s.id} onClick={() => setAfiseazaSimbol(s.id)} style={{ flex: 1, padding: '0.35rem 0.25rem', borderRadius: '8px', border: `1px solid ${afiseazaSimbol === s.id ? 'var(--gold-primary)' : 'var(--border-subtle)'}`, background: afiseazaSimbol === s.id ? 'rgba(212,175,55,0.1)' : 'var(--bg-input)', color: afiseazaSimbol === s.id ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem' }}>{s.label}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="checkbox" id="citat" checked={afiseazaCitat} onChange={e => { setAfiseazaCitat(e.target.checked); if (e.target.checked) setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)]); }} />
+                <label htmlFor="citat" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>Adaugă citat teolog (Luther, Calvin, Spurgeon...)</label>
+              </div>
+
+              {afiseazaCitat && citatSelectat && (
+                <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '0.75rem', fontSize: '0.78rem' }}>
+                  <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>„{citatSelectat.text.substring(0, 80)}..."</div>
+                  <div style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>— {citatSelectat.autor}</div>
+                  <button onClick={() => setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)])} style={{ marginTop: '0.5rem', padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem' }}>🔄 Alt citat</button>
+                </div>
+              )}
             </div>
 
-            {/* Editare verset din Step 3 */}
-            <div className="verse-card">
-              <div style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', textTransform: 'uppercase',
-                letterSpacing: 2, fontWeight: 700, marginBottom: '0.4rem' }}>📖 Verset (editabil)</div>
-              <textarea
-                value={versetEditat}
-                onChange={e => setVersetEditat(e.target.value)}
-                rows={3}
-                style={{
-                  width: '100%', fontFamily: "'Playfair Display', serif", fontSize: '0.88rem',
-                  fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.6,
-                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)', padding: '0.5rem', resize: 'vertical'
-                }}
-              />
-              <input
-                type="text"
-                value={referintaEditata}
-                onChange={e => setReferintaEditata(e.target.value)}
-                style={{
-                  width: '100%', marginTop: '0.4rem', fontWeight: 700, color: 'var(--gold-primary)',
-                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)', padding: '0.4rem 0.5rem', fontSize: '0.8rem'
-                }}
-              />
-              <button className="btn btn-outline btn-sm" style={{ marginTop: '0.5rem' }} onClick={forceRender}>
+            {/* Butoane generate */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button onClick={handleGenerate} disabled={generating || !versetSelectat} style={{ padding: '0.875rem', borderRadius: '12px', border: 'none', background: !versetSelectat ? 'var(--bg-input)' : 'linear-gradient(135deg, #d4af37, #b8960c)', color: !versetSelectat ? 'var(--text-muted)' : '#000', cursor: !versetSelectat ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.95rem' }}>
+                {generating ? '⏳ Se generează...' : '✨ Generează text postare'}
+              </button>
+              <button onClick={handleGenerateAI} disabled={generatingAI || !versetSelectat} style={{ padding: '0.875rem', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.5)', background: !versetSelectat ? 'transparent' : 'rgba(99,102,241,0.1)', color: !versetSelectat ? 'var(--text-muted)' : '#a5b4fc', cursor: !versetSelectat ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.95rem' }}>
+                {generatingAI ? '⏳ AI generează...' : '🤖 Generează cu AI avansat'}
+              </button>
+              <button onClick={forceRender} disabled={!templateSelectat || !versetSelectat} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.82rem' }}>
                 🔄 Actualizează imaginea
               </button>
             </div>
           </div>
 
+          {/* Dreapta — preview canvas */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+              <canvas ref={canvasRef} style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 'var(--radius-lg)' }} />
+              {!versetSelectat && (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', flexDirection: 'column', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '2rem' }}>📖</span>
+                  <span>Selectează un verset pentru preview</span>
+                </div>
+              )}
+            </div>
+            <button onClick={downloadImage} disabled={!generatedImageBase64} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: !generatedImageBase64 ? 'var(--text-muted)' : 'var(--gold-primary)', cursor: !generatedImageBase64 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+              ⬇️ Descarcă imaginea (JPG)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ STEP 3: PUBLICĂ ═══ */}
+      {step === 3 && generated && (
+        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+
+          {/* Stânga — text generat */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'Playfair Display, serif' }}>✨ Text Generat</h2>
+
+            {/* Tabs AI/Normal */}
             {generated.variante?.length > 1 && (
-              <div className="tabs">
-                {generated.variante.slice(0, 5).map((_, i) => (
-                  <button key={i} className={`tab ${variantaActiva === i ? 'active' : ''}`}
-                    onClick={() => setVariantaActiva(i)}>
-                    {i === 0 ? '✨ V1' : `🔄 V${i + 1}`}
+              <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--bg-input)', borderRadius: '10px', padding: '4px' }}>
+                {generated.variante.map((_, i) => (
+                  <button key={i} onClick={() => setVariantaActiva(i)} style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: 'none', background: variantaActiva === i ? 'var(--bg-card)' : 'transparent', color: variantaActiva === i ? 'var(--gold-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: variantaActiva === i ? 600 : 400 }}>
+                    Varianta {i+1}
                   </button>
                 ))}
               </div>
             )}
-			
-			
-			{/* AI Results Panel */}
-{aiResult && (
-  <div style={{
-    background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04))',
-    border: '1px solid rgba(99,102,241,0.2)',
-    borderRadius: '16px',
-    padding: '1rem',
-    marginBottom: '0.75rem'
-  }}>
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '0.5rem',
-      marginBottom: '0.75rem'
-    }}>
-      <span style={{ fontSize: '1.1rem' }}>🤖</span>
-      <span style={{ fontWeight: 700, color: '#6366f1', fontSize: '0.9rem' }}>
-        Gemini AI
-      </span>
-      <span style={{
-        fontSize: '0.68rem', background: 'rgba(99,102,241,0.1)',
-        color: '#6366f1', padding: '1px 6px', borderRadius: '10px'
-      }}>
-        {aiResult.platform}
-      </span>
-    </div>
 
-    {/* Hook */}
-    {aiResult.hook && (
-      <div style={{ marginBottom: '0.5rem' }}>
-        <div style={{
-          fontSize: '0.68rem', color: 'var(--text-muted)',
-          textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.2rem'
-        }}>
-          🎣 Hook
-        </div>
-        <div style={{
-          fontWeight: 700, color: 'var(--text-primary)',
-          fontSize: '0.9rem', fontStyle: 'italic'
-        }}>
-          "{aiResult.hook}"
-        </div>
-      </div>
-    )}
-
-    {/* Ore recomandate */}
-    <div style={{
-      display: 'flex', gap: '0.5rem', flexWrap: 'wrap',
-      marginBottom: '0.5rem'
-    }}>
-      <div style={{
-        background: 'rgba(16,185,129,0.1)',
-        border: '1px solid rgba(16,185,129,0.2)',
-        borderRadius: '10px', padding: '0.4rem 0.75rem',
-        fontSize: '0.8rem', color: '#10b981', fontWeight: 600
-      }}>
-        🌅 Dimineață: {aiResult.oraDimineata}
-      </div>
-      <div style={{
-        background: 'rgba(99,102,241,0.1)',
-        border: '1px solid rgba(99,102,241,0.2)',
-        borderRadius: '10px', padding: '0.4rem 0.75rem',
-        fontSize: '0.8rem', color: '#6366f1', fontWeight: 600
-      }}>
-        🌙 Seară: {aiResult.oraSeara}
-      </div>
-    </div>
-
-    {/* Motiv ore */}
-    {aiResult.motivOre && (
-      <div style={{
-        fontSize: '0.75rem', color: 'var(--text-muted)',
-        marginBottom: '0.5rem'
-      }}>
-        ℹ️ {aiResult.motivOre}
-      </div>
-    )}
-
-    {/* Story text */}
-    {aiResult.storyText && (
-      <div style={{ marginBottom: '0.5rem' }}>
-        <div style={{
-          fontSize: '0.68rem', color: 'var(--text-muted)',
-          textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.2rem'
-        }}>
-          📱 Story/Reel text
-        </div>
-        <div style={{
-          background: 'var(--bg-input)', borderRadius: '8px',
-          padding: '0.4rem 0.75rem', fontSize: '0.85rem',
-          color: 'var(--text-primary)', fontWeight: 600,
-          display: 'inline-block'
-        }}>
-          {aiResult.storyText}
-        </div>
-      </div>
-    )}
-
-    {/* Emoji */}
-    {aiResult.emojiTema && (
-      <div style={{ fontSize: '1.1rem' }}>{aiResult.emojiTema}</div>
-    )}
-
-    {/* Sfat imagine */}
-    {aiResult.sfatImagine && (
-      <div style={{
-        marginTop: '0.5rem', fontSize: '0.75rem',
-        color: 'var(--text-muted)', fontStyle: 'italic'
-      }}>
-        🖼️ {aiResult.sfatImagine}
-      </div>
-    )}
-  </div>
-)}
-
-{/* Variante tabs - AI */}
-{aiResult && (
-  <div className="tabs" style={{ marginBottom: '0.75rem' }}>
-    <button
-      className={`tab ${aiVarianta === 0 ? 'active' : ''}`}
-      onClick={() => {
-        setAiVarianta(0);
-        setVariantaActiva(0);
-      }}
-    >
-      ✨ Standard
-    </button>
-    <button
-      className={`tab ${aiVarianta === 1 ? 'active' : ''}`}
-      onClick={() => {
-        setAiVarianta(1);
-        setVariantaActiva(1);
-      }}
-    >
-      ❤️ Caldă
-    </button>
-    <button
-      className={`tab ${aiVarianta === 2 ? 'active' : ''}`}
-      onClick={() => {
-        setAiVarianta(2);
-        setVariantaActiva(2);
-      }}
-    >
-      🔥 Puternică
-    </button>
-  </div>
-)}
-			
-			
-			
-
-            <div className="card card-gold">
-              <div className="card-header">
-                <div className="card-title"><span className="icon">📝</span> Descriere</div>
-                <button className="btn btn-outline btn-sm" onClick={() =>
-                  navigator.clipboard.writeText(generated.variante?.[variantaActiva] || generated.descriere)
-                }>📋 Copiază</button>
-              </div>
-              <div style={{ background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', padding: '1rem',
-                whiteSpace: 'pre-wrap', fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.7, minHeight: 100 }}>
-                {generated.variante?.[variantaActiva] || generated.descriere}
-              </div>
+            <div className="card" style={{ padding: '1rem' }}>
+              <textarea className="form-textarea" value={generated.variante?.[variantaActiva] || generated.descriere} onChange={e => setGenerated(prev => { const v = [...(prev.variante || [prev.descriere])]; v[variantaActiva] = e.target.value; return { ...prev, variante: v, descriere: v[0] }; })} rows={10} style={{ fontSize: '0.88rem', resize: 'vertical' }} />
+              {generated.hashtags && (
+                <div style={{ marginTop: '0.75rem', padding: '0.65rem', background: 'var(--bg-input)', borderRadius: '8px', fontSize: '0.78rem', color: 'var(--accent-blue)', wordBreak: 'break-word' }}>
+                  {generated.hashtags}
+                </div>
+              )}
             </div>
 
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title"><span className="icon">#️⃣</span> Hashtags</div>
-                <button className="btn btn-outline btn-sm"
-                  onClick={() => navigator.clipboard.writeText(generated.hashtags)}>📋 Copiază</button>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-                {(generated.hashtags || '').split(' ').filter(Boolean).map((h, i) => (
-                  <span key={i} className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{h}</span>
-                ))}
-              </div>
-            </div>
-
-            {publishResult && (
-              <div style={{
-                padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                background: publishResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                border: `1px solid ${publishResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                color: publishResult.success ? 'var(--accent-green)' : 'var(--accent-red)',
-                fontSize: '0.85rem', fontWeight: 600
-              }}>{publishResult.message}</div>
-            )}
-
-            {scheduleResult && (
-              <div style={{
-                padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                background: scheduleResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                border: `1px solid ${scheduleResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                color: scheduleResult.success ? 'var(--accent-green)' : 'var(--accent-red)',
-                fontSize: '0.85rem', fontWeight: 600
-              }}>{scheduleResult.message}</div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-              <button className="btn btn-gold" onClick={handleSave} disabled={saved}>
-                {saved ? '✅ Salvat!' : '💾 Salvează'}
+            {/* Acțiuni */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button onClick={handleSave} style={{ padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: saved ? 'var(--accent-green)' : 'var(--text-primary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
+                {saved ? '✅ Salvat!' : '💾 Salvează ca draft'}
               </button>
-              <button className="btn btn-outline" onClick={downloadImage}>⬇️ PNG</button>
 
-              {isAdmin ? (
-                <button onClick={handlePublish} disabled={publishing} style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  padding: '0.75rem', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
-                  fontSize: '0.85rem', fontWeight: 600,
-                  background: publishing ? 'rgba(24,119,242,0.5)' : 'linear-gradient(135deg,#1877F2,#0C5DC7)',
-                  color: 'white', boxShadow: '0 4px 15px rgba(24,119,242,0.3)'
-                }}>
-                  {publishing ? '⏳...' : '📘 Facebook Acum'}
-                </button>
-              ) : (
-                <div style={{
-                  padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                  fontSize: '0.78rem', color: 'var(--text-muted)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center'
-                }}>🔒 Publicare doar admin</div>
+              {isAdmin && (
+                <>
+                  <button onClick={handlePublish} disabled={publishing} style={{ padding: '0.75rem', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #1877F2, #0C5DC7)', color: '#fff', cursor: publishing ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>
+                    {publishing ? '⏳ Se publică...' : '📘 Publică pe Facebook acum'}
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} className="form-input" style={{ flex: 1, fontSize: '0.82rem' }} />
+                    <button onClick={handleSchedule} disabled={scheduling || !scheduledAt} style={{ padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                      {scheduling ? '⏳...' : '📅 Programează'}
+                    </button>
+                  </div>
+                </>
               )}
 
-              <button className="btn btn-secondary" onClick={() => {
-                setStep(1); setGenerated(null); setVersetSelectat(null);
-                setVersetEditat(''); setReferintaEditata('');
-                setPublishResult(null); setScheduleResult(null);
-                setGeneratedImageBase64(null); setPreviewUrl(null);
-              }}>🔄 Nouă</button>
+              {publishResult && (
+                <div style={{ padding: '0.75rem', borderRadius: '10px', background: publishResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${publishResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`, color: publishResult.success ? 'var(--accent-green)' : 'var(--accent-red)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  {publishResult.message}
+                </div>
+              )}
+
+              {scheduleResult && (
+                <div style={{ padding: '0.75rem', borderRadius: '10px', background: scheduleResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${scheduleResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`, color: scheduleResult.success ? 'var(--accent-green)' : 'var(--accent-red)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  {scheduleResult.message}
+                </div>
+              )}
             </div>
 
-            {isAdmin && (
-              <div className="card">
-                <div className="card-header">
-                  <div className="card-title"><span className="icon">📅</span> Programare Automată</div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Data și ora (ora României):</label>
-                  <input type="datetime-local" className="form-input"
-                    value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} />
-                </div>
-                <button
-  className="btn btn-gold btn-block"
-  onClick={handleSchedule}
-  disabled={scheduling}
->
-  {scheduling ? '⏳ Se programează...' : '📅 Programează pe Facebook'}
-</button>
-              </div>
-            )}
-			{/* ═══ REEL GENERATOR ═══ */}
-<ReelGenerator
-  templateUrl={templateSelectat?.url || templateSelectat?.thumbnail || null}
-  versetText={versetEditat || generated?.verset?.text || ''}
-  versetReferinta={referintaEditata || generated?.verset?.referintaCompleta || generated?.verset?.referinta || ''}
-  descriere={generated?.variante?.[variantaActiva] || generated?.descriere || ''}
-  hashtags={generated?.hashtags || ''}
-  tema={tema}
-  isAdmin={isAdmin}
-/>
-			
-			
+            <button onClick={() => { setStep(2); setGenerated(null); setPublishResult(null); setScheduleResult(null); }} style={{ padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.82rem' }}>
+              ← Înapoi la editare
+            </button>
           </div>
+
+          {/* Dreapta — preview imagine */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+              <canvas ref={canvasRef} style={{ width: '100%', height: 'auto', display: 'block' }} />
+            </div>
+            <button onClick={downloadImage} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+              ⬇️ Descarcă imaginea (JPG)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ReelGenerator */}
+      {isAdmin && (
+        <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1.5rem' }}>
+          <ReelGenerator />
         </div>
       )}
     </div>
