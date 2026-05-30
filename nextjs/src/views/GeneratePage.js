@@ -305,7 +305,8 @@ const drawLineColored = (line, x, y, fz, font, defaultColor, accentColor) => {
 };
 
 // Desenează fiecare linie cu cuvinte colorate
-// ── Cuvinte cheie COLORATE — cuvânt cu cuvânt ──
+lines.forEach((line, i) => {
+  // ── Cuvinte cheie COLORATE — cuvânt cu cuvânt ──
 const CUVINTE_CHEIE_AURII = [
   'dumnezeu', 'domnul', 'hristos', 'isus', 'iisus', 'tatăl', 'tatal',
   'duhul', 'sfânt', 'sfant', 'iubire', 'dragoste', 'har', 'credință',
