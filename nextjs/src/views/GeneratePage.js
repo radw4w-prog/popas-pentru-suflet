@@ -977,14 +977,8 @@ const ReelSection = () => (
                 <input type="checkbox" id="citat" checked={afiseazaCitat} onChange={e => { setAfiseazaCitat(e.target.checked); if (e.target.checked) setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)]); }} />
                 <label htmlFor="citat" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}>Adaugă citat teolog (Luther, Calvin, Spurgeon...)</label>
               </div>
-
-              {afiseazaCitat && citatSelectat && (
-                <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '0.75rem', fontSize: '0.78rem' }}>
-                  <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>„{citatSelectat.text.substring(0, 80)}..."</div>
-                  <div style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>— {citatSelectat.autor}</div>
-                  <button onClick={() => setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)])} style={{ marginTop: '0.5rem', padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem' }}>🔄 Alt citat</button>
-                {/* Slider font citat */}
-    <div>
+			  
+			  <div>
       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
         Mărime font citat: {citatFontSize}px
       </label>
@@ -997,6 +991,14 @@ const ReelSection = () => (
     </div>
   </>
 )}
+
+              {afiseazaCitat && citatSelectat && (
+                <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '0.75rem', fontSize: '0.78rem' }}>
+                  <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>„{citatSelectat.text.substring(0, 80)}..."</div>
+                  <div style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>— {citatSelectat.autor}</div>
+                  <button onClick={() => setCitatSelectat(CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)])} style={{ marginTop: '0.5rem', padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.72rem' }}>🔄 Alt citat</button>
+                </div>
+              )}
             </div>
 			
 
