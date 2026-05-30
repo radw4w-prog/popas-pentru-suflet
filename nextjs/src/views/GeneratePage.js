@@ -76,6 +76,7 @@ const GeneratePage = () => {
   const canvasRef = useRef(null);
   const loadedImgRef = useRef(null);
   const loadedLogoRef = useRef(null);
+  const [citatFontSize, setCitatFontSize] = useState(22);
 
   // Preload logo
   useEffect(() => {
@@ -354,27 +355,32 @@ lines.forEach((line, i) => {
       }
 
       // ── CITAT TEOLOG ──
-      if (citat && afiseazaCitat) {
-        const citY = H - 240;
-        ctx.save();
-        // Fundal
-        ctx.fillStyle = 'rgba(0,0,0,0.38)';
-        roundRect(ctx, W*0.07, citY - 18, W*0.86, 115, 14);
-        ctx.fill();
-        // Text citat
-        ctx.font = `italic 27px '${stilText.font}', Georgia, serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.88)';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.7)';
-        ctx.shadowBlur = 8;
-        const citLines = wrapLines(`„${citat.text}"`, W * 0.78, 2);
-        citLines.forEach((line, i) => { ctx.fillText(line, W/2, citY + 25 + i * 36); });
-        // Autor
-        ctx.font = `600 23px 'Inter', Arial, sans-serif`;
-        ctx.fillStyle = '#D4AF37';
-        ctx.fillText(`— ${citat.autor}`, W/2, citY + 100);
-        ctx.restore();
-      }
+if (citat && afiseazaCitat) {
+  const citY = H - 235;
+  ctx.save();
+  
+  // Text citat — fără fundal
+  ctx.font = `italic ${Math.round(fz * 0.42)}px '${stilText.font}', Georgia, serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+  
+  const citLines = wrapLines(`„${citat.text}"`, W * 0.78, 2);
+  citLines.forEach((line, i) => {
+    ctx.fillText(line, W / 2, citY + i * Math.round(fz * 0.55));
+  });
+  
+  // Autor
+  ctx.font = `600 ${Math.round(fz * 0.36)}px 'Inter', Arial, sans-serif`;
+  ctx.fillStyle = '#D4AF37';
+  ctx.shadowBlur = 12;
+  ctx.fillText(`— ${citat.autor}`, W / 2, citY + citLines.length * Math.round(fz * 0.55) + 20);
+  
+  ctx.restore();
+}
 
       // Separator jos
       drawSep(H - 168, 210, 0.28);
@@ -980,6 +986,19 @@ const ReelSection = () => (
                 </div>
               )}
             </div>
+			<div>
+      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+        Mărime font citat: {citatFontSize}px
+      </label>
+      <input
+        type="range" min="16" max="32" step="1"
+        value={citatFontSize}
+        onChange={e => setCitatFontSize(+e.target.value)}
+        style={{ width: '100%' }}
+      />
+    </div>
+  </>
+)}
 
             {/* Butoane generate */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
