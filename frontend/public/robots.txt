@@ -9,4 +9,4 @@ Disallow: /api/
 Disallow: /login
 Disallow: /register
 
-Sitemap: https://serene-khapse-8c6464.netlify.app/sitemap.xml
+Sitemap: https://popas-pentru-suflet-backend.onrender.com/sitemap.xml
