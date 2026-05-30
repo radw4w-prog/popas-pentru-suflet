@@ -129,208 +129,318 @@ const [aiVarianta, setAiVarianta] = useState(0);
       canvas.height = H;
 
       // Cover crop
-      const imgR = img.width / img.height;
-      const canR = W / H;
-      let sx = 0, sy = 0, sw = img.width, sh = img.height;
-      if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
-      else { sh = img.width / canR; sy = (img.height - sh) / 2; }
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      // ══════════════════════════════════════════════════════════════
+// ÎNLOCUIEȘTE tot conținutul funcției drawOnCanvas din GeneratePage.js
+// De la "const ctx = canvas.getContext('2d');" până la "saveCanvasImage();"
+// ══════════════════════════════════════════════════════════════
 
-      // Gradient overlay
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(0,0,0,0.05)');
-      grad.addColorStop(0.25, 'rgba(0,0,0,0.2)');
-      grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
-      grad.addColorStop(0.75, 'rgba(0,0,0,0.6)');
-      grad.addColorStop(1, 'rgba(0,0,0,0.8)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+const ctx = canvas.getContext('2d');
+const W = 1080;
+const H = 1350;
+canvas.width = W;
+canvas.height = H;
 
-      const sc = 1;
-      const fz = Math.round(stilText.fontSize * 2 * sc);
+// ── Cover crop ──
+const imgR = img.width / img.height;
+const canR = W / H;
+let sx = 0, sy = 0, sw = img.width, sh = img.height;
+if (imgR > canR) { sw = img.height * canR; sx = (img.width - sw) / 2; }
+else { sh = img.width / canR; sy = (img.height - sh) / 2; }
+ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 
-      // ═══ WATERMARK REPETAT PE FUNDAL (greu de decupat) ═══
-      ctx.save();
-      ctx.globalAlpha = 0.04;
-      ctx.font = `700 ${Math.round(28 * sc)}px Inter, Arial, sans-serif`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      for (let y = 60; y < H; y += 120) {
-        for (let x = 80; x < W; x += 380) {
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(-0.35);
-          ctx.fillText('popaspentrusuflet.ro', 0, 0);
-          ctx.restore();
-        }
-      }
-      ctx.restore();
+// ── Overlay gradient dramatic ──
+const grad = ctx.createLinearGradient(0, 0, 0, H);
+grad.addColorStop(0, 'rgba(0,0,0,0.08)');
+grad.addColorStop(0.15, 'rgba(0,0,0,0.25)');
+grad.addColorStop(0.45, 'rgba(0,0,0,0.5)');
+grad.addColorStop(0.72, 'rgba(0,0,0,0.72)');
+grad.addColorStop(1, 'rgba(0,0,0,0.92)');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, W, H);
 
-      // ═══ TEXT VERSET ═══
-      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-      ctx.fillStyle = stilText.culoare;
-      ctx.textAlign = 'center';
+// ── Watermark repetat discret ──
+ctx.save();
+ctx.globalAlpha = 0.04;
+ctx.font = '700 22px Inter, Arial, sans-serif';
+ctx.fillStyle = '#FFFFFF';
+ctx.textAlign = 'center';
+for (let y = 60; y < H; y += 120) {
+  for (let x = 80; x < W; x += 380) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.35);
+    ctx.fillText('popaspentrusuflet.ro', 0, 0);
+    ctx.restore();
+  }
+}
+ctx.restore();
 
-      if (stilText.umbra) {
-        ctx.shadowColor = 'rgba(0,0,0,0.9)';
-        ctx.shadowBlur = 25 * sc;
-        ctx.shadowOffsetX = 2 * sc;
-        ctx.shadowOffsetY = 3 * sc;
-      }
+// ── Helper: separator auriu ──
+const drawSep = (y, w = 120, opacity = 0.6) => {
+  const sg = ctx.createLinearGradient(W/2 - w, 0, W/2 + w, 0);
+  sg.addColorStop(0, 'transparent');
+  sg.addColorStop(0.3, `rgba(212,175,55,${opacity})`);
+  sg.addColorStop(0.7, `rgba(212,175,55,${opacity})`);
+  sg.addColorStop(1, 'transparent');
+  ctx.strokeStyle = sg;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W/2 - w, y);
+  ctx.lineTo(W/2 + w, y);
+  ctx.stroke();
+};
 
-      // Word wrap
-      const maxW = W * 0.82;
-      const lh = fz * 1.5;
-      const raw = `\u201C${textDePus}\u201D`;
-      const words = raw.split(' ');
-      const lines = [];
-      let cur = '';
-      words.forEach(w => {
-        const t = cur + w + ' ';
-        if (ctx.measureText(t).width > maxW && cur) {
-          lines.push(cur.trim());
-          cur = w + ' ';
-        } else { cur = t; }
-      });
+// ── Helper: wrap text ──
+const wrapLines = (text, maxW, maxL = 8) => {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur + w + ' ';
+    if (ctx.measureText(t).width > maxW && cur) {
       lines.push(cur.trim());
+      cur = w + ' ';
+      if (lines.length >= maxL - 1) break;
+    } else { cur = t; }
+  }
+  lines.push(cur.trim());
+  return lines.slice(0, maxL);
+};
 
-      const maxLines = 8;
-      const dl = lines.slice(0, maxLines);
-      if (lines.length > maxLines) dl[maxLines - 1] += '...';
-      const th = dl.length * lh;
+const fz = Math.round(stilText.fontSize * 2);
+const lh = fz * 1.55;
+const maxW = W * 0.82;
 
-      let startY;
-      if (stilText.pozitie === 'top') startY = H * 0.12;
-      else if (stilText.pozitie === 'bottom') startY = H - th - H * 0.28;
-      else startY = (H - th) / 2 - 40;
+// ── ORNAMENTE COLȚURI ──
+const drawColt = (x, y, dx, dy) => {
+  ctx.strokeStyle = 'rgba(212,175,55,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + dx * 40, y);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x, y + dy * 40);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(212,175,55,0.5)';
+  ctx.beginPath();
+  ctx.arc(x, y, 3, 0, Math.PI * 2);
+  ctx.fill();
+};
+drawColt(55, 55, 1, 1);
+drawColt(W-55, 55, -1, 1);
+drawColt(55, H-55, 1, -1);
+drawColt(W-55, H-55, -1, -1);
 
-      // Linie decorativă sus
-      ctx.strokeStyle = 'rgba(212,175,55,0.6)';
-      ctx.lineWidth = 2 * sc;
-      const lineW = 70 * sc;
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - lineW, startY - 35 * sc);
-      ctx.lineTo(W / 2 + lineW, startY - 35 * sc);
-      ctx.stroke();
+// Linie decorativă sus
+drawSep(90, 180, 0.35);
 
-      // Desenează liniile de text
-      dl.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lh));
+// ── CRUCE SUS (simbol creștin) ──
+ctx.save();
+ctx.shadowColor = 'rgba(212,175,55,0.6)';
+ctx.shadowBlur = 25;
+const cY = 170, cH = 65, cW2 = 14, bW = 44, bH = 13;
+ctx.fillStyle = '#D4AF37';
+ctx.fillRect(W/2 - cW2/2, cY - cH/2, cW2, cH);
+ctx.fillRect(W/2 - bW/2, cY - cH*0.15, bW, bH);
+ctx.restore();
 
-      // Linie decorativă jos
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - lineW, startY + th + 15 * sc);
-      ctx.lineTo(W / 2 + lineW, startY + th + 15 * sc);
-      ctx.stroke();
+// ── TITLU (dacă există) ──
+if (titlu) {
+  ctx.save();
+  ctx.font = `600 24px '${stilText.font}', Georgia, serif`;
+  ctx.fillStyle = '#D4AF37';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '2px';
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 15;
+  const titluLines = wrapLines(titlu.toUpperCase(), W * 0.75, 2);
+  let tY = 240;
+  titluLines.forEach(line => { ctx.fillText(line, W/2, tY); tY += 32; });
+  ctx.restore();
+}
 
-      // Referința
-      ctx.shadowBlur = 12 * sc;
-      ctx.font = `bold ${Math.round(fz * 0.48)}px '${stilText.font}', Georgia, serif`;
-      ctx.fillStyle = '#D4AF37';
-      ctx.fillText(`\u2014 ${refDePus}`, W / 2, startY + th + 55 * sc);
+// ── TEXT VERSET PRINCIPAL ──
+const versetText2 = `\u201C${textDePus}\u201D`;
+ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+const lines = wrapLines(versetText2, maxW, 8);
+const totalH = lines.length * lh;
 
-      // ═══ WATERMARK LOGO + TEXT - INTEGRAT ═══
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
+let startY;
+if (stilText.pozitie === 'top') startY = 300;
+else if (stilText.pozitie === 'bottom') startY = H - totalH - 280;
+else startY = Math.max(300, (H - totalH) / 2 - 60);
 
-      const logo = loadedLogoRef.current;
-      const wmY = H - 140 * sc;
+// Separator sus verset
+ctx.save();
+ctx.shadowColor = 'rgba(0,0,0,0.8)';
+ctx.shadowBlur = 20;
+drawSep(startY - 30, 100, 0.5);
 
-      if (logo) {
-        const logoH = 75 * sc;
-        const logoW = logoH;
-        const logoX = W / 2 - logoW / 2;
-        const logoY = wmY;
+// Ghilimele decorative mari
+ctx.save();
+ctx.globalAlpha = 0.08;
+ctx.font = 'bold 160px Georgia, serif';
+ctx.fillStyle = '#D4AF37';
+ctx.textAlign = 'left';
+ctx.fillText('\u201C', 40, startY + 80);
+ctx.restore();
 
-        // Glow subtil în spatele logo-ului
-        ctx.save();
-        ctx.globalAlpha = 0.15;
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 30, 0, Math.PI * 2);
-        const glowGrad = ctx.createRadialGradient(
-          W / 2, logoY + logoH / 2, logoH / 2,
-          W / 2, logoY + logoH / 2, logoH / 2 + 30
-        );
-        glowGrad.addColorStop(0, 'rgba(212,175,55,0.4)');
-        glowGrad.addColorStop(1, 'rgba(212,175,55,0)');
-        ctx.fillStyle = glowGrad;
-        ctx.fill();
-        ctx.restore();
+// ── Cuvinte cheie COLORATE ──
+const CUVINTE_CHEIE_AURII = [
+  'Dumnezeu', 'Domnul', 'Hristos', 'Isus', 'Iisus', 'Tatăl', 'Duhul', 'Sfânt',
+  'iubire', 'dragoste', 'har', 'credință', 'nădejde', 'pace', 'bucurie',
+  'mântuire', 'viață', 'adevăr', 'lumină', 'putere', 'slavă', 'veșnic',
+  'iertare', 'binecuvântare', 'Sfântul', 'Domnului', 'Dumnezeului'
+];
 
-        // Cerc exterior
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 5 * sc, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fill();
+if (stilText.umbra) {
+  ctx.shadowColor = 'rgba(0,0,0,0.95)';
+  ctx.shadowBlur = 28;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 3;
+}
 
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2 + 5 * sc, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(212,175,55,0.5)';
-        ctx.lineWidth = 1.5 * sc;
-        ctx.stroke();
+lines.forEach((line, i) => {
+  const y = startY + i * lh;
+  const words2 = line.split(' ');
 
-        // Logo circular
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(W / 2, logoY + logoH / 2, logoH / 2, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-        ctx.restore();
+  // Verifică dacă linia conține cuvinte cheie
+  const areCuvantCheie = words2.some(w =>
+    CUVINTE_CHEIE_AURII.some(ck =>
+      w.replace(/[„""''.,;:!?]/g, '').toLowerCase() === ck.toLowerCase()
+    )
+  );
 
-        // Text sub logo - semi-transparent, integrat
-        ctx.globalAlpha = 0.75;
-        const wmFz = Math.round(24 * sc);
-        ctx.font = `600 ${wmFz}px Inter, Arial, sans-serif`;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.fillText('Popas pentru Suflet', W / 2, logoY + logoH + 30 * sc);
+  if (areCuvantCheie && words2.length <= 4) {
+    // Linie scurtă cu cuvânt cheie — toată linia în auriu + bold
+    ctx.font = `bold italic ${Math.round(fz * 1.05)}px '${stilText.font}', Georgia, serif`;
+    ctx.fillStyle = '#F4D03F';
+    ctx.textAlign = 'center';
+    ctx.fillText(line, W/2, y);
+    ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+  } else {
+    // Linie normală — culoarea selectată
+    ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+    ctx.fillStyle = stilText.culoare;
+    ctx.textAlign = 'center';
+    ctx.fillText(line, W/2, y);
+  }
+});
 
-        // Linie subțire decorativă sub text
-        ctx.globalAlpha = 0.3;
-        ctx.strokeStyle = '#D4AF37';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(W / 2 - 90, logoY + logoH + 42 * sc);
-        ctx.lineTo(W / 2 + 90, logoY + logoH + 42 * sc);
-        ctx.stroke();
+const afterVerset = startY + totalH;
 
-        ctx.globalAlpha = 1.0;
-      } else {
-        // Fallback fără logo
-        ctx.globalAlpha = 0.6;
-        const wmFz = Math.round(28 * sc);
-        ctx.font = `700 ${wmFz}px Inter, Arial, sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.textAlign = 'center';
-        ctx.fillText('🕊️ Popas pentru Suflet', W / 2, H - 50 * sc);
-        ctx.globalAlpha = 1.0;
-      }
+// Separator jos verset
+ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+drawSep(afterVerset + 18, 100, 0.5);
 
-      // ═══ WATERMARK COLȚURI (anti-decupare) ═══
-      ctx.save();
-      ctx.globalAlpha = 0.06;
-      ctx.font = `600 ${Math.round(16 * sc)}px Inter, Arial, sans-serif`;
-      ctx.fillStyle = '#FFFFFF';
+// Referință
+ctx.save();
+ctx.font = `bold ${Math.round(fz * 0.44)}px '${stilText.font}', Georgia, serif`;
+ctx.fillStyle = '#D4AF37';
+ctx.textAlign = 'center';
+ctx.shadowColor = 'rgba(0,0,0,0.9)';
+ctx.shadowBlur = 15;
+ctx.fillText(`\u2014 ${refDePus} \u2014`, W/2, afterVerset + 58);
+ctx.restore();
 
-      // Colț stânga-sus
-      ctx.textAlign = 'left';
-      ctx.fillText('popaspentrusuflet.ro', 15, 25);
+// ── GÂNDUL ZILEI (dacă există) ──
+if (gandZilei2 && afterVerset < H - 350) {
+  const gY = afterVerset + 110;
+  drawSep(gY - 10, 80, 0.25);
+  ctx.save();
+  ctx.font = `500 32px 'Inter', Arial, sans-serif`;
+  ctx.fillStyle = 'rgba(212,175,55,0.85)';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 10;
+  ctx.fillText('✦ Gândul zilei ✦', W/2, gY + 30);
 
-      // Colț dreapta-sus
-      ctx.textAlign = 'right';
-      ctx.fillText('popaspentrusuflet.ro', W - 15, 25);
+  ctx.font = `italic 34px Georgia, serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  const gandLines = wrapLines(gandZilei2, W * 0.75, 3);
+  gandLines.forEach((line, i) => {
+    ctx.fillText(line, W/2, gY + 80 + i * 44);
+  });
+  ctx.restore();
+}
 
-      // Colț stânga-jos
-      ctx.textAlign = 'left';
-      ctx.fillText('popaspentrusuflet.ro', 15, H - 12);
+// Separator jos
+drawSep(H - 165, 200, 0.3);
 
-      // Colț dreapta-jos
-      ctx.textAlign = 'right';
-      ctx.fillText('popaspentrusuflet.ro', W - 15, H - 12);
+// ── BRANDING / LOGO ──
+ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+const logo2 = loadedLogoRef.current;
+const wmY = H - 140;
 
-      ctx.restore();
+if (logo2) {
+  const logoH = 70;
+  const logoX = W/2 - 35;
+  const logoY = wmY;
 
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  const glowG = ctx.createRadialGradient(W/2, logoY+logoH/2, logoH/2, W/2, logoY+logoH/2, logoH/2+28);
+  glowG.addColorStop(0, 'rgba(212,175,55,0.4)');
+  glowG.addColorStop(1, 'rgba(212,175,55,0)');
+  ctx.beginPath();
+  ctx.arc(W/2, logoY+logoH/2, logoH/2+28, 0, Math.PI*2);
+  ctx.fillStyle = glowG;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(W/2, logoY+logoH/2, logoH/2+4, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(212,175,55,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(W/2, logoY+logoH/2, logoH/2, 0, Math.PI*2);
+  ctx.clip();
+  ctx.drawImage(logo2, logoX, logoY, logoH, logoH);
+  ctx.restore();
+
+  ctx.globalAlpha = 0.75;
+  ctx.font = '600 22px Inter, Arial, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.fillText('Popas pentru Suflet', W/2, logoY+logoH+28);
+
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = '#D4AF37';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(W/2-90, logoY+logoH+40);
+  ctx.lineTo(W/2+90, logoY+logoH+40);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+} else {
+  ctx.globalAlpha = 0.6;
+  ctx.font = '700 26px Inter, Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText('🕊️ Popas pentru Suflet', W/2, H-50);
+  ctx.globalAlpha = 1;
+}
+
+// Watermark colțuri
+ctx.save();
+ctx.globalAlpha = 0.055;
+ctx.font = '600 15px Inter, Arial, sans-serif';
+ctx.fillStyle = '#FFFFFF';
+ctx.textAlign = 'left'; ctx.fillText('popaspentrusuflet.ro', 15, 24);
+ctx.textAlign = 'right'; ctx.fillText('popaspentrusuflet.ro', W-15, 24);
+ctx.textAlign = 'left'; ctx.fillText('popaspentrusuflet.ro', 15, H-12);
+ctx.textAlign = 'right'; ctx.fillText('popaspentrusuflet.ro', W-15, H-12);
+ctx.restore();
       // Salvare
-      saveCanvasImage();
+saveCanvasImage();
+
+
+
+     
     };
 
     // Dacă imaginea e deja încărcată
