@@ -256,34 +256,98 @@ const GeneratePage = () => {
       ctx.fillText('\u201C', 35, startY + 90);
       ctx.restore();
 
-      // ── Cuvinte cheie COLORATE ──
-      if (stilText.umbra) {
-        ctx.shadowColor = 'rgba(0,0,0,0.95)';
-        ctx.shadowBlur = 28;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 3;
-      }
+      // ÎNLOCUIEȘTE secțiunea "── Cuvinte cheie COLORATE ──" din renderCanvas
+// în GeneratePage.js cu codul de mai jos:
 
-      lines.forEach((line, i) => {
-        const y = startY + i * lh;
-        const words2 = line.split(' ');
+// ── Cuvinte cheie COLORATE — cuvânt cu cuvânt ──
+const CUVINTE_CHEIE_AURII = [
+  'dumnezeu', 'domnul', 'hristos', 'isus', 'iisus', 'tatăl', 'tatal',
+  'duhul', 'sfânt', 'sfant', 'iubire', 'dragoste', 'har', 'credință',
+  'credinta', 'nădejde', 'nadejde', 'pace', 'bucurie', 'mântuire',
+  'mantuire', 'viață', 'viata', 'adevăr', 'adevar', 'lumină', 'lumina',
+  'putere', 'slavă', 'slava', 'veșnic', 'vesnic', 'iertare',
+  'binecuvântare', 'binecuvantare', 'sfântul', 'sfantul',
+  'domnului', 'dumnezeului', 'tatălui', 'tatalui', 'hristoase'
+];
 
-        const areCuvantCheie = words2.some(w =>
-          CUVINTE_CHEIE_AURII.some(ck =>
-            w.replace(/[„""''.,;:!?]/g, '').toLowerCase() === ck.toLowerCase()
-          )
-        );
+const isKeyword = (word) => {
+  const clean = word.replace(/[„""''.,;:!?«»\-()]/g, '').toLowerCase();
+  return CUVINTE_CHEIE_AURII.includes(clean);
+};
 
-        if (areCuvantCheie && words2.length <= 5) {
-          ctx.font = `bold italic ${Math.round(fz * 1.06)}px '${stilText.font}', Georgia, serif`;
-          ctx.fillStyle = '#F4D03F';
-        } else {
-          ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-          ctx.fillStyle = stilText.culoare;
-        }
-        ctx.textAlign = 'center';
-        ctx.fillText(line, W/2, y);
-      });
+// Funcție pentru a desena o linie cu cuvinte colorate individual
+const drawLineColored = (line, x, y, fz, font, defaultColor, accentColor) => {
+  const words = line.split(' ');
+  
+  // Calculăm lățimea totală pentru centrare
+  ctx.font = `italic ${fz}px '${font}', Georgia, serif`;
+  const totalWidth = ctx.measureText(line).width;
+  let curX = x - totalWidth / 2;
+
+  words.forEach((word, i) => {
+    const isKey = isKeyword(word);
+    
+    if (isKey) {
+      ctx.font = `bold italic ${Math.round(fz * 1.04)}px '${font}', Georgia, serif`;
+      ctx.fillStyle = accentColor;
+    } else {
+      ctx.font = `italic ${fz}px '${font}', Georgia, serif`;
+      ctx.fillStyle = defaultColor;
+    }
+    
+    ctx.textAlign = 'left';
+    ctx.fillText(word, curX, y);
+    curX += ctx.measureText(word).width + ctx.measureText(' ').width;
+  });
+  
+  // Reset
+  ctx.textAlign = 'center';
+};
+
+// Desenează fiecare linie cu cuvinte colorate
+// ── Cuvinte cheie COLORATE — cuvânt cu cuvânt ──
+const CUVINTE_CHEIE_AURII = [
+  'dumnezeu', 'domnul', 'hristos', 'isus', 'iisus', 'tatăl', 'tatal',
+  'duhul', 'sfânt', 'sfant', 'iubire', 'dragoste', 'har', 'credință',
+  'credinta', 'nădejde', 'nadejde', 'pace', 'bucurie', 'mântuire',
+  'mantuire', 'viață', 'viata', 'adevăr', 'adevar', 'lumină', 'lumina',
+  'putere', 'slavă', 'slava', 'veșnic', 'vesnic', 'iertare',
+  'binecuvântare', 'binecuvantare', 'sfântul', 'sfantul',
+  'domnului', 'dumnezeului', 'tatălui', 'tatalui'
+];
+
+const isKeyword = (word) => {
+  const clean = word.replace(/[„""''.,;:!?«»\-()\u201C\u201D]/g, '').toLowerCase();
+  return CUVINTE_CHEIE_AURII.includes(clean);
+};
+
+const drawLineColored = (line, centerX, y) => {
+  const words = line.split(' ');
+  ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+  const totalWidth = ctx.measureText(line).width;
+  let curX = centerX - totalWidth / 2;
+
+  words.forEach((word) => {
+    const key = isKeyword(word);
+    if (key) {
+      ctx.font = `bold italic ${Math.round(fz * 1.06)}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = '#F4D03F';
+    } else {
+      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
+      ctx.fillStyle = stilText.culoare;
+    }
+    ctx.textAlign = 'left';
+    ctx.fillText(word, curX, y);
+    const spaceW = ctx.measureText(' ').width;
+    curX += ctx.measureText(word).width + spaceW;
+  });
+  ctx.textAlign = 'center';
+};
+
+lines.forEach((line, i) => {
+  drawLineColored(line, W / 2, startY + i * lh);
+});
+
 
       const afterVerset = startY + totalH;
       ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
