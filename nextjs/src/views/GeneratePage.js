@@ -306,47 +306,16 @@ const drawLineColored = (line, x, y, fz, font, defaultColor, accentColor) => {
 
 // Desenează fiecare linie cu cuvinte colorate
 lines.forEach((line, i) => {
-  // ── Cuvinte cheie COLORATE — cuvânt cu cuvânt ──
-const CUVINTE_CHEIE_AURII = [
-  'dumnezeu', 'domnul', 'hristos', 'isus', 'iisus', 'tatăl', 'tatal',
-  'duhul', 'sfânt', 'sfant', 'iubire', 'dragoste', 'har', 'credință',
-  'credinta', 'nădejde', 'nadejde', 'pace', 'bucurie', 'mântuire',
-  'mantuire', 'viață', 'viata', 'adevăr', 'adevar', 'lumină', 'lumina',
-  'putere', 'slavă', 'slava', 'veșnic', 'vesnic', 'iertare',
-  'binecuvântare', 'binecuvantare', 'sfântul', 'sfantul',
-  'domnului', 'dumnezeului', 'tatălui', 'tatalui'
-];
-
-const isKeyword = (word) => {
-  const clean = word.replace(/[„""''.,;:!?«»\-()\u201C\u201D]/g, '').toLowerCase();
-  return CUVINTE_CHEIE_AURII.includes(clean);
-};
-
-const drawLineColored = (line, centerX, y) => {
-  const words = line.split(' ');
-  ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-  const totalWidth = ctx.measureText(line).width;
-  let curX = centerX - totalWidth / 2;
-
-  words.forEach((word) => {
-    const key = isKeyword(word);
-    if (key) {
-      ctx.font = `bold italic ${Math.round(fz * 1.06)}px '${stilText.font}', Georgia, serif`;
-      ctx.fillStyle = '#F4D03F';
-    } else {
-      ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-      ctx.fillStyle = stilText.culoare;
-    }
-    ctx.textAlign = 'left';
-    ctx.fillText(word, curX, y);
-    const spaceW = ctx.measureText(' ').width;
-    curX += ctx.measureText(word).width + spaceW;
-  });
-  ctx.textAlign = 'center';
-};
-
-lines.forEach((line, i) => {
-  drawLineColored(line, W / 2, startY + i * lh);
+  const y = startY + i * lh;
+  drawLineColored(
+    line,
+    W / 2,
+    y,
+    fz,
+    stilText.font,
+    stilText.culoare,  // culoarea normală (alb de obicei)
+    '#F4D03F'          // auriu pentru cuvinte cheie
+  );
 });
 
 
