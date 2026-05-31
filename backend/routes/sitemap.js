@@ -10,10 +10,17 @@ router.get('/', (req, res) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
+    <loc>${baseUrl}/landing</loc>
+    <lastmod>${azi}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
     <loc>${baseUrl}/dashboard</loc>
     <lastmod>${azi}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <priority>0.9</priority>
   </url>
 
   <url>

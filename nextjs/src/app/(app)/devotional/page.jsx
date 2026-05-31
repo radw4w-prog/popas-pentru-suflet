@@ -7,12 +7,12 @@ export async function generateMetadata() {
     const d = data?.data;
     if (d?.title) {
       return {
-        title: `${d.title} - Devotional zilnic`,
+        title: `${d.title} - Devoțional zilnic`,
         description: d.introduction?.substring(0, 155),
       };
     }
   } catch {}
-  return { title: 'Devotional zilnic - Meditatie crestina' };
+  return { title: 'Devoțional zilnic - Meditație creștină', description: 'Meditație zilnică cu verset, mesaj, rugăciune și gândul zilei. Hrană spirituală pentru fiecare dimineață.' };
 }
 export default function Devotional() { return <DevotionalPage />; }
 

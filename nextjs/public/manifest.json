@@ -79,8 +79,8 @@
     {
       "name": "Biblia",
       "short_name": "Biblia",
-      "description": "Biblioteca de versete",
-      "url": "/verses",
+      "description": "Biblia Cornilescu online",
+      "url": "/biblia",
       "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
     },
     {

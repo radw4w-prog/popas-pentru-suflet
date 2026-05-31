@@ -1,12 +1,24 @@
 User-agent: *
 Allow: /
+Allow: /landing
 Allow: /dashboard
-Allow: /verses
+Allow: /biblia
+Allow: /devotional
+Allow: /audio
 Allow: /generate
+Allow: /rugaciuni
+Allow: /reading
 
 Disallow: /admin
 Disallow: /api/
 Disallow: /login
 Disallow: /register
+Disallow: /profile
+Disallow: /settings
+Disallow: /journal
+Disallow: /bookmarks
+Disallow: /history
+Disallow: /schedule
+Disallow: /notifications
 
-Sitemap: https://popas-pentru-suflet-backend.onrender.com/sitemap.xml
+Sitemap: https://popas-pentru-suflet.vercel.app/sitemap.xml
