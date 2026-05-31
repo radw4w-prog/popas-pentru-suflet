@@ -203,7 +203,7 @@ router.get('/templates', async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [templates, total] = await Promise.all([
-      Template.find(filter).sort({ ordine: 1 }).skip(skip).limit(parseInt(limit)).lean(),
+      Template.find(filter).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
       Template.countDocuments(filter)
     ]);
 
@@ -259,22 +259,30 @@ router.post('/templates', async (req, res) => {
 
     console.log('📸 Template URL normalizat:', url);
 
-    // Generează ID unic
-    const ultimul = await Template.findOne().sort({ templateId: -1 }).lean();
-    const ultimulNr = ultimul ? parseInt(ultimul.templateId.replace('t', '')) : 0;
-    const templateId = `t${String(ultimulNr + 1).padStart(3, '0')}`;
+    // Generează ID unic - caută ultimul din DB numeric
+    const ultimul = await Template.findOne().sort({ ordine: -1 }).lean();
+    const ultimulNr = ultimul ? (ultimul.ordine || 0) : 0;
+    const nextNr = ultimulNr + 1;
+    const templateId = `t${String(nextNr).padStart(3, '0')}`;
 
-    // Generează thumbnail automat (300×375, calitate redusă)
-    const thumbUrl = thumbnail || url.replace('w=1080', 'w=400').replace('h=1350', 'h=500').replace('q=85', 'q=60');
+    // Verifică dacă templateId există deja, dacă da, adaugă timestamp
+    const exista = await Template.findOne({ templateId }).lean();
+    const finalTemplateId = exista ? `t${Date.now()}` : templateId;
+
+    // Generează thumbnail automat
+    const base = url.split('?')[0];
+    const thumbUrl = thumbnail || `${base}?w=400&h=500&fit=crop&q=60`;
+
+    console.log('📸 Salvez template:', { finalTemplateId, name, url: url.substring(0, 80), thumbUrl: thumbUrl.substring(0, 80) });
 
     const template = await Template.create({
-      templateId,
+      templateId: finalTemplateId,
       name,
       url,
       thumbnail: thumbUrl,
       categorie: categorie || 'spiritual',
       activ: true,
-      ordine: ultimulNr + 1,
+      ordine: nextNr,
       sursa: 'admin'
     });
 
