@@ -503,32 +503,36 @@ if (ref.isReference) {
   const carteExact = new RegExp(`^${ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
   const abrevRegex = new RegExp(ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 let isRefSearch = false;
+
 if (search && search.trim()) {
   const ref = parseReference(search);
   isRefSearch = ref.isReference;
-  
-  if (ref.verset) {
-    conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
-    conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
-  }
 
-  conditions.push({ carte: carteExact, capitol: ref.capitol });
-  conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
-  conditions.push({ referinta: new RegExp(search.trim(), 'i') });
+  if (ref.isReference) {
+    const conditions = [];
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const carteExact = new RegExp(`^${esc(ref.carte)}$`, 'i');
+    const abrevRegex = new RegExp(`^${esc(ref.carte)}`, 'i');
 
-  filter.$or = conditions;
-} else {
-  // Căutare text liber — caută în text și referință
-  filter.$or = [
-    { text: new RegExp(search.trim(), 'i') },
-    { referinta: new RegExp(search.trim(), 'i') },
-  ];
-}
+    if (ref.verset) {
+      conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
+      conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
     }
+    conditions.push({ carte: carteExact, capitol: ref.capitol });
+    conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
+    conditions.push({ referinta: new RegExp(esc(search.trim()), 'i') });
+    filter.$or = conditions;
+  } else {
+    filter.$or = [
+      { text: new RegExp(search.trim(), 'i') },
+      { referinta: new RegExp(search.trim(), 'i') },
+    ];
+  }
+}
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const limitNr = Math.min(parseInt(limit), 500);
-    const sortBy = ref?.isReference
+const skip = (parseInt(page) - 1) * parseInt(limit);
+const limitNr = Math.min(parseInt(limit), 500);
+const sortBy = isRefSearch
   ? { ordine: 1, capitol: 1, verset: 1 }
   : { testament: 1, carte: 1, capitol: 1, verset: 1 };
 
