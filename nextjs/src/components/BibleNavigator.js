@@ -132,10 +132,15 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   const highlightText = (text, query) => {
     if (!query || query.length < 2) return text;
     try {
-      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+      // Construiește regex cu suport diacritice
+      const diacriticMap = { 'a': '[aăâ]', 'ă': '[aăâ]', 'â': '[aăâ]', 'i': '[iî]', 'î': '[iî]', 's': '[sș]', 'ș': '[sș]', 't': '[tț]', 'ț': '[tț]' };
+      const pattern = query.split('').map(c => {
+        const escaped = c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return diacriticMap[c.toLowerCase()] || escaped;
+      }).join('');
+      const parts = text.split(new RegExp(`(${pattern})`, 'gi'));
       return parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase()
+        new RegExp(`^${pattern}$`, 'i').test(part)
           ? <mark key={i} style={{ background: 'rgba(212,175,55,0.35)', color: 'var(--text-primary)', borderRadius: '2px', padding: '0 1px' }}>{part}</mark>
           : part
       );

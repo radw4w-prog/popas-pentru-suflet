@@ -497,16 +497,28 @@ router.get('/', async (req, res) => {
         const abrevRegex = new RegExp('^' + esc(ref.carte), 'i');
 
         if (ref.verset) {
+          // Dacă avem verset specific, returnează DOAR acel verset
           conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
           conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
+        } else {
+          // Fără verset — returnează tot capitolul
+          conditions.push({ carte: carteExact, capitol: ref.capitol });
+          conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
         }
-        conditions.push({ carte: carteExact, capitol: ref.capitol });
-        conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
         conditions.push({ referinta: new RegExp(esc(search.trim()), 'i') });
         filter.$or = conditions;
       } else {
+        // ═══ Căutare text cu suport diacritice ═══
+        // Înlocuiește caracterele fără diacritice cu pattern-uri care matchuiesc ambele variante
+        const diacriticMap = {
+          'a': '[aăâ]', 'ă': '[aăâ]', 'â': '[aăâ]',
+          'i': '[iî]', 'î': '[iî]',
+          's': '[sș]', 'ș': '[sș]', 'ş': '[sș]',
+          't': '[tț]', 'ț': '[tț]', 'ţ': '[tț]',
+        };
+        const searchText = search.trim().split('').map(c => diacriticMap[c.toLowerCase()] || c).join('');
         filter.$or = [
-          { text: new RegExp(search.trim(), 'i') },
+          { text: new RegExp(searchText, 'i') },
           { referinta: new RegExp(search.trim(), 'i') }
         ];
       }
