@@ -23,6 +23,16 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   // Popup referință
   const [refPopup, setRefPopup] = useState(null);
   const popupRef = useRef(null);
+  
+  // ═══ SEARCH ═══
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchPage, setSearchPage] = useState(1);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchTimeout = useRef(null);
+  const searchInputRef = useRef(null);
 
   const { isAuthenticated } = useAuth();
 
@@ -43,6 +53,93 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   const getHeaders = () => {
     const token = localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  // ═══ SEARCH LOGIC ═══
+  const performSearch = useCallback(async (query, page = 1) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]); setSearchTotal(0); return;
+    }
+    setSearchLoading(true);
+    try {
+      const r = await api.get(`/api/verses?search=${encodeURIComponent(query.trim())}&page=${page}&limit=20`);
+      const data = r.data;
+      if (page === 1) {
+        setSearchResults(data.versete || []);
+      } else {
+        setSearchResults(prev => [...prev, ...(data.versete || [])]);
+      }
+      setSearchTotal(data.total || 0);
+      setSearchPage(page);
+    } catch (e) { console.error('Search error:', e); }
+    finally { setSearchLoading(false); }
+  }, []);
+
+  const handleSearchInput = useCallback((value) => {
+    setSearchQuery(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!value || value.trim().length < 2) {
+      setSearchResults([]); setSearchTotal(0); return;
+    }
+    searchTimeout.current = setTimeout(() => {
+      performSearch(value, 1);
+    }, 400);
+  }, [performSearch]);
+
+  const handleSearchClear = () => {
+    setSearchQuery(''); setSearchResults([]); setSearchTotal(0); setSearchPage(1);
+    if (searchInputRef.current) searchInputRef.current.focus();
+  };
+
+  const goToSearchResult = async (verse) => {
+    const carte = ordineBiblie.find(o => o.carte === verse.carte);
+    const carteInfo = cartiData.find(c => c.carte === verse.carte);
+    if (!carte) return;
+
+    const carteObj = { ...carte, totalCapitole: carteInfo?.totalCapitole || 0, totalVersete: carteInfo?.totalVersete || 0 };
+    
+    // Setează starea
+    setSelectedCarte(carteObj);
+    setSelectedCapitol(verse.capitol);
+    setStep('versete');
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearchTotal(0);
+    setReferinteMap({});
+    setRefPopup(null);
+    setLoadingVersete(true);
+
+    try {
+      const r = await api.get(`/api/verses?carte=${encodeURIComponent(verse.carte)}&capitol=${verse.capitol}&limit=500`);
+      setVersete(r.data?.versete || []);
+      await Promise.all([fetchBookmarks(verse.carte, verse.capitol), fetchReferinte(verse.carte, verse.capitol)]);
+    } catch (e) { console.error(e); }
+    finally { setLoadingVersete(false); }
+
+    // Scroll la verset specific
+    setTimeout(() => {
+      const el = document.querySelector(`[data-verset="${verse.verset}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.transition = 'background 0.3s';
+        el.style.background = 'rgba(212,175,55,0.15)';
+        setTimeout(() => { el.style.background = ''; }, 2000);
+      }
+    }, 300);
+  };
+
+  const highlightText = (text, query) => {
+    if (!query || query.length < 2) return text;
+    try {
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+      return parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} style={{ background: 'rgba(212,175,55,0.35)', color: 'var(--text-primary)', borderRadius: '2px', padding: '0 1px' }}>{part}</mark>
+          : part
+      );
+    } catch { return text; }
   };
 
   const fetchData = async () => {
@@ -192,6 +289,118 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
         {onClose && <button className="bible-nav-close" onClick={onClose}>✕</button>}
       </div>
 
+      {/* ═══ SEARCH BAR ═══ */}
+      <div style={{
+        padding: '0.6rem 1rem',
+        borderBottom: '1px solid var(--border-color)',
+        background: 'var(--bg-secondary)',
+      }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem', color: 'var(--text-muted)', pointerEvents: 'none' }}>🔍</span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              onFocus={() => setShowSearch(true)}
+              placeholder='Caută text sau referință (ex: "dragoste", "Ioan 3:16")'
+              style={{
+                width: '100%',
+                padding: '0.65rem 2.2rem 0.65rem 2.2rem',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-input)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem',
+                fontFamily: 'inherit',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+            />
+            {searchQuery && (
+              <button onClick={handleSearchClear} style={{
+                position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
+                fontSize: '1rem', padding: '2px', lineHeight: 1
+              }}>✕</button>
+            )}
+          </div>
+          {showSearch && searchQuery && (
+            <button onClick={() => { setShowSearch(false); setSearchResults([]); setSearchTotal(0); setSearchQuery(''); }} style={{
+              padding: '0.5rem 0.75rem', borderRadius: '10px', border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem',
+              whiteSpace: 'nowrap', flexShrink: 0
+            }}>Anulează</button>
+          )}
+        </div>
+
+        {/* Info rezultate */}
+        {showSearch && searchQuery.length >= 2 && (
+          <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {searchLoading ? '⏳ Se caută...' : `${searchTotal} rezultate pentru „${searchQuery}"`}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ SEARCH RESULTS ═══ */}
+      {showSearch && searchResults.length > 0 && (
+        <div style={{
+          maxHeight: '60vh', overflowY: 'auto', borderBottom: '2px solid var(--gold-primary)',
+          background: 'var(--bg-primary)',
+        }}>
+          {searchResults.map((verse, idx) => (
+            <div
+              key={verse._id || idx}
+              onClick={() => goToSearchResult(verse)}
+              style={{
+                padding: '0.75rem 1rem',
+                borderBottom: '1px solid var(--border-subtle)',
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              {/* Referință */}
+              <div style={{
+                fontSize: '0.75rem', fontWeight: 700, color: 'var(--gold-primary)',
+                marginBottom: '0.25rem', fontFamily: 'Inter, sans-serif',
+              }}>
+                📖 {verse.carte} {verse.capitol}:{verse.verset}
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                  {verse.testament === 'VT' ? '📜 VT' : '✝️ NT'}
+                </span>
+              </div>
+              {/* Text cu highlight */}
+              <p style={{
+                fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)',
+                fontFamily: 'Lora, Georgia, serif', fontStyle: 'italic',
+                margin: 0,
+                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                „{highlightText(verse.text, searchQuery)}"
+              </p>
+            </div>
+          ))}
+
+          {/* Load more */}
+          {searchResults.length < searchTotal && (
+            <button
+              onClick={() => performSearch(searchQuery, searchPage + 1)}
+              disabled={searchLoading}
+              style={{
+                width: '100%', padding: '0.75rem', background: 'var(--bg-card)',
+                border: 'none', borderTop: '1px solid var(--border-color)',
+                color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+              }}
+            >
+              {searchLoading ? '⏳ Se încarcă...' : `📖 Încarcă mai multe (${searchResults.length}/${searchTotal})`}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ═══ BODY ═══ */}
       <div className="bible-nav-body" style={{ position: 'relative' }}>
 
@@ -299,6 +508,7 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
                     return (
                       <div
                         key={verse._id}
+                        data-verset={verse.verset}
                         className={`bible-verse-row ${rl ? 'red-letter' : ''} ${isCopiat ? 'copied' : ''}`}
                         style={bm?.tip === 'highlight' ? { background: getHighlight(bm).background } : {}}
                       >
