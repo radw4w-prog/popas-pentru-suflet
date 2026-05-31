@@ -214,7 +214,7 @@ export default function LandingPage() {
         /* ── RESPONSIVE ── */
         @media (max-width: 768px) {
           .lp-nav { padding: 0.875rem 1rem; }
-          .lp-btn-outline { display: none; }
+          .lp-btn-outline { font-size: 0.75rem; padding: 0.4rem 0.8rem; }
           .lp-grid-3 { grid-template-columns: 1fr; }
           .lp-testimoniale { grid-template-columns: 1fr; }
           .lp-stats-inner { grid-template-columns: repeat(2,1fr); }
