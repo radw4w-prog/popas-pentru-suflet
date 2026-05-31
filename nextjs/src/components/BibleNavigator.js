@@ -1,9 +1,18 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { FontSizeContext } from './Header';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+// ═══ FONT SETTINGS ═══
+const FONT_SIZES = { small: '0.9rem', medium: '1.05rem', large: '1.25rem' };
+const FONT_FAMILIES = {
+  lora: { label: 'Lora', value: 'Lora, Georgia, serif' },
+  georgia: { label: 'Georgia', value: 'Georgia, serif' },
+  system: { label: 'System', value: 'system-ui, -apple-system, sans-serif' },
+};
 
 const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   const [step, setStep] = useState('carti');
@@ -35,6 +44,24 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   const searchInputRef = useRef(null);
 
   const { isAuthenticated } = useAuth();
+  const { fontSize } = useContext(FontSizeContext);
+
+  // Bible-specific font settings
+  const [bibleFont, setBibleFont] = useState('lora');
+  const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('bibleFont') || 'lora';
+    setBibleFont(saved);
+  }, []);
+
+  const changeBibleFont = (font) => {
+    setBibleFont(font);
+    localStorage.setItem('bibleFont', font);
+  };
+
+  const verseFontSize = FONT_SIZES[fontSize] || FONT_SIZES.medium;
+  const verseFontFamily = FONT_FAMILIES[bibleFont]?.value || FONT_FAMILIES.lora.value;
 
   useEffect(() => { fetchData(); }, []);
 
@@ -495,8 +522,56 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
           <div>
             <div className="bible-carte-info">
               <div className="bible-carte-name">{selectedCarte.carte} {selectedCapitol}</div>
-              <div className="bible-carte-meta">{versete.length} versete • {selectedCarte.test === 'VT' ? '📜 VT' : '✝️ NT'}</div>
+              <div className="bible-carte-meta">
+                {versete.length} versete • {selectedCarte.test === 'VT' ? '📜 VT' : '✝️ NT'}
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  style={{
+                    marginLeft: '0.75rem', background: 'none', border: '1px solid var(--border-color)',
+                    borderRadius: '8px', padding: '0.2rem 0.5rem', cursor: 'pointer',
+                    color: showSettings ? 'var(--gold-primary)' : 'var(--text-muted)',
+                    fontSize: '0.8rem', transition: 'all 0.15s'
+                  }}
+                  title="Setări text"
+                >
+                  ⚙️ Aa
+                </button>
+              </div>
             </div>
+
+            {/* ═══ TEXT SETTINGS BAR ═══ */}
+            {showSettings && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+                padding: '0.6rem 0.75rem', marginBottom: '0.5rem',
+                background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px',
+              }}>
+                {/* Font Family */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Font:</span>
+                  {Object.entries(FONT_FAMILIES).map(([key, f]) => (
+                    <button key={key} onClick={() => changeBibleFont(key)} style={{
+                      padding: '0.25rem 0.5rem', borderRadius: '8px', cursor: 'pointer',
+                      border: bibleFont === key ? '1px solid var(--gold-primary)' : '1px solid var(--border-color)',
+                      background: bibleFont === key ? 'rgba(212,175,55,0.12)' : 'transparent',
+                      color: bibleFont === key ? 'var(--gold-primary)' : 'var(--text-secondary)',
+                      fontSize: '0.75rem', fontFamily: f.value, fontWeight: bibleFont === key ? 600 : 400,
+                    }}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Separator */}
+                <div style={{ width: 1, height: 20, background: 'var(--border-color)' }} />
+
+                {/* Font Size info */}
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  Mărime: <strong style={{ color: 'var(--gold-primary)' }}>{fontSize === 'small' ? 'Mic' : fontSize === 'large' ? 'Mare' : 'Mediu'}</strong>
+                  <span style={{ marginLeft: '0.3rem', opacity: 0.6 }}>(din Aa header)</span>
+                </div>
+              </div>
+            )}
 
             {loadingVersete ? (
               <div className="loading-spinner"><div className="spinner" /></div>
@@ -526,11 +601,12 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
                           <p
                             className={`bible-verse-text ${rl ? 'rl-text' : ''}`}
                             style={{
-                              fontSize: '1.05rem',
+                              fontSize: verseFontSize,
                               lineHeight: 1.85,
                               margin: '0 0 0.4rem 0',
                               cursor: 'pointer',
-                              fontFamily: 'Lora, Georgia, serif',
+                              fontFamily: verseFontFamily,
+                              transition: 'font-size 0.2s, font-family 0.2s',
                             }}
                             onClick={() => copyVerse(verse)}
                             title="Click pentru a copia"
