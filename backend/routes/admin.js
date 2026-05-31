@@ -229,7 +229,7 @@ router.post('/templates', async (req, res) => {
     }
 
     // ═══ Normalizare URL Unsplash ═══
-    // Cazul 1: URL pagină unsplash.com/photos/slug-ID
+    // Cazul 1: URL pagină unsplash.com/photos/slug-ID → extrage imagine reală
     if (url.includes('unsplash.com/photos/') && !url.includes('images.unsplash.com')) {
       try {
         const axios = require('axios');
@@ -238,22 +238,26 @@ router.post('/templates', async (req, res) => {
           maxRedirects: 5,
           timeout: 10000
         });
-        const html = pageRes.data;
+        const html = typeof pageRes.data === 'string' ? pageRes.data : JSON.stringify(pageRes.data);
         const match = html.match(/https:\/\/images\.unsplash\.com\/photo-[a-zA-Z0-9_-]+/);
         if (match) {
           url = `${match[0]}?w=1080&h=1350&fit=crop&q=85`;
         } else {
-          return res.status(400).json({ success: false, message: 'Nu am putut extrage imaginea din URL-ul Unsplash. Folosește URL-ul direct al imaginii (images.unsplash.com/photo-...).' });
+          return res.status(400).json({ success: false, message: 'Nu am putut extrage imaginea. Copiază URL-ul imaginii direct (click dreapta pe imagine → Copy Image Address).' });
         }
       } catch (fetchErr) {
-        return res.status(400).json({ success: false, message: 'Eroare la accesarea URL-ului Unsplash. Încearcă URL-ul direct (images.unsplash.com/photo-...).' });
+        console.error('Fetch Unsplash page error:', fetchErr.message);
+        return res.status(400).json({ success: false, message: 'Nu pot accesa pagina Unsplash. Copiază URL-ul imaginii direct (click dreapta pe imagine → Copy Image Address).' });
       }
     }
-    // Cazul 2: URL direct images.unsplash.com — normalizează parametrii
+    // Cazul 2: URL direct images.unsplash.com — curăță TOȚI parametrii, setează standard
     else if (url.includes('images.unsplash.com')) {
+      // Extrage doar base URL (fără NICIUN parametru - ixlib, ixid, auto, etc.)
       const base = url.split('?')[0];
       url = `${base}?w=1080&h=1350&fit=crop&q=85`;
     }
+
+    console.log('📸 Template URL normalizat:', url);
 
     // Generează ID unic
     const ultimul = await Template.findOne().sort({ templateId: -1 }).lean();
