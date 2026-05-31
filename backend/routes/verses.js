@@ -502,7 +502,11 @@ if (ref.isReference) {
   // Match EXACT pe carte (^ și $ = început și sfârșit)
   const carteExact = new RegExp(`^${ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
   const abrevRegex = new RegExp(ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-
+let isRefSearch = false;
+if (search && search.trim()) {
+  const ref = parseReference(search);
+  isRefSearch = ref.isReference;
+  
   if (ref.verset) {
     conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
     conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
@@ -524,7 +528,9 @@ if (ref.isReference) {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const limitNr = Math.min(parseInt(limit), 500);
-    const sortBy = { testament: 1, carte: 1, capitol: 1, verset: 1 };
+    const sortBy = ref?.isReference
+  ? { ordine: 1, capitol: 1, verset: 1 }
+  : { testament: 1, carte: 1, capitol: 1, verset: 1 };
 
     const [versete, total] = await Promise.all([
       Verse.find(filter)
