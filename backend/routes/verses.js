@@ -499,25 +499,16 @@ router.get('/', async (req, res) => {
 if (ref.isReference) {
   const conditions = [];
 
-  // Match EXACT pe nume carte (cu ^ și $)
-  const carteRegexExact = new RegExp(`^${ref.carte}$`, 'i');
-  // Match și pe abreviere
-  const abrevRegex = new RegExp(ref.carte, 'i');
+  // Match EXACT pe carte (^ și $ = început și sfârșit)
+  const carteExact = new RegExp(`^${ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+  const abrevRegex = new RegExp(ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
   if (ref.verset) {
-    conditions.push({
-      carte: carteRegexExact,
-      capitol: ref.capitol,
-      verset: ref.verset
-    });
-    conditions.push({
-      abreviere: abrevRegex,
-      capitol: ref.capitol,
-      verset: ref.verset
-    });
+    conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
+    conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
   }
 
-  conditions.push({ carte: carteRegexExact, capitol: ref.capitol });
+  conditions.push({ carte: carteExact, capitol: ref.capitol });
   conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
   conditions.push({ referinta: new RegExp(search.trim(), 'i') });
 
