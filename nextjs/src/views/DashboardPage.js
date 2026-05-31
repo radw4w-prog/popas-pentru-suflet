@@ -24,6 +24,13 @@ const DashboardPage = () => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, []);
 
+  // Redirecționează vizitatorii neautentificați la landing
+  useEffect(() => {
+    if (!isAuthenticated && !localStorage.getItem('token')) {
+      router.replace('/landing');
+    }
+  }, [isAuthenticated, router]);
+
   useEffect(() => {
     const load = async () => {
       try {

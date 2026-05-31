@@ -52,7 +52,7 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/dashboard",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#d4af37",
