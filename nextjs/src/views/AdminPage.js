@@ -63,7 +63,7 @@ const AdminPage = () => {
   }, [getHeaders]);
 
   const loadTemplates = useCallback(async () => {
-    const res = await axios.get(`${API_URL}/api/admin/templates?limit=200`, getHeaders());
+    const res = await axios.get(`${API_URL}/api/admin/templates?limit=500`, getHeaders());
     if (res.data.success) {
       setTemplates(res.data.templates || []);
       setTemplateStats(res.data.stats || []);
@@ -613,19 +613,36 @@ const AdminPage = () => {
           {showAddTemplate && (
             <div style={{ border: '1px solid rgba(34,197,94,0.3)', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', background: 'rgba(34,197,94,0.03)' }}>
               <h4 style={{ margin: '0 0 0.75rem 0', color: '#22c55e' }}>➕ Template nou</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.75rem 0' }}>
+                Lipește un URL Unsplash. Dimensiunile se setează automat la <strong>1080×1350</strong> (format Facebook/Instagram).
+              </p>
               <div style={{ display: 'grid', gap: '0.5rem' }}>
-                <input value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} placeholder="Nume template" style={inputStyle} />
-                <input value={newTemplate.url} onChange={e => setNewTemplate({ ...newTemplate, url: e.target.value })} placeholder="URL imagine (Unsplash)" style={inputStyle} />
+                <input value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} placeholder="Nume template (ex: Apus Maiestuos)" style={inputStyle} />
+                <input value={newTemplate.url} onChange={e => {
+                  let raw = e.target.value.trim();
+                  // Dacă e URL direct images.unsplash.com — normalizează parametrii
+                  if (raw.includes('images.unsplash.com')) {
+                    const base = raw.split('?')[0];
+                    raw = `${base}?w=1080&h=1350&fit=crop&q=85`;
+                  }
+                  // Dacă e URL pagină unsplash.com/photos/... — lăsăm backend-ul să-l rezolve
+                  setNewTemplate({ ...newTemplate, url: raw });
+                }} placeholder="URL Unsplash (pagină SAU imagine directă)" style={inputStyle} />
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '-0.2rem 0 0 0' }}>
+                  ✅ Acceptă: <code>unsplash.com/photos/...</code> sau <code>images.unsplash.com/photo-...</code> — se convertește automat la 1080×1350
+                </p>
                 <select value={newTemplate.categorie} onChange={e => setNewTemplate({ ...newTemplate, categorie: e.target.value })} style={inputStyle}>
                   {CATEGORII.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={async () => {
+                    if (!newTemplate.name || !newTemplate.url) { alert('Completează numele și URL-ul!'); return; }
                     try {
                       await axios.post(`${API_URL}/api/admin/templates`, newTemplate, getHeaders());
                       setNewTemplate({ name: '', url: '', categorie: 'spiritual' });
                       setShowAddTemplate(false);
                       await loadTemplates(); await loadDashboard();
+                      alert('✅ Template adăugat!');
                     } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
                   }} style={{ ...smallBtnStyle, color: '#22c55e', borderColor: 'rgba(34,197,94,0.3)' }}>
                     ✅ Salvează
@@ -634,36 +651,89 @@ const AdminPage = () => {
                 </div>
               </div>
               {newTemplate.url && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.3rem 0' }}>Preview:</p>
-                  <img src={newTemplate.url.replace('w=1080&h=1350', 'w=200&h=250').replace('q=85', 'q=60')} alt="Preview" style={{ width: 100, height: 125, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
+                <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+                  <div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 0.3rem 0' }}>Preview:</p>
+                    {newTemplate.url.includes('images.unsplash.com') ? (
+                      <img
+                        src={`${newTemplate.url.split('?')[0]}?w=200&h=250&fit=crop&q=60`}
+                        alt="Preview"
+                        referrerPolicy="no-referrer"
+                        style={{ width: 100, height: 125, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div style={{ width: 100, height: 125, borderRadius: '8px', border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#d4af37', textAlign: 'center', padding: '0.3rem' }}>
+                        🔗 Preview apare<br/>după salvare
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <div>📐 Full: 1080×1350px</div>
+                    <div>🎯 Format: Vertical (4:5)</div>
+                    <div>📱 Ideal: FB, IG, TikTok</div>
+                    {!newTemplate.url.includes('images.unsplash.com') && (
+                      <div style={{ color: '#d4af37', marginTop: '0.3rem' }}>⚡ URL-ul va fi convertit automat la salvare</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           )}
 
+          {/* Info format */}
+          <div style={{ padding: '0.6rem 1rem', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '10px', marginBottom: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            📐 Format standard: <strong>1080×1350px</strong> (vertical) — ideal Facebook, Instagram, TikTok
+          </div>
+
           {/* Grid template-uri */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
-            {templates.map(t => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
+            {templates.map(t => {
+              // Generează thumbnail din URL — extrage base și adaugă parametri mici
+              const rawUrl = t.thumbnail || t.url || '';
+              const thumbBase = rawUrl.split('?')[0];
+              const thumbSrc = thumbBase.includes('unsplash.com') 
+                ? `${thumbBase}?w=300&h=375&fit=crop&q=60` 
+                : rawUrl;
+              return (
               <div key={t._id} style={{
                 border: `1px solid ${t.activ ? 'var(--border-color)' : 'rgba(239,68,68,0.3)'}`,
                 borderRadius: '12px', overflow: 'hidden', position: 'relative',
                 opacity: t.activ ? 1 : 0.5
               }}>
-                <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: 140, objectFit: 'cover' }} loading="lazy" />
+                <div style={{ width: '100%', height: 170, background: 'rgba(99,102,241,0.05)', position: 'relative' }}>
+                  <img
+                    src={thumbSrc}
+                    alt={t.name}
+                    referrerPolicy="no-referrer"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    loading="lazy"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.8rem">🖼️ Nu se poate<br/>încărca</div>'; }}
+                  />
+                  {!t.activ && (
+                    <div style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(239,68,68,0.9)', color: 'white', padding: '1px 6px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>
+                      INACTIV
+                    </div>
+                  )}
+                </div>
                 <div style={{ padding: '0.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t.name}>
                     {t.name}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{t.categorie} • {t.sursa}</div>
-                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                    {t.categorie} • {t.sursa || 'builtin'} • {t.templateId}
+                  </div>
+                  <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', wordBreak: 'break-all', opacity: 0.6, maxHeight: '2em', overflow: 'hidden' }}>
+                    {thumbSrc.substring(0, 80)}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.3rem' }}>
                     <button onClick={async () => {
                       try {
                         await axios.put(`${API_URL}/api/admin/templates/${t._id}/toggle`, {}, getHeaders());
                         await loadTemplates(); await loadDashboard();
                       } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
-                    }} style={{ ...smallBtnStyle, padding: '3px 6px', fontSize: '0.7rem' }}>
-                      {t.activ ? '👁️' : '👁️‍🗨️'}
+                    }} style={{ ...smallBtnStyle, padding: '3px 8px', fontSize: '0.7rem' }} title={t.activ ? 'Dezactivează' : 'Activează'}>
+                      {t.activ ? '🙈 Ascunde' : '👁️ Arată'}
                     </button>
                     <button onClick={async () => {
                       if (!window.confirm(`Ștergi definitiv "${t.name}"?`)) return;
@@ -671,13 +741,13 @@ const AdminPage = () => {
                         await axios.delete(`${API_URL}/api/admin/templates/${t._id}`, getHeaders());
                         await loadTemplates(); await loadDashboard();
                       } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
-                    }} style={{ ...smallBtnStyle, padding: '3px 6px', fontSize: '0.7rem', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
+                    }} style={{ ...smallBtnStyle, padding: '3px 8px', fontSize: '0.7rem', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
                       🗑️
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         </div>
       )}
