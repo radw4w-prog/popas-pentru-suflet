@@ -538,17 +538,6 @@ if (citat && afiseazaCitat) {
     finally { setSearching(false); }
   };
 
-
-// Sortează: cărțile cu nume exact mai scurt primele (Ioan înainte de 1 Ioan)
-const sortate = (r.data.versete || []).sort((a, b) => {
-  const aExact = a.carte.length - b.carte.length;
-  if (aExact !== 0) return aExact;
-  return (a.capitol - b.capitol) || (a.verset - b.verset);
-});
-setVerseteGasite(sortate);
-
-
-
   const handleUpload = async (file) => {
     if (!file) return;
     setUploading(true);
