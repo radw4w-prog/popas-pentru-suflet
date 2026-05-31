@@ -468,6 +468,10 @@ router.get('/capitol/:abrev/:capitol', async (req, res) => {
 // ═══════════════════════════════════════
 // GET /api/verses
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// GET /api/verses — secțiunea de căutare FIXATĂ
+// Înlocuiește DOAR această secțiune în verses.js
+// ═══════════════════════════════════════
 router.get('/', async (req, res) => {
   try {
     const {
@@ -483,54 +487,55 @@ router.get('/', async (req, res) => {
     const filter = {};
 
     if (testament && testament !== 'all') filter.testament = testament;
-    if (carte && carte !== 'all') filter.carte = carte; // match exact, nu regex
+    if (carte && carte !== 'all') filter.carte = carte; // match exact
     if (capitol) filter.capitol = parseInt(capitol);
     if (favorit === 'true') filter.favorit = true;
 
+    let isRefSearch = false;
+
     if (search && search.trim()) {
       const ref = parseReference(search);
+      isRefSearch = ref.isReference;
 
-      // Fix pentru căutarea în versete
-// Înlocuiește în backend/routes/verses.js secțiunea cu ref.isReference
+      if (ref.isReference) {
+        const conditions = [];
 
-// PROBLEMA: new RegExp('Ioan', 'i') prinde și '1 Ioan', '2 Ioan', '3 Ioan'
-// FIX: match exact pe carte folosind ^ și $ în regex
+        // Match EXACT pe carte cu ^ și $ — previne Ioan să prindă 1 Ioan
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const carteExact = new RegExp(`^${escapeRegex(ref.carte)}$`, 'i');
+        const abrevRegex = new RegExp(`^${escapeRegex(ref.carte)}`, 'i');
 
-if (ref.isReference) {
-  const conditions = [];
+        if (ref.verset) {
+          // Prioritate maximă: carte exactă + capitol + verset
+          conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
+          conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
+        }
 
-  // Match EXACT pe carte (^ și $ = început și sfârșit)
-  const carteExact = new RegExp(`^${ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
-  const abrevRegex = new RegExp(ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-let isRefSearch = false;
-if (search && search.trim()) {
-  const ref = parseReference(search);
-  isRefSearch = ref.isReference;
-  
-  if (ref.verset) {
-    conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
-    conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
-  }
+        // Capitol întreg
+        conditions.push({ carte: carteExact, capitol: ref.capitol });
+        conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
 
-  conditions.push({ carte: carteExact, capitol: ref.capitol });
-  conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
-  conditions.push({ referinta: new RegExp(search.trim(), 'i') });
+        // Fallback pe referință text
+        conditions.push({ referinta: new RegExp(escapeRegex(search.trim()), 'i') });
 
-  filter.$or = conditions;
-} else {
-  // Căutare text liber — caută în text și referință
-  filter.$or = [
-    { text: new RegExp(search.trim(), 'i') },
-    { referinta: new RegExp(search.trim(), 'i') },
-  ];
-}
+        filter.$or = conditions;
+      } else {
+        // Căutare text liber — caută în text și referință
+        filter.$or = [
+          { text: new RegExp(search.trim(), 'i') },
+          { referinta: new RegExp(search.trim(), 'i') },
+        ];
+      }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const limitNr = Math.min(parseInt(limit), 500);
-    const sortBy = ref?.isReference
-  ? { ordine: 1, capitol: 1, verset: 1 }
-  : { testament: 1, carte: 1, capitol: 1, verset: 1 };
+
+    // Sortare: când e referință exactă → după ordine canonică (Ioan=43 < 1Ioan=62)
+    // Când e text liber → ordinea standard
+    const sortBy = isRefSearch
+      ? { ordine: 1, capitol: 1, verset: 1 }
+      : { testament: 1, carte: 1, capitol: 1, verset: 1 };
 
     const [versete, total] = await Promise.all([
       Verse.find(filter)
@@ -552,6 +557,7 @@ if (search && search.trim()) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // ═══════════════════════════════════════
 // GET /api/verses/:id
