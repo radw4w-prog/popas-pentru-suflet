@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+const CATEGORII = ['spiritual', 'apus', 'rasarit', 'munte', 'padure', 'mare', 'flori', 'cer', 'minimalist', 'iarna'];
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const AdminPage = () => {
@@ -17,6 +19,14 @@ const AdminPage = () => {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [templateStats, setTemplateStats] = useState([]);
+  const [prayers, setPrayers] = useState([]);
+  const [prayerStats, setPrayerStats] = useState({});
+  const [devotionals, setDevotionals] = useState([]);
+  const [showAddTemplate, setShowAddTemplate] = useState(false);
+  const [newTemplate, setNewTemplate] = useState({ name: '', url: '', categorie: 'spiritual' });
+  const [editingDevotional, setEditingDevotional] = useState(null);
 
   // Folosește întotdeauna token-ul curent din localStorage
   const getHeaders = useCallback(() => {
@@ -52,6 +62,27 @@ const AdminPage = () => {
     if (res.data.success) setPosts(res.data.postari || []);
   }, [getHeaders]);
 
+  const loadTemplates = useCallback(async () => {
+    const res = await axios.get(`${API_URL}/api/admin/templates?limit=200`, getHeaders());
+    if (res.data.success) {
+      setTemplates(res.data.templates || []);
+      setTemplateStats(res.data.stats || []);
+    }
+  }, [getHeaders]);
+
+  const loadPrayers = useCallback(async () => {
+    const res = await axios.get(`${API_URL}/api/admin/prayers?limit=50`, getHeaders());
+    if (res.data.success) {
+      setPrayers(res.data.cereri || []);
+      setPrayerStats(res.data.stats || {});
+    }
+  }, [getHeaders]);
+
+  const loadDevotionals = useCallback(async () => {
+    const res = await axios.get(`${API_URL}/api/admin/devotionals?limit=30`, getHeaders());
+    if (res.data.success) setDevotionals(res.data.devotionale || []);
+  }, [getHeaders]);
+
   const loadAll = useCallback(async () => {
     try {
       setLoading(true);
@@ -63,7 +94,7 @@ const AdminPage = () => {
         return;
       }
 
-      await Promise.all([loadDashboard(), loadUsers(), loadPosts()]);
+      await Promise.all([loadDashboard(), loadUsers(), loadPosts(), loadTemplates(), loadPrayers(), loadDevotionals()]);
     } catch (err) {
       console.error(err);
       const status = err.response?.status;
@@ -83,7 +114,7 @@ const AdminPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadDashboard, loadUsers, loadPosts, logout]);
+  }, [loadDashboard, loadUsers, loadPosts, loadTemplates, loadPrayers, loadDevotionals, logout]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -213,6 +244,9 @@ const AdminPage = () => {
         {[
           { key: 'dashboard', label: '📊 Dashboard' },
           { key: 'users', label: '👥 Utilizatori' },
+          { key: 'templates', label: '🖼️ Template-uri' },
+          { key: 'prayers', label: '🙏 Rugăciuni' },
+          { key: 'devotionals', label: '📋 Devoționale' },
           { key: 'posts', label: '📝 Postări' },
           { key: 'settings', label: '⚙️ Setări Site' }
         ].map(tab => (
@@ -281,6 +315,24 @@ const AdminPage = () => {
             value={stats?.postari?.draft || 0}
             icon="📄"
             color="rgba(156,163,175,0.1)"
+          />
+          <StatCard
+            title="Template-uri active"
+            value={stats?.templates?.active || 0}
+            icon="🖼️"
+            color="rgba(251,191,36,0.1)"
+          />
+          <StatCard
+            title="Rugăciuni neaprobate"
+            value={stats?.rugaciuni?.neaprobate || 0}
+            icon="🙏"
+            color={stats?.rugaciuni?.neaprobate > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)'}
+          />
+          <StatCard
+            title="Devoționale"
+            value={stats?.devotionale?.total || 0}
+            icon="📋"
+            color="rgba(167,139,250,0.1)"
           />
         </div>
       )}
@@ -535,6 +587,275 @@ const AdminPage = () => {
         </div>
       )}
 
+      {/* ═══ TEMPLATES ═══ */}
+      {activeTab === 'templates' && (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h3 style={{ margin: 0 }}>🖼️ Template-uri ({templates.length})</h3>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => setShowAddTemplate(!showAddTemplate)} style={{ ...smallBtnStyle, color: '#22c55e', borderColor: 'rgba(34,197,94,0.3)' }}>
+                ➕ Adaugă
+              </button>
+              <button onClick={loadTemplates} style={smallBtnStyle}>🔄 Reîncarcă</button>
+            </div>
+          </div>
+
+          {/* Statistici categorii */}
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            {templateStats.map(s => (
+              <span key={s._id} style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(99,102,241,0.1)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                {s._id}: {s.active}/{s.total}
+              </span>
+            ))}
+          </div>
+
+          {/* Formular adăugare */}
+          {showAddTemplate && (
+            <div style={{ border: '1px solid rgba(34,197,94,0.3)', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', background: 'rgba(34,197,94,0.03)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#22c55e' }}>➕ Template nou</h4>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <input value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} placeholder="Nume template" style={inputStyle} />
+                <input value={newTemplate.url} onChange={e => setNewTemplate({ ...newTemplate, url: e.target.value })} placeholder="URL imagine (Unsplash)" style={inputStyle} />
+                <select value={newTemplate.categorie} onChange={e => setNewTemplate({ ...newTemplate, categorie: e.target.value })} style={inputStyle}>
+                  {CATEGORII.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={async () => {
+                    try {
+                      await axios.post(`${API_URL}/api/admin/templates`, newTemplate, getHeaders());
+                      setNewTemplate({ name: '', url: '', categorie: 'spiritual' });
+                      setShowAddTemplate(false);
+                      await loadTemplates(); await loadDashboard();
+                    } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                  }} style={{ ...smallBtnStyle, color: '#22c55e', borderColor: 'rgba(34,197,94,0.3)' }}>
+                    ✅ Salvează
+                  </button>
+                  <button onClick={() => setShowAddTemplate(false)} style={smallBtnStyle}>❌ Anulează</button>
+                </div>
+              </div>
+              {newTemplate.url && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.3rem 0' }}>Preview:</p>
+                  <img src={newTemplate.url.replace('w=1080&h=1350', 'w=200&h=250').replace('q=85', 'q=60')} alt="Preview" style={{ width: 100, height: 125, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Grid template-uri */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
+            {templates.map(t => (
+              <div key={t._id} style={{
+                border: `1px solid ${t.activ ? 'var(--border-color)' : 'rgba(239,68,68,0.3)'}`,
+                borderRadius: '12px', overflow: 'hidden', position: 'relative',
+                opacity: t.activ ? 1 : 0.5
+              }}>
+                <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: 140, objectFit: 'cover' }} loading="lazy" />
+                <div style={{ padding: '0.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t.name}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{t.categorie} • {t.sursa}</div>
+                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem' }}>
+                    <button onClick={async () => {
+                      try {
+                        await axios.put(`${API_URL}/api/admin/templates/${t._id}/toggle`, {}, getHeaders());
+                        await loadTemplates(); await loadDashboard();
+                      } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                    }} style={{ ...smallBtnStyle, padding: '3px 6px', fontSize: '0.7rem' }}>
+                      {t.activ ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                    <button onClick={async () => {
+                      if (!window.confirm(`Ștergi definitiv "${t.name}"?`)) return;
+                      try {
+                        await axios.delete(`${API_URL}/api/admin/templates/${t._id}`, getHeaders());
+                        await loadTemplates(); await loadDashboard();
+                      } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                    }} style={{ ...smallBtnStyle, padding: '3px 6px', fontSize: '0.7rem', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PRAYERS ═══ */}
+      {activeTab === 'prayers' && (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>🙏 Moderare Rugăciuni ({prayers.length})</h3>
+            <button onClick={loadPrayers} style={smallBtnStyle}>🔄 Reîncarcă</button>
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(34,197,94,0.1)', fontSize: '0.85rem' }}>
+              ✅ Aprobate: {prayerStats.aprobate || 0}
+            </span>
+            <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', fontSize: '0.85rem' }}>
+              ❌ Neaprobate: {prayerStats.neaprobate || 0}
+            </span>
+            <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(99,102,241,0.1)', fontSize: '0.85rem' }}>
+              🎯 Rezolvate: {prayerStats.rezolvate || 0}
+            </span>
+          </div>
+
+          {prayers.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)' }}>Nu există cereri de rugăciune.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {prayers.map(c => (
+                <div key={c._id} style={{
+                  border: `1px solid ${c.aprobat ? 'var(--border-color)' : 'rgba(239,68,68,0.3)'}`,
+                  borderRadius: '12px', padding: '1rem',
+                  background: c.aprobat ? 'transparent' : 'rgba(239,68,68,0.03)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
+                        {c.titlu}
+                        {!c.aprobat && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.2)', color: '#ef4444', padding: '1px 6px', borderRadius: '4px' }}>NEAPROBAT</span>}
+                        {c.rezolvat && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', background: 'rgba(34,197,94,0.2)', color: '#22c55e', padding: '1px 6px', borderRadius: '4px' }}>REZOLVAT</span>}
+                      </div>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '0.3rem 0' }}>{c.cerere}</p>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>📂 {c.categorie}</span>
+                        <span>👤 {c.anonim ? 'Anonim' : c.numeAfisat}</span>
+                        <span>🙏 {c.rugaciuni} rugăciuni</span>
+                        <span>📅 {new Date(c.createdAt).toLocaleDateString('ro-RO')}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                      <button onClick={async () => {
+                        try {
+                          await axios.put(`${API_URL}/api/admin/prayers/${c._id}/toggle-aprobare`, {}, getHeaders());
+                          await loadPrayers(); await loadDashboard();
+                        } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                      }} style={{ ...smallBtnStyle, color: c.aprobat ? '#ef4444' : '#22c55e' }}>
+                        {c.aprobat ? '❌ Respinge' : '✅ Aprobă'}
+                      </button>
+                      <button onClick={async () => {
+                        try {
+                          await axios.put(`${API_URL}/api/admin/prayers/${c._id}/rezolvat`, {}, getHeaders());
+                          await loadPrayers();
+                        } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                      }} style={smallBtnStyle}>
+                        {c.rezolvat ? '↩️ Nerezolvat' : '🎯 Rezolvat'}
+                      </button>
+                      <button onClick={async () => {
+                        if (!window.confirm('Ștergi definitiv această cerere?')) return;
+                        try {
+                          await axios.delete(`${API_URL}/api/admin/prayers/${c._id}`, getHeaders());
+                          await loadPrayers(); await loadDashboard();
+                        } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                      }} style={{ ...smallBtnStyle, color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
+                        🗑️ Șterge
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ DEVOTIONALS ═══ */}
+      {activeTab === 'devotionals' && (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>📋 Devoționale ({devotionals.length})</h3>
+            <button onClick={loadDevotionals} style={smallBtnStyle}>🔄 Reîncarcă</button>
+          </div>
+
+          {/* Editor devoțional */}
+          {editingDevotional && (
+            <div style={{ border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', background: 'rgba(99,102,241,0.03)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#6366f1' }}>✏️ Editare: {editingDevotional.title}</h4>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <input value={editingDevotional.title} onChange={e => setEditingDevotional({ ...editingDevotional, title: e.target.value })} placeholder="Titlu" style={inputStyle} />
+                <input value={editingDevotional.verseReference} onChange={e => setEditingDevotional({ ...editingDevotional, verseReference: e.target.value })} placeholder="Referință verset" style={inputStyle} />
+                <textarea value={editingDevotional.verseText} onChange={e => setEditingDevotional({ ...editingDevotional, verseText: e.target.value })} placeholder="Text verset" style={{ ...inputStyle, minHeight: '60px' }} />
+                <textarea value={editingDevotional.introduction} onChange={e => setEditingDevotional({ ...editingDevotional, introduction: e.target.value })} placeholder="Introducere" style={{ ...inputStyle, minHeight: '80px' }} />
+                <textarea value={editingDevotional.reflection} onChange={e => setEditingDevotional({ ...editingDevotional, reflection: e.target.value })} placeholder="Mesaj/Reflecție" style={{ ...inputStyle, minHeight: '80px' }} />
+                <textarea value={editingDevotional.practicalApplication} onChange={e => setEditingDevotional({ ...editingDevotional, practicalApplication: e.target.value })} placeholder="Aplică astăzi" style={{ ...inputStyle, minHeight: '60px' }} />
+                <textarea value={editingDevotional.prayer} onChange={e => setEditingDevotional({ ...editingDevotional, prayer: e.target.value })} placeholder="Rugăciune" style={{ ...inputStyle, minHeight: '60px' }} />
+                <textarea value={editingDevotional.thoughtOfTheDay} onChange={e => setEditingDevotional({ ...editingDevotional, thoughtOfTheDay: e.target.value })} placeholder="Gândul zilei" style={{ ...inputStyle, minHeight: '60px' }} />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={async () => {
+                    try {
+                      await axios.put(`${API_URL}/api/admin/devotionals/${editingDevotional._id}`, editingDevotional, getHeaders());
+                      setEditingDevotional(null);
+                      await loadDevotionals();
+                      alert('Devoțional salvat!');
+                    } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                  }} style={{ ...smallBtnStyle, color: '#22c55e', borderColor: 'rgba(34,197,94,0.3)' }}>
+                    ✅ Salvează
+                  </button>
+                  <button onClick={() => setEditingDevotional(null)} style={smallBtnStyle}>❌ Anulează</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {devotionals.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)' }}>Nu există devoționale.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {devotionals.map(d => (
+                <div key={d._id} style={{
+                  border: `1px solid ${d.published ? 'var(--border-color)' : 'rgba(239,68,68,0.3)'}`,
+                  borderRadius: '12px', padding: '1rem',
+                  opacity: d.published ? 1 : 0.6
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
+                        {d.title}
+                        {!d.published && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.2)', color: '#ef4444', padding: '1px 6px', borderRadius: '4px' }}>ASCUNS</span>}
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0', fontStyle: 'italic' }}>
+                        „{d.verseText?.substring(0, 100)}..." — {d.verseReference}
+                      </p>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span>📅 {d.dateKey}</span>
+                        <span>🤖 {d.generatedBy === 'ai' ? `AI (${d.aiModel || '?'})` : d.generatedBy}</span>
+                        {d.theologyScore && <span>📊 Scor: {d.theologyScore}/10</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                      <button onClick={() => setEditingDevotional({ ...d })} style={smallBtnStyle}>
+                        ✏️ Editează
+                      </button>
+                      <button onClick={async () => {
+                        try {
+                          await axios.put(`${API_URL}/api/admin/devotionals/${d._id}/toggle-published`, {}, getHeaders());
+                          await loadDevotionals();
+                        } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                      }} style={{ ...smallBtnStyle, color: d.published ? '#ef4444' : '#22c55e' }}>
+                        {d.published ? '🙈 Ascunde' : '👁️ Publică'}
+                      </button>
+                      <button onClick={async () => {
+                        if (!window.confirm(`Ștergi devoționalul "${d.title}"?`)) return;
+                        try {
+                          await axios.delete(`${API_URL}/api/admin/devotionals/${d._id}`, getHeaders());
+                          await loadDevotionals();
+                        } catch (err) { alert(err.response?.data?.message || 'Eroare'); }
+                      }} style={{ ...smallBtnStyle, color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ═══ SETTINGS ═══ */}
       {activeTab === 'settings' && (
         <div style={cardStyle}>
@@ -612,6 +933,19 @@ const smallBtnStyle = {
   fontSize: '0.82rem',
   transition: 'all 0.15s',
   whiteSpace: 'nowrap'
+};
+
+const inputStyle = {
+  padding: '0.65rem 0.85rem',
+  borderRadius: '8px',
+  border: '1px solid var(--border-color)',
+  background: 'var(--bg-primary)',
+  color: 'var(--text-primary)',
+  fontSize: '0.9rem',
+  width: '100%',
+  boxSizing: 'border-box',
+  fontFamily: 'inherit',
+  resize: 'vertical'
 };
 
 const settingRowStyle = {

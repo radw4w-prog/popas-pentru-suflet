@@ -13,6 +13,7 @@ const multer = require('multer');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { checkGenerateLimit, getGenerateStatus, registerGeneration } = require('../middleware/rateLimit');
 const geminiService = require('../services/geminiService');
+const Template = require('../models/Template');
 
 let Description = null;
 try {
@@ -253,11 +254,32 @@ router.get('/ai/test', async (req, res) => {
 });
 
 // GET /api/generate/templates
-router.get('/templates', (req, res) => {
+router.get('/templates', async (req, res) => {
   try {
+    // Încearcă din MongoDB
+    const dbTemplates = await Template.find({ activ: true })
+      .sort({ ordine: 1 })
+      .lean();
+
+    let builtIn;
+    if (dbTemplates.length > 0) {
+      // Mapează din format DB → format frontend
+      builtIn = dbTemplates.map(t => ({
+        id: t.templateId,
+        name: t.name,
+        url: t.url,
+        thumbnail: t.thumbnail,
+        categorie: t.categorie,
+        sursa: t.sursa
+      }));
+    } else {
+      // Fallback la JSON dacă DB-ul e gol
+      builtIn = TEMPLATES_BUILTIN;
+    }
+
+    // Template-uri uploadate (fișiere locale)
     const uploadDir = path.join(__dirname, '../uploads/templates');
     let uploadate = [];
-
     if (fs.existsSync(uploadDir)) {
       const files = fs.readdirSync(uploadDir);
       uploadate = files
@@ -273,12 +295,17 @@ router.get('/templates', (req, res) => {
     }
 
     res.json({
-      builtIn: TEMPLATES_BUILTIN,
+      builtIn,
       uploadate,
-      total: TEMPLATES_BUILTIN.length + uploadate.length
+      total: builtIn.length + uploadate.length
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Fallback complet la JSON
+    res.json({
+      builtIn: TEMPLATES_BUILTIN,
+      uploadate: [],
+      total: TEMPLATES_BUILTIN.length
+    });
   }
 });
 
