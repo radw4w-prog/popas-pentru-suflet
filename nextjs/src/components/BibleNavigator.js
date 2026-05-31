@@ -45,8 +45,11 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
 
   // ═══ NOTES ═══
   const [notesMap, setNotesMap] = useState({});
-  const [editingNote, setEditingNote] = useState(null); // { verset, text, noteId? }
+  const [editingNote, setEditingNote] = useState(null);
   const [noteText, setNoteText] = useState('');
+
+  // ═══ READING PROGRESS ═══
+  const [readChapters, setReadChapters] = useState(new Set());
 
   const { isAuthenticated } = useAuth();
   const { fontSize } = useContext(FontSizeContext);
@@ -294,14 +297,30 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
     });
   };
 
-  const handleSelectCarte = (carte) => {
+  const handleSelectCarte = async (carte) => {
     setSelectedCarte(carte); setSelectedCapitol(null); setVersete([]);
     setStep('capitole'); setRefPopup(null);
+    // Fetch reading progress for this book
+    if (isAuthenticated) {
+      try {
+        const r = await api.get(`/api/reading/carti`, { headers: getHeaders() });
+        if (r.data?.success) {
+          const bookProgress = r.data.carti?.find(c => c.carte === carte.carte);
+          if (bookProgress?.capitoleCitite) {
+            setReadChapters(new Set(bookProgress.capitoleCitite));
+          } else {
+            setReadChapters(new Set());
+          }
+        }
+      } catch { setReadChapters(new Set()); }
+    }
   };
 
   const handleSelectCapitol = async (capitol) => {
     setSelectedCapitol(capitol); setStep('versete'); setLoadingVersete(true);
-    setReferinteMap({}); setRefPopup(null);
+    setReferinteMap({}); setRefPopup(null); setEditingNote(null); setNoteText('');
+    // Scroll to top
+    document.querySelector('.bible-nav-body')?.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       const r = await api.get(`/api/verses?carte=${encodeURIComponent(selectedCarte.carte)}&capitol=${capitol}&limit=500`);
       setVersete(r.data?.versete || []);
@@ -309,6 +328,17 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
     } catch (e) { console.error(e); }
     finally { setLoadingVersete(false); }
     if (onSelectCapitol) onSelectCapitol(selectedCarte.carte, capitol);
+    // Marchează capitolul ca citit
+    if (isAuthenticated) {
+      try {
+        await api.post('/api/reading/mark', {
+          carte: selectedCarte.carte,
+          abreviere: selectedCarte.ab,
+          capitol,
+          ordineBiblie: selectedCarte.ordine
+        }, { headers: getHeaders() });
+      } catch {}
+    }
   };
 
   const handleBack = () => {
@@ -546,11 +576,31 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
               <div className="bible-carte-meta">
                 {selectedCarte.test === 'VT' ? '📜 Vechiul Testament' : '✝️ Noul Testament'}
                 {' '}• {selectedCarte.totalCapitole} capitole • {selectedCarte.totalVersete} versete
+                {readChapters.size > 0 && (
+                  <span style={{ marginLeft: '0.5rem', color: '#10b981', fontWeight: 600 }}>
+                    • ✅ {readChapters.size}/{selectedCarte.totalCapitole} citite
+                  </span>
+                )}
               </div>
             </div>
             <div className="bible-chapters-grid">
               {Array.from({ length: selectedCarte.totalCapitole }, (_, i) => i + 1).map(cap => (
-                <button key={cap} className="bible-chapter-btn" onClick={() => handleSelectCapitol(cap)}>{cap}</button>
+                <button
+                  key={cap}
+                  className={`bible-chapter-btn ${readChapters.has(cap) ? 'read' : ''}`}
+                  onClick={() => handleSelectCapitol(cap)}
+                  style={readChapters.has(cap) ? {
+                    background: 'rgba(16,185,129,0.12)',
+                    borderColor: 'rgba(16,185,129,0.3)',
+                    position: 'relative',
+                  } : {}}
+                  title={readChapters.has(cap) ? `Capitol ${cap} — citit ✅` : `Capitol ${cap}`}
+                >
+                  {cap}
+                  {readChapters.has(cap) && (
+                    <span style={{ position: 'absolute', top: 2, right: 3, fontSize: '0.5rem', color: '#10b981' }}>✓</span>
+                  )}
+                </button>
               ))}
             </div>
           </div>
@@ -575,6 +625,47 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
                 >
                   ⚙️ Aa
                 </button>
+              </div>
+
+              {/* ═══ NAVIGARE RAPIDĂ ═══ */}
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <select
+                  value={selectedCarte.carte}
+                  onChange={(e) => {
+                    const carte = ordineBiblie.find(o => o.carte === e.target.value);
+                    const info = cartiData.find(c => c.carte === e.target.value);
+                    if (carte) {
+                      const obj = { ...carte, totalCapitole: info?.totalCapitole || 0, totalVersete: info?.totalVersete || 0 };
+                      setSelectedCarte(obj);
+                      setSelectedCapitol(null);
+                      setStep('capitole');
+                    }
+                  }}
+                  style={{
+                    padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem',
+                    border: '1px solid var(--border-color)', background: 'var(--bg-input)',
+                    color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'pointer',
+                    maxWidth: '160px',
+                  }}
+                >
+                  {ordineBiblie.map(o => (
+                    <option key={o.carte} value={o.carte}>{o.carte}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedCapitol}
+                  onChange={(e) => handleSelectCapitol(parseInt(e.target.value))}
+                  style={{
+                    padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem',
+                    border: '1px solid var(--border-color)', background: 'var(--bg-input)',
+                    color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'pointer',
+                    width: '65px',
+                  }}
+                >
+                  {Array.from({ length: selectedCarte.totalCapitole }, (_, i) => i + 1).map(cap => (
+                    <option key={cap} value={cap}>Cap {cap}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
