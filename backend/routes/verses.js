@@ -468,86 +468,63 @@ router.get('/capitol/:abrev/:capitol', async (req, res) => {
 // ═══════════════════════════════════════
 // GET /api/verses
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// GET /api/verses
+// ═══════════════════════════════════════
 router.get('/', async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 24,
-      search = '',
-      carte = '',
-      testament = '',
-      capitol = '',
-      favorit = ''
+      page = 1, limit = 24, search = '',
+      carte = '', testament = '', capitol = '', favorit = ''
     } = req.query;
 
     const filter = {};
-
     if (testament && testament !== 'all') filter.testament = testament;
-    if (carte && carte !== 'all') filter.carte = carte; // match exact, nu regex
+    if (carte && carte !== 'all') filter.carte = carte;
     if (capitol) filter.capitol = parseInt(capitol);
     if (favorit === 'true') filter.favorit = true;
 
+    let isRefSearch = false;
+
     if (search && search.trim()) {
       const ref = parseReference(search);
+      isRefSearch = ref.isReference;
 
-      // Fix pentru căutarea în versete
-// Înlocuiește în backend/routes/verses.js secțiunea cu ref.isReference
+      if (ref.isReference) {
+        const conditions = [];
+        const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const carteExact = new RegExp('^' + esc(ref.carte) + '$', 'i');
+        const abrevRegex = new RegExp('^' + esc(ref.carte), 'i');
 
-// PROBLEMA: new RegExp('Ioan', 'i') prinde și '1 Ioan', '2 Ioan', '3 Ioan'
-// FIX: match exact pe carte folosind ^ și $ în regex
-
-if (ref.isReference) {
-  const conditions = [];
-
-  // Match EXACT pe carte (^ și $ = început și sfârșit)
-  const carteExact = new RegExp(`^${ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
-  const abrevRegex = new RegExp(ref.carte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-let isRefSearch = false;
-
-if (search && search.trim()) {
-  const ref = parseReference(search);
-  isRefSearch = ref.isReference;
-
-  if (ref.isReference) {
-    const conditions = [];
-    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const carteExact = new RegExp(`^${esc(ref.carte)}$`, 'i');
-    const abrevRegex = new RegExp(`^${esc(ref.carte)}`, 'i');
-
-    if (ref.verset) {
-      conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
-      conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
+        if (ref.verset) {
+          conditions.push({ carte: carteExact, capitol: ref.capitol, verset: ref.verset });
+          conditions.push({ abreviere: abrevRegex, capitol: ref.capitol, verset: ref.verset });
+        }
+        conditions.push({ carte: carteExact, capitol: ref.capitol });
+        conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
+        conditions.push({ referinta: new RegExp(esc(search.trim()), 'i') });
+        filter.$or = conditions;
+      } else {
+        filter.$or = [
+          { text: new RegExp(search.trim(), 'i') },
+          { referinta: new RegExp(search.trim(), 'i') }
+        ];
+      }
     }
-    conditions.push({ carte: carteExact, capitol: ref.capitol });
-    conditions.push({ abreviere: abrevRegex, capitol: ref.capitol });
-    conditions.push({ referinta: new RegExp(esc(search.trim()), 'i') });
-    filter.$or = conditions;
-  } else {
-    filter.$or = [
-      { text: new RegExp(search.trim(), 'i') },
-      { referinta: new RegExp(search.trim(), 'i') },
-    ];
-  }
-}
 
-const skip = (parseInt(page) - 1) * parseInt(limit);
-const limitNr = Math.min(parseInt(limit), 500);
-const sortBy = isRefSearch
-  ? { ordine: 1, capitol: 1, verset: 1 }
-  : { testament: 1, carte: 1, capitol: 1, verset: 1 };
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const limitNr = Math.min(parseInt(limit), 500);
+    const sortBy = isRefSearch
+      ? { ordine: 1, capitol: 1, verset: 1 }
+      : { testament: 1, carte: 1, capitol: 1, verset: 1 };
 
     const [versete, total] = await Promise.all([
-      Verse.find(filter)
-        .sort(sortBy)
-        .skip(skip)
-        .limit(limitNr)
-        .lean(),
+      Verse.find(filter).sort(sortBy).skip(skip).limit(limitNr).lean(),
       Verse.countDocuments(filter)
     ]);
 
     res.json({
-      versete,
-      total,
+      versete, total,
       page: parseInt(page),
       totalPages: Math.ceil(total / limitNr),
       limit: limitNr
