@@ -228,8 +228,29 @@ router.post('/templates', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Numele și URL-ul sunt obligatorii.' });
     }
 
-    // ═══ Normalizare URL Unsplash la format standard 1080×1350 ═══
-    if (url.includes('unsplash.com')) {
+    // ═══ Normalizare URL Unsplash ═══
+    // Cazul 1: URL pagină unsplash.com/photos/slug-ID
+    if (url.includes('unsplash.com/photos/') && !url.includes('images.unsplash.com')) {
+      try {
+        const axios = require('axios');
+        const pageRes = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          maxRedirects: 5,
+          timeout: 10000
+        });
+        const html = pageRes.data;
+        const match = html.match(/https:\/\/images\.unsplash\.com\/photo-[a-zA-Z0-9_-]+/);
+        if (match) {
+          url = `${match[0]}?w=1080&h=1350&fit=crop&q=85`;
+        } else {
+          return res.status(400).json({ success: false, message: 'Nu am putut extrage imaginea din URL-ul Unsplash. Folosește URL-ul direct al imaginii (images.unsplash.com/photo-...).' });
+        }
+      } catch (fetchErr) {
+        return res.status(400).json({ success: false, message: 'Eroare la accesarea URL-ului Unsplash. Încearcă URL-ul direct (images.unsplash.com/photo-...).' });
+      }
+    }
+    // Cazul 2: URL direct images.unsplash.com — normalizează parametrii
+    else if (url.includes('images.unsplash.com')) {
       const base = url.split('?')[0];
       url = `${base}?w=1080&h=1350&fit=crop&q=85`;
     }
