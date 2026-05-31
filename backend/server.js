@@ -191,6 +191,7 @@ app.use('/api/journey', require('./routes/spiritualJourney'));
 app.use('/api/journal', require('./routes/journal'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/cross-references', require('./routes/crossReferences'));
+app.use('/api/verse-notes', require('./routes/verseNotes'));
 
 // ═══════════════════════════════════════
 // SCHEDULER
