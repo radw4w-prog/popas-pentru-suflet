@@ -681,7 +681,6 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
                               ))}
                             </div>
                           )}
-                        </div>
 
                           {/* Note pe verset */}
                           {isAuthenticated && notesMap[verse.verset]?.length > 0 && (
