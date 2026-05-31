@@ -21,7 +21,7 @@ const PWAInstallBanner = () => {
     // Verifică dacă userul a respins deja (reapare după 7 zile)
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     if (dismissed) {
-      const dismissedAt = parseInt(dismissed);
+      const dismissedAt = parseInt(dismissed, 10);
       if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
       localStorage.removeItem('pwa-install-dismissed');
     }
@@ -30,6 +30,13 @@ const PWAInstallBanner = () => {
     const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
     setIsIOS(iOS);
 
+    const handleInstalled = () => {
+      setIsInstalled(true);
+      setShowBanner(false);
+      setDeferredPrompt(null);
+      localStorage.removeItem('pwa-install-dismissed');
+    };
+
     // iOS nu are beforeinstallprompt
     if (iOS) {
       const isSafari = /safari/i.test(navigator.userAgent) &&
@@ -37,7 +44,8 @@ const PWAInstallBanner = () => {
       if (isSafari) {
         setTimeout(() => setShowBanner(true), 3000);
       }
-      return;
+      window.addEventListener('appinstalled', handleInstalled);
+      return () => window.removeEventListener('appinstalled', handleInstalled);
     }
 
     // Android / Desktop
@@ -48,7 +56,12 @@ const PWAInstallBanner = () => {
     };
 
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', handleInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -112,8 +125,8 @@ const PWAInstallBanner = () => {
             Apasă <strong>Share</strong> → <strong>Add to Home Screen</strong>
           </div>
         ) : (
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Popas pentru Suflet
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            Acces rapid la Biblia online, devoțional și rugăciuni
           </div>
         )}
       </div>

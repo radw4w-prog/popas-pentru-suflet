@@ -1,7 +1,7 @@
 {
   "short_name": "Popas",
   "name": "Popas pentru Suflet",
-  "description": "Aplicație creștină pentru generare conținut, citire Biblie și planificare postări",
+  "description": "Aplicație creștină cu Biblia online, devoțional zilnic și rugăciuni.",
   "icons": [
     {
       "src": "icons/icon-72.png",
@@ -52,22 +52,16 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "id": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#d4af37",
   "background_color": "#0a0a0f",
   "scope": "/",
   "lang": "ro",
-  "categories": ["lifestyle", "religion", "social"],
-  "screenshots": [
-    {
-      "src": "screenshots/mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
+  "categories": ["lifestyle", "religion", "education"],
+  "prefer_related_applications": false,
   "shortcuts": [
     {
       "name": "Generează",

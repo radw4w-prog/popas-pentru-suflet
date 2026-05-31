@@ -1,5 +1,6 @@
 import { Inter, Playfair_Display, Lora } from 'next/font/google';
 import Script from 'next/script';
+import PWAInstallBanner from '@/components/PWAInstallBanner';
 import '@/styles/App.css';
 import '@/styles/Premium.css';
 import '@/styles/BottomNav.css';
@@ -78,6 +79,7 @@ export default function RootLayout({ children }) {
           </>
         )}
         {children}
+        <PWAInstallBanner />
       </body>
     </html>
   );

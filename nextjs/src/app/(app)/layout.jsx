@@ -5,7 +5,6 @@ import { AuthProvider } from '@/context/AuthContext';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
-import PWAInstallBanner from '@/components/PWAInstallBanner';
 import { FontSizeProvider } from '@/components/Header';
 
 export default function AppLayout({ children }) {
@@ -37,7 +36,6 @@ export default function AppLayout({ children }) {
         <div className="page-content">{children}</div>
       </div>
       {mounted && <BottomNav />}
-      {mounted && <PWAInstallBanner />}
     </FontSizeProvider>
   </AuthProvider>
 );
