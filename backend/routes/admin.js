@@ -222,9 +222,16 @@ router.get('/templates', async (req, res) => {
 // POST /api/admin/templates — Adaugă template nou
 router.post('/templates', async (req, res) => {
   try {
-    const { name, url, thumbnail, categorie } = req.body;
+    const { name, thumbnail, categorie } = req.body;
+    let { url } = req.body;
     if (!name || !url) {
       return res.status(400).json({ success: false, message: 'Numele și URL-ul sunt obligatorii.' });
+    }
+
+    // ═══ Normalizare URL Unsplash la format standard 1080×1350 ═══
+    if (url.includes('unsplash.com')) {
+      const base = url.split('?')[0];
+      url = `${base}?w=1080&h=1350&fit=crop&q=85`;
     }
 
     // Generează ID unic
@@ -232,8 +239,8 @@ router.post('/templates', async (req, res) => {
     const ultimulNr = ultimul ? parseInt(ultimul.templateId.replace('t', '')) : 0;
     const templateId = `t${String(ultimulNr + 1).padStart(3, '0')}`;
 
-    // Generează thumbnail automat dacă nu e furnizat
-    const thumbUrl = thumbnail || url.replace('w=1080&h=1350', 'w=400&h=500').replace('q=85', 'q=60');
+    // Generează thumbnail automat (300×375, calitate redusă)
+    const thumbUrl = thumbnail || url.replace('w=1080', 'w=400').replace('h=1350', 'h=500').replace('q=85', 'q=60');
 
     const template = await Template.create({
       templateId,
