@@ -708,7 +708,6 @@ const AdminPage = () => {
                     referrerPolicy="no-referrer"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                     loading="lazy"
-                    onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.8rem">🖼️ Nu se poate<br/>încărca</div>'; }}
                   />
                   {!t.activ && (
                     <div style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(239,68,68,0.9)', color: 'white', padding: '1px 6px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>
@@ -723,9 +722,7 @@ const AdminPage = () => {
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
                     {t.categorie} • {t.sursa || 'builtin'} • {t.templateId}
                   </div>
-                  <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', wordBreak: 'break-all', opacity: 0.6, maxHeight: '2em', overflow: 'hidden' }}>
-                    {thumbSrc.substring(0, 80)}
-                  </div>
+
                   <div style={{ display: 'flex', gap: '0.3rem' }}>
                     <button onClick={async () => {
                       try {
