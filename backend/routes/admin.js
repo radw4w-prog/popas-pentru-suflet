@@ -228,6 +228,9 @@ router.post('/templates', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Numele și URL-ul sunt obligatorii.' });
     }
 
+    // ═══ Fix sanitizare XSS care encode-ază URL-urile ═══
+    url = url.replace(/&#x2F;/gi, '/').replace(/&amp;/gi, '&').replace(/&#x3A;/gi, ':');
+
     // ═══ Normalizare URL Unsplash ═══
     // Cazul 1: URL pagină unsplash.com/photos/slug-ID → extrage imagine reală
     if (url.includes('unsplash.com/photos/') && !url.includes('images.unsplash.com')) {
@@ -270,8 +273,8 @@ router.post('/templates', async (req, res) => {
     const finalTemplateId = exista ? `t${Date.now()}` : templateId;
 
     // Generează thumbnail automat
-    const base = url.split('?')[0];
-    const thumbUrl = thumbnail || `${base}?w=400&h=500&fit=crop&q=60`;
+    const baseUrl = url.split('?')[0];
+    const thumbUrl = thumbnail || `${baseUrl}?w=400&h=500&fit=crop&q=60`;
 
     console.log('📸 Salvez template:', { finalTemplateId, name, url: url.substring(0, 80), thumbUrl: thumbUrl.substring(0, 80) });
 

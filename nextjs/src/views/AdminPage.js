@@ -689,8 +689,8 @@ const AdminPage = () => {
           {/* Grid template-uri */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
             {templates.map(t => {
-              // Generează thumbnail din URL — extrage base și adaugă parametri mici
-              const rawUrl = t.thumbnail || t.url || '';
+              // Generează thumbnail din URL — decode HTML entities + extrage base
+              const rawUrl = (t.thumbnail || t.url || '').replace(/&#x2F;/gi, '/').replace(/&amp;/gi, '&').replace(/&#x3A;/gi, ':');
               const thumbBase = rawUrl.split('?')[0];
               const thumbSrc = thumbBase.includes('unsplash.com') 
                 ? `${thumbBase}?w=300&h=375&fit=crop&q=60` 

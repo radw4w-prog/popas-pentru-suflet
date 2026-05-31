@@ -263,12 +263,13 @@ router.get('/templates', async (req, res) => {
 
     let builtIn;
     if (dbTemplates.length > 0) {
-      // Mapează din format DB → format frontend
+      // Mapează din format DB → format frontend (decode HTML entities din sanitizare XSS)
+      const decodeUrl = (u) => (u || '').replace(/&#x2F;/gi, '/').replace(/&amp;/gi, '&').replace(/&#x3A;/gi, ':');
       builtIn = dbTemplates.map(t => ({
         id: t.templateId,
         name: t.name,
-        url: t.url,
-        thumbnail: t.thumbnail,
+        url: decodeUrl(t.url),
+        thumbnail: decodeUrl(t.thumbnail),
         categorie: t.categorie,
         sursa: t.sursa
       }));
