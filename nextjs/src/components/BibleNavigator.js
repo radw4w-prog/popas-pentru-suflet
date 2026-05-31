@@ -43,6 +43,11 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   const searchTimeout = useRef(null);
   const searchInputRef = useRef(null);
 
+  // ═══ NOTES ═══
+  const [notesMap, setNotesMap] = useState({});
+  const [editingNote, setEditingNote] = useState(null); // { verset, text, noteId? }
+  const [noteText, setNoteText] = useState('');
+
   const { isAuthenticated } = useAuth();
   const { fontSize } = useContext(FontSizeContext);
 
@@ -140,7 +145,7 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
     try {
       const r = await api.get(`/api/verses?carte=${encodeURIComponent(verse.carte)}&capitol=${verse.capitol}&limit=500`);
       setVersete(r.data?.versete || []);
-      await Promise.all([fetchBookmarks(verse.carte, verse.capitol), fetchReferinte(verse.carte, verse.capitol)]);
+      await Promise.all([fetchBookmarks(verse.carte, verse.capitol), fetchReferinte(verse.carte, verse.capitol), fetchNotes(verse.carte, verse.capitol)]);
     } catch (e) { console.error(e); }
     finally { setLoadingVersete(false); }
 
@@ -172,6 +177,40 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
           : part
       );
     } catch { return text; }
+  };
+
+  // ═══ NOTES LOGIC ═══
+  const fetchNotes = async (carte, capitol) => {
+    if (!isAuthenticated) return;
+    try {
+      const r = await api.get(`/api/verse-notes/capitol?carte=${encodeURIComponent(carte)}&capitol=${capitol}`, { headers: getHeaders() });
+      if (r.data?.success) setNotesMap(r.data.noteMap || {});
+    } catch {}
+  };
+
+  const saveNote = async (verse) => {
+    if (!noteText.trim()) return;
+    try {
+      if (editingNote?.noteId) {
+        await api.put(`/api/verse-notes/${editingNote.noteId}`, { nota: noteText }, { headers: getHeaders() });
+      } else {
+        await api.post('/api/verse-notes', {
+          carte: verse.carte, capitol: verse.capitol, verset: verse.verset,
+          referinta: `${verse.carte} ${verse.capitol}:${verse.verset}`,
+          textVerset: verse.text, nota: noteText
+        }, { headers: getHeaders() });
+      }
+      setEditingNote(null); setNoteText('');
+      await fetchNotes(verse.carte, verse.capitol);
+    } catch (e) { alert('Eroare la salvarea notei.'); }
+  };
+
+  const deleteNote = async (noteId, carte, capitol) => {
+    if (!window.confirm('Ștergi această notă?')) return;
+    try {
+      await api.delete(`/api/verse-notes/${noteId}`, { headers: getHeaders() });
+      await fetchNotes(carte, capitol);
+    } catch (e) { alert('Eroare la ștergerea notei.'); }
   };
 
   const fetchData = async () => {
@@ -266,7 +305,7 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
     try {
       const r = await api.get(`/api/verses?carte=${encodeURIComponent(selectedCarte.carte)}&capitol=${capitol}&limit=500`);
       setVersete(r.data?.versete || []);
-      await Promise.all([fetchBookmarks(selectedCarte.carte, capitol), fetchReferinte(selectedCarte.carte, capitol)]);
+      await Promise.all([fetchBookmarks(selectedCarte.carte, capitol), fetchReferinte(selectedCarte.carte, capitol), fetchNotes(selectedCarte.carte, capitol)]);
     } catch (e) { console.error(e); }
     finally { setLoadingVersete(false); }
     if (onSelectCapitol) onSelectCapitol(selectedCarte.carte, capitol);
@@ -644,11 +683,75 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
                           )}
                         </div>
 
+                          {/* Note pe verset */}
+                          {isAuthenticated && notesMap[verse.verset]?.length > 0 && (
+                            <div style={{ marginBottom: '0.3rem' }}>
+                              {notesMap[verse.verset].map(n => (
+                                <div key={n._id} style={{
+                                  background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)',
+                                  borderRadius: '8px', padding: '0.4rem 0.6rem', marginBottom: '0.2rem',
+                                  fontSize: '0.8rem', color: 'var(--text-secondary)', position: 'relative',
+                                }}>
+                                  <span style={{ color: 'rgba(124,58,237,0.7)', fontSize: '0.7rem', marginRight: '0.3rem' }}>📝</span>
+                                  {n.nota}
+                                  <span style={{ display: 'inline-flex', gap: '0.3rem', marginLeft: '0.4rem' }}>
+                                    <button onClick={() => { setEditingNote({ verset: verse.verset, noteId: n._id }); setNoteText(n.nota); }}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.65rem', color: 'var(--text-muted)', padding: 0 }}>✏️</button>
+                                    <button onClick={() => deleteNote(n._id, verse.carte, verse.capitol)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.65rem', color: 'var(--text-muted)', padding: 0 }}>🗑️</button>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Editor notă */}
+                          {editingNote?.verset === verse.verset && (
+                            <div style={{
+                              background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.25)',
+                              borderRadius: '10px', padding: '0.5rem', marginBottom: '0.3rem',
+                            }}>
+                              <textarea
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                placeholder="Scrie notița ta despre acest verset..."
+                                style={{
+                                  width: '100%', minHeight: '60px', padding: '0.4rem', borderRadius: '8px',
+                                  border: '1px solid var(--border-color)', background: 'var(--bg-input)',
+                                  color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'inherit',
+                                  resize: 'vertical', outline: 'none',
+                                }}
+                                autoFocus
+                              />
+                              <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.3rem' }}>
+                                <button onClick={() => saveNote(verse)} style={{
+                                  padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none',
+                                  background: 'rgba(124,58,237,0.2)', color: '#7c3aed', cursor: 'pointer',
+                                  fontSize: '0.75rem', fontWeight: 600,
+                                }}>✅ Salvează</button>
+                                <button onClick={() => { setEditingNote(null); setNoteText(''); }} style={{
+                                  padding: '0.3rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)',
+                                  background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                                  fontSize: '0.75rem',
+                                }}>Anulează</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Acțiuni */}
                         <div className="bible-verse-actions">
                           <button className="bva-btn" onClick={() => copyVerse(verse)} title="Copiază">
                             {isCopiat ? '✅' : '📋'}
                           </button>
+                          {isAuthenticated && (
+                            <button className="bva-btn" onClick={() => {
+                              if (editingNote?.verset === verse.verset) { setEditingNote(null); setNoteText(''); }
+                              else { setEditingNote({ verset: verse.verset }); setNoteText(''); }
+                            }} title="Adaugă notă" style={{ color: notesMap[verse.verset]?.length ? '#7c3aed' : undefined }}>
+                              📝
+                            </button>
+                          )}
                           {isAuthenticated && (
                             <div style={{ position: 'relative' }}>
                               <button
