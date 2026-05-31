@@ -56,6 +56,19 @@ export default function RootLayout({ children }) {
       </head>
 	 
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(reg) { console.log('SW registered:', reg.scope); })
+                    .catch(function(err) { console.log('SW registration failed:', err); });
+                });
+              }
+            `
+          }}
+        />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} strategy="afterInteractive" />

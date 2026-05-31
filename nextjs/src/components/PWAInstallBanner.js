@@ -18,9 +18,13 @@ const PWAInstallBanner = () => {
       return;
     }
 
-    // Verifică dacă userul a respins deja
+    // Verifică dacă userul a respins deja (reapare după 7 zile)
     const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) return;
+    if (dismissed) {
+      const dismissedAt = parseInt(dismissed);
+      if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
+      localStorage.removeItem('pwa-install-dismissed');
+    }
 
     // Detectează iOS
     const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
@@ -62,7 +66,7 @@ const PWAInstallBanner = () => {
 
   const handleDismiss = () => {
     setShowBanner(false);
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    localStorage.setItem('pwa-install-dismissed', String(Date.now()));
   };
 
   if (!showBanner || isInstalled) return null;
