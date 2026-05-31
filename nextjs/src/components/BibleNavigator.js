@@ -505,6 +505,66 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
       {/* ═══ BODY ═══ */}
       <div className="bible-nav-body" style={{ position: 'relative' }}>
 
+        {/* ═══ NAVIGARE RAPIDĂ — STICKY INSIDE BODY ═══ */}
+        {step === 'versete' && selectedCarte && selectedCapitol && (
+          <div style={{
+            display: 'flex', gap: '0.4rem', padding: '0.4rem 0.75rem', alignItems: 'center',
+            background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)',
+            position: 'sticky', top: 0, zIndex: 20,
+            marginLeft: '-1rem', marginRight: '-1rem', marginTop: '-1rem',
+            paddingTop: '0.5rem',
+          }}>
+            <select
+              value={selectedCarte.carte}
+              onChange={(e) => {
+                const carte = ordineBiblie.find(o => o.carte === e.target.value);
+                const info = cartiData.find(c => c.carte === e.target.value);
+                if (carte) {
+                  const obj = { ...carte, totalCapitole: info?.totalCapitole || 0, totalVersete: info?.totalVersete || 0 };
+                  setSelectedCarte(obj);
+                  setSelectedCapitol(null);
+                  setStep('capitole');
+                }
+              }}
+              style={{
+                padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem',
+                border: '1px solid var(--border-color)', background: 'var(--bg-input)',
+                color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'pointer',
+                maxWidth: '160px',
+              }}
+            >
+              {ordineBiblie.map(o => (
+                <option key={o.carte} value={o.carte}>{o.carte}</option>
+              ))}
+            </select>
+            <select
+              value={selectedCapitol}
+              onChange={(e) => handleSelectCapitol(parseInt(e.target.value))}
+              style={{
+                padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem',
+                border: '1px solid var(--border-color)', background: 'var(--bg-input)',
+                color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'pointer',
+                width: '70px',
+              }}
+            >
+              {Array.from({ length: selectedCarte.totalCapitole }, (_, i) => i + 1).map(cap => (
+                <option key={cap} value={cap}>Cap {cap}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              style={{
+                marginLeft: 'auto', background: 'none', border: '1px solid var(--border-color)',
+                borderRadius: '8px', padding: '0.25rem 0.5rem', cursor: 'pointer',
+                color: showSettings ? 'var(--gold-primary)' : 'var(--text-muted)',
+                fontSize: '0.75rem',
+              }}
+            >
+              ⚙️ Aa
+            </button>
+          </div>
+        )}
+
         {/* ── POPUP REFERINȚĂ ── */}
         {refPopup && (
           <div data-ref-popup="true" style={{
@@ -627,46 +687,7 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
                 </button>
               </div>
 
-              {/* ═══ NAVIGARE RAPIDĂ ═══ */}
-              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <select
-                  value={selectedCarte.carte}
-                  onChange={(e) => {
-                    const carte = ordineBiblie.find(o => o.carte === e.target.value);
-                    const info = cartiData.find(c => c.carte === e.target.value);
-                    if (carte) {
-                      const obj = { ...carte, totalCapitole: info?.totalCapitole || 0, totalVersete: info?.totalVersete || 0 };
-                      setSelectedCarte(obj);
-                      setSelectedCapitol(null);
-                      setStep('capitole');
-                    }
-                  }}
-                  style={{
-                    padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem',
-                    border: '1px solid var(--border-color)', background: 'var(--bg-input)',
-                    color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'pointer',
-                    maxWidth: '160px',
-                  }}
-                >
-                  {ordineBiblie.map(o => (
-                    <option key={o.carte} value={o.carte}>{o.carte}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedCapitol}
-                  onChange={(e) => handleSelectCapitol(parseInt(e.target.value))}
-                  style={{
-                    padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem',
-                    border: '1px solid var(--border-color)', background: 'var(--bg-input)',
-                    color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'pointer',
-                    width: '65px',
-                  }}
-                >
-                  {Array.from({ length: selectedCarte.totalCapitole }, (_, i) => i + 1).map(cap => (
-                    <option key={cap} value={cap}>Cap {cap}</option>
-                  ))}
-                </select>
-              </div>
+
             </div>
 
             {/* ═══ TEXT SETTINGS BAR ═══ */}
