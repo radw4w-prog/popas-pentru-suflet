@@ -105,6 +105,7 @@ const NotificationsPage = () => {
   const getTipColor = (tip) => {
     const colors = {
       reminder: '#6366f1',
+      devotional: '#f59e0b',
       milestone: '#f4d03f',
       intarziere: '#ef4444',
       sistem: '#6b7280'

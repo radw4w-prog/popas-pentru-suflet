@@ -2,16 +2,30 @@ const Notification = require('../models/Notification');
 const ReadingPlan = require('../models/ReadingPlan');
 const ReadingProgress = require('../models/ReadingProgress');
 const User = require('../models/User');
+const { getTodayDevotional } = require('./devotionalService');
+const { sendNotificationToUser } = require('./webPushService');
 
-async function createNotification(userId, tip, titlu, mesaj, icon = '🔔') {
+function getNotificationUrl(tip) {
+  switch (tip) {
+    case 'reminder':
+    case 'intarziere':
+    case 'milestone':
+      return '/reading';
+    case 'devotional':
+      return '/devotional';
+    default:
+      return '/notifications';
+  }
+}
+
+async function createNotification(userId, tip, titlu, mesaj, icon = '🔔', options = {}) {
   try {
     const acum24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const existenta = await Notification.findOne({
-      userId,
-      tip,
-      titlu,
-      createdAt: { $gte: acum24h }
-    });
+    const duplicateQuery = options.onceEver
+      ? { userId, tip, titlu }
+      : { userId, tip, titlu, createdAt: { $gte: acum24h } };
+
+    const existenta = await Notification.findOne(duplicateQuery);
 
     if (existenta) {
       console.log(`   ⏭️  Skip duplicat: ${titlu}`);
@@ -19,7 +33,19 @@ async function createNotification(userId, tip, titlu, mesaj, icon = '🔔') {
     }
 
     const notif = await Notification.create({
-      userId, tip, titlu, mesaj, icon, citit: false
+      userId,
+      tip,
+      titlu,
+      mesaj,
+      icon,
+      citit: false
+    });
+
+    await sendNotificationToUser(userId, {
+      title: titlu,
+      body: mesaj,
+      tag: options.tag || `notif-${tip}`,
+      data: { url: options.url || getNotificationUrl(tip) }
     });
 
     console.log(`   ✅ Creat: ${titlu}`);
@@ -69,13 +95,11 @@ async function verificaUserNotificari(user) {
       1189
     );
     const intarziere = Math.max(0, capitoleAsteptate - totalCitite);
-    const procent = Math.round((totalCitite / 1189) * 100);
 
     console.log(`   📊 ${user.email}:`);
     console.log(`      citite=${totalCitite}, asteptate=${capitoleAsteptate}`);
     console.log(`      intarziere=${intarziere}, ziua=${zileTrecute}`);
 
-    // ─── CITIT AZI ───
     const azStart = new Date();
     azStart.setHours(0, 0, 0, 0);
     const azEnd = new Date();
@@ -88,8 +112,6 @@ async function verificaUserNotificari(user) {
 
     console.log(`      cititAzi=${cititAzi}`);
 
-    // ─── 1. NOTIFICARE PROGRES ZI ───
-    // Dacă nu a terminat planul zilei (indiferent de zi)
     if (setari.reminderZilnic) {
       const planZiTerminat = cititAzi >= plan.capitolePerZi;
 
@@ -100,27 +122,27 @@ async function verificaUserNotificari(user) {
           'reminder',
           '📖 Continuă planul de citire!',
           `Ai citit ${cititAzi} din ${plan.capitolePerZi} capitol(e) planificate pentru azi. Mai ai ${ramase} de citit! 🙏`,
-          '📖'
+          '📖',
+          { url: '/reading', tag: 'reading-reminder' }
         );
       } else {
-        console.log(`      ⏭️  Reminder skip: plan zilnic terminat`);
+        console.log('      ⏭️  Reminder skip: plan zilnic terminat');
       }
     }
 
-    // ─── 2. ÎNTÂRZIERE ───
     if (setari.intarziere && intarziere > 0) {
       await createNotification(
         user._id,
         'intarziere',
         `⚠️ Ești cu ${intarziere} capitol(e) în urmă!`,
         `Planul tău de azi necesită ${capitoleAsteptate} capitole citite, dar ai citit ${totalCitite}. Hai să recuperăm! 💪`,
-        '⚠️'
+        '⚠️',
+        { url: '/reading', tag: 'reading-delay' }
       );
     } else {
       console.log(`      ⏭️  Întârziere skip: intarziere=${intarziere}`);
     }
 
-    // ─── 3. MILESTONE ───
     if (setari.milestones && totalCitite > 0) {
       const milestones = [
         {
@@ -155,29 +177,19 @@ async function verificaUserNotificari(user) {
         }
       ];
 
-      for (const m of milestones) {
-        if (totalCitite >= m.prag) {
-          const existent = await Notification.findOne({
-            userId: user._id,
-            tip: 'milestone',
-            titlu: m.titlu
-          });
-
-          if (!existent) {
-            await Notification.create({
-              userId: user._id,
-              tip: 'milestone',
-              titlu: m.titlu,
-              mesaj: m.mesaj,
-              icon: '🏆',
-              citit: false
-            });
-            console.log(`      ✅ Milestone: ${m.titlu}`);
-          }
+      for (const milestone of milestones) {
+        if (totalCitite >= milestone.prag) {
+          await createNotification(
+            user._id,
+            'milestone',
+            milestone.titlu,
+            milestone.mesaj,
+            '🏆',
+            { url: '/reading', tag: `milestone-${milestone.prag}`, onceEver: true }
+          );
         }
       }
     }
-
   } catch (error) {
     console.error(`Eroare verificaUser (${user._id}):`, error.message);
   }
@@ -198,6 +210,37 @@ async function runNotificationsJob() {
   }
 }
 
+async function runDevotionalNotificationsJob() {
+  try {
+    console.log('☀️ Rulare job notificări devoțional...');
+    const devotional = await getTodayDevotional();
+    const useri = await User.find({ activ: true });
+
+    for (const user of useri) {
+      const setari = user.setari?.notificari;
+      if (!setari?.active || setari?.devotional === false) continue;
+
+      const titlu = '☀️ Devoționalul zilei este pregătit';
+      const mesaj = devotional?.title
+        ? `${devotional.title} — intră să citești devoționalul de astăzi.`
+        : 'Intră să citești devoționalul de astăzi.';
+
+      await createNotification(
+        user._id,
+        'devotional',
+        titlu,
+        mesaj,
+        '☀️',
+        { url: '/devotional', tag: 'daily-devotional' }
+      );
+    }
+
+    console.log(`✅ Notificări devoțional procesate pentru ${useri.length} useri.`);
+  } catch (error) {
+    console.error('❌ Eroare job devoțional:', error.message);
+  }
+}
+
 async function checkMilestoneAfterMark(userId, totalCitite) {
   try {
     const user = await User.findById(userId);
@@ -213,25 +256,16 @@ async function checkMilestoneAfterMark(userId, totalCitite) {
       { prag: 1189, titlu: '🎊 Biblia citită integral!', mesaj: 'Ai citit TOATĂ Biblia! 🎊🙏' }
     ];
 
-    for (const m of milestones) {
-      if (totalCitite >= m.prag) {
-        const existent = await Notification.findOne({
+    for (const milestone of milestones) {
+      if (totalCitite >= milestone.prag) {
+        await createNotification(
           userId,
-          tip: 'milestone',
-          titlu: m.titlu
-        });
-
-        if (!existent) {
-          await Notification.create({
-            userId,
-            tip: 'milestone',
-            titlu: m.titlu,
-            mesaj: m.mesaj,
-            icon: '🏆',
-            citit: false
-          });
-          console.log(`🏆 Milestone: ${m.titlu} → ${userId}`);
-        }
+          'milestone',
+          milestone.titlu,
+          milestone.mesaj,
+          '🏆',
+          { url: '/reading', tag: `milestone-${milestone.prag}`, onceEver: true }
+        );
       }
     }
   } catch (error) {
@@ -241,6 +275,7 @@ async function checkMilestoneAfterMark(userId, totalCitite) {
 
 module.exports = {
   runNotificationsJob,
+  runDevotionalNotificationsJob,
   checkMilestoneAfterMark,
   createNotification
 };

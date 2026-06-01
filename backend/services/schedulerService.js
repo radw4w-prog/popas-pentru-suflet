@@ -3,11 +3,13 @@ const cron = require('node-cron');
 let initialized = false;
 let running = false;
 let runningNotif = false;
+let runningDevotional = false;
+
+const TZ = 'Europe/Bucharest';
 
 function init() {
   if (initialized) return;
 
-  // Scheduler doar dacă este activat explicit
   if (process.env.ENABLE_SCHEDULER !== 'true') {
     console.log('⏸️ Scheduler dezactivat pentru această instanță.');
     return;
@@ -17,31 +19,31 @@ function init() {
 
   console.log('🕐 Inițializare scheduler...');
 
-  // ─── Job 1: Publicare postări programate (la fiecare minut) ───
   cron.schedule('* * * * *', async () => {
     await checkAndPublish();
   });
 
-  // ─── Job 2: Notificări dimineața la 08:00 ───
+  cron.schedule('5 7 * * *', async () => {
+    console.log('☀️ Job notificări devoțional (07:05)...');
+    await runDevotionalNotificationsJob();
+  }, { timezone: TZ });
+
   cron.schedule('0 8 * * *', async () => {
     console.log('🔔 Job notificări dimineață (08:00)...');
     await runNotificationsJob();
-  });
+  }, { timezone: TZ });
 
-  // ─── Job 3: Notificări seara la 21:00 ───
   cron.schedule('0 21 * * *', async () => {
     console.log('🔔 Job notificări seară (21:00)...');
     await runNotificationsJob();
-  });
+  }, { timezone: TZ });
 
   console.log('✅ Scheduler pornit:');
   console.log('   📅 Publicare postări: la fiecare minut');
-  console.log('   🔔 Notificări citire: 08:00 și 21:00');
+  console.log('   ☀️ Devoțional zilnic: 07:05 (Europe/Bucharest)');
+  console.log('   🔔 Notificări citire: 08:00 și 21:00 (Europe/Bucharest)');
 }
 
-// ═══════════════════════════════════════
-// JOB 1: PUBLICARE POSTĂRI
-// ═══════════════════════════════════════
 async function checkAndPublish() {
   if (running) return;
   running = true;
@@ -63,14 +65,12 @@ async function checkAndPublish() {
 
     for (const post of posts) {
       try {
-        // ← LOCK: marchează imediat ca 'publishing' înainte să publice
         const locked = await Post.findOneAndUpdate(
           { _id: post._id, status: 'scheduled', socialPostId: null },
           { status: 'publishing' },
           { new: true }
         );
 
-        // Dacă nu am putut să o lock-uim → altcineva a luat-o deja
         if (!locked) {
           console.log(`⏭️  Skip ${post._id} - deja procesată`);
           continue;
@@ -78,13 +78,13 @@ async function checkAndPublish() {
 
         console.log(`➡️  Publicare: ${post._id} | tip: ${post.tipMedia || 'image'}`);
 
-let result;
-if (post.tipMedia === 'video' && post.videoBase64) {
-  console.log('🎬 Publicare video Reel...');
-  result = await facebookService.publishVideo(post);
-} else {
-  result = await facebookService.publishPost(post);
-}
+        let result;
+        if (post.tipMedia === 'video' && post.videoBase64) {
+          console.log('🎬 Publicare video Reel...');
+          result = await facebookService.publishVideo(post);
+        } else {
+          result = await facebookService.publishPost(post);
+        }
 
         await Post.findByIdAndUpdate(post._id, {
           status: 'published',
@@ -110,9 +110,6 @@ if (post.tipMedia === 'video' && post.videoBase64) {
   }
 }
 
-// ═══════════════════════════════════════
-// JOB 2: NOTIFICĂRI CITIRE
-// ═══════════════════════════════════════
 async function runNotificationsJob() {
   if (runningNotif) return;
   runningNotif = true;
@@ -127,4 +124,23 @@ async function runNotificationsJob() {
   }
 }
 
-module.exports = { init, checkAndPublish, runNotificationsJob };
+async function runDevotionalNotificationsJob() {
+  if (runningDevotional) return;
+  runningDevotional = true;
+
+  try {
+    const { runDevotionalNotificationsJob: run } = require('./notificationService');
+    await run();
+  } catch (error) {
+    console.error('❌ Eroare job devoțional:', error.message);
+  } finally {
+    runningDevotional = false;
+  }
+}
+
+module.exports = {
+  init,
+  checkAndPublish,
+  runNotificationsJob,
+  runDevotionalNotificationsJob
+};

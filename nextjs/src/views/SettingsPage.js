@@ -3,11 +3,25 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import usePushNotifications from '../hooks/usePushNotifications';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const SettingsPage = () => {
   const { user, updateUser } = useAuth();
+  const {
+    supported: pushSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    loading: pushLoading,
+    serverConfigured: pushServerConfigured,
+    subscribe: enablePush,
+    unsubscribe: disablePush,
+    sendTestNotification,
+    sendTestDevotional,
+    sendTestReading,
+    refreshStatus: refreshPushStatus
+  } = usePushNotifications();
 
   const [fbStatus, setFbStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,6 +29,7 @@ const SettingsPage = () => {
   const [saved, setSaved] = useState(false);
   const [savingNotif, setSavingNotif] = useState(false);
   const [savedNotif, setSavedNotif] = useState(false);
+  const [pushActionMessage, setPushActionMessage] = useState(null);
 
   const [config, setConfig] = useState({
     fbToken: '',
@@ -24,6 +39,7 @@ const SettingsPage = () => {
 
   const [notifSetari, setNotifSetari] = useState({
     active: true,
+    devotional: true,
     reminderZilnic: true,
     milestones: true,
     intarziere: true
@@ -33,12 +49,13 @@ const SettingsPage = () => {
 
   useEffect(() => {
     checkStatus();
-  }, []);
+    refreshPushStatus();
+  }, [refreshPushStatus]);
 
   // Inițializează setările notificărilor din user
   useEffect(() => {
     if (user?.setari?.notificari) {
-      setNotifSetari(user.setari.notificari);
+      setNotifSetari(prev => ({ ...prev, ...user.setari.notificari }));
     }
   }, [user]);
 
@@ -130,6 +147,40 @@ const SettingsPage = () => {
     } else {
       setNotifSetari(prev => ({ ...prev, [key]: !prev[key] }));
     }
+  };
+
+  const handleEnablePush = async () => {
+    const result = await enablePush();
+    setPushActionMessage({ type: result.success ? 'success' : 'error', text: result.message });
+    if (result.success) {
+      setTimeout(() => setPushActionMessage(null), 4000);
+    }
+  };
+
+  const handleDisablePush = async () => {
+    const result = await disablePush();
+    setPushActionMessage({ type: result.success ? 'success' : 'error', text: result.message });
+    if (result.success) {
+      setTimeout(() => setPushActionMessage(null), 4000);
+    }
+  };
+
+  const handleTestPush = async () => {
+    const result = await sendTestNotification();
+    setPushActionMessage({ type: result.success ? 'success' : 'error', text: result.message });
+    setTimeout(() => setPushActionMessage(null), 5000);
+  };
+
+  const handleTestDevotionalPush = async () => {
+    const result = await sendTestDevotional();
+    setPushActionMessage({ type: result.success ? 'success' : 'error', text: result.message });
+    setTimeout(() => setPushActionMessage(null), 5000);
+  };
+
+  const handleTestReadingPush = async () => {
+    const result = await sendTestReading();
+    setPushActionMessage({ type: result.success ? 'success' : 'error', text: result.message });
+    setTimeout(() => setPushActionMessage(null), 5000);
   };
 
   return (
@@ -330,7 +381,7 @@ const SettingsPage = () => {
 
       {/* ═══ TAB NOTIFICĂRI ═══ */}
       {activeTab === 'notificari' && (
-        <div style={{ maxWidth: 600 }}>
+        <div style={{ maxWidth: 860, display: 'grid', gap: '1rem' }}>
           <div className="card">
             <div className="card-header">
               <div className="card-title">
@@ -365,7 +416,7 @@ const SettingsPage = () => {
                 </div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                   {notifSetari.active
-                    ? 'Primești notificări despre planul de citire'
+                    ? 'Primești notificări despre devoțional și planul de citire'
                     : 'Toate notificările sunt dezactivate'}
                 </div>
               </div>
@@ -396,6 +447,14 @@ const SettingsPage = () => {
               </div>
 
               <NotifRow
+                icon="☀️"
+                titlu="Devoțional zilnic"
+                descriere="Primești dimineața o notificare către devoționalul zilei"
+                checked={notifSetari.devotional}
+                onChange={() => toggleNotif('devotional')}
+              />
+
+              <NotifRow
                 icon="📖"
                 titlu="Reminder citire zilnică"
                 descriere="Primești un reminder dacă nu ai citit în ziua respectivă (08:00 și 21:00)"
@@ -414,13 +473,12 @@ const SettingsPage = () => {
               <NotifRow
                 icon="⚠️"
                 titlu="Avertisment întârziere"
-                descriere="Notificare când ești cu 3+ zile în urmă față de planul de citire"
+                descriere="Notificare când ești în urmă față de planul de citire"
                 checked={notifSetari.intarziere}
                 onChange={() => toggleNotif('intarziere')}
               />
             </div>
 
-            {/* Info frecvență */}
             <div style={{
               padding: '0.875rem',
               background: 'var(--bg-input)',
@@ -431,11 +489,9 @@ const SettingsPage = () => {
               marginBottom: '1.25rem'
             }}>
               <strong>ℹ️ Când primești notificări?</strong><br />
-              Notificările sunt generate automat de două ori pe zi:
-              <strong> dimineața la 08:00</strong> și
-              <strong> seara la 21:00</strong>.
-              Nu vei primi duplicate — dacă ai primit deja o notificare similară
-              în ultimele 24 ore, nu se mai trimite alta.
+              Devoționalul zilnic este programat dimineața, iar reminder-ele de citire rulează la
+              <strong> 08:00</strong> și <strong>21:00</strong>.
+              Nu vei primi duplicate dacă o notificare similară a fost deja creată recent.
             </div>
 
             <button
@@ -464,6 +520,118 @@ const SettingsPage = () => {
                   ? '✅ Setări salvate!'
                   : '💾 Salvează setările'}
             </button>
+          </div>
+
+          <div className="card card-gold">
+            <div className="card-header">
+              <div className="card-title">
+                <span className="icon">📲</span>
+                Notificări Push în browser
+              </div>
+            </div>
+
+            <div style={{
+              padding: '1rem',
+              borderRadius: '12px',
+              border: '1px solid var(--border-color)',
+              background: 'rgba(212,175,55,0.06)',
+              marginBottom: '1rem',
+              display: 'grid',
+              gap: '0.5rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Suport browser</span>
+                <strong style={{ color: pushSupported ? '#22c55e' : '#ef4444' }}>
+                  {pushSupported ? 'Da' : 'Nu'}
+                </strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Permisiune</span>
+                <strong style={{ color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                  {pushPermission}
+                </strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Abonare activă</span>
+                <strong style={{ color: pushSubscribed ? '#22c55e' : 'var(--text-primary)' }}>
+                  {pushSubscribed ? 'Activă' : 'Inactivă'}
+                </strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Server configurat</span>
+                <strong style={{ color: pushServerConfigured ? '#22c55e' : '#f59e0b' }}>
+                  {pushServerConfigured ? 'Da' : 'Lipsesc chei VAPID'}
+                </strong>
+              </div>
+            </div>
+
+            <div style={{
+              fontSize: '0.82rem',
+              color: 'var(--text-muted)',
+              lineHeight: 1.7,
+              marginBottom: '1rem'
+            }}>
+              Activează notificările push pentru a primi direct în browser devoționalul zilnic și reminder-ele de citire,
+              chiar și atunci când nu ai pagina deschisă activ.
+            </div>
+
+            {pushActionMessage && (
+              <div style={{
+                padding: '0.85rem 1rem',
+                borderRadius: '10px',
+                marginBottom: '1rem',
+                fontSize: '0.82rem',
+                border: `1px solid ${pushActionMessage.type === 'success' ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)'}`,
+                background: pushActionMessage.type === 'success' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                color: pushActionMessage.type === 'success' ? '#22c55e' : '#f87171'
+              }}>
+                {pushActionMessage.text}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {!pushSubscribed ? (
+                <button
+                  className="btn btn-gold"
+                  onClick={handleEnablePush}
+                  disabled={!pushSupported || pushLoading}
+                >
+                  {pushLoading ? '⏳ Se activează...' : '🔔 Activează push'}
+                </button>
+              ) : (
+                <button
+                  className="btn btn-outline"
+                  onClick={handleDisablePush}
+                  disabled={pushLoading}
+                >
+                  {pushLoading ? '⏳ Se dezactivează...' : '🔕 Dezactivează push'}
+                </button>
+              )}
+
+              <button
+                className="btn btn-secondary"
+                onClick={handleTestPush}
+                disabled={!pushSubscribed || !pushServerConfigured || pushLoading}
+              >
+                🧪 Test generic
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={handleTestDevotionalPush}
+                disabled={!pushSubscribed || !pushServerConfigured || pushLoading}
+              >
+                ☀️ Test devoțional
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={handleTestReadingPush}
+                disabled={!pushSubscribed || !pushServerConfigured || pushLoading}
+              >
+                📖 Test citire
+              </button>
+            </div>
           </div>
         </div>
       )}

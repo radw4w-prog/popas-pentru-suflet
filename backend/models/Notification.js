@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema({
   },
   tip: {
     type: String,
-    enum: ['reminder', 'milestone', 'intarziere', 'sistem'],
+    enum: ['reminder', 'milestone', 'intarziere', 'sistem', 'devotional'],
     required: true
   },
   titlu: {

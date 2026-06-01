@@ -49,6 +49,7 @@ const userSchema = new mongoose.Schema({
   setari: {
     notificari: {
       active: { type: Boolean, default: true },
+      devotional: { type: Boolean, default: true },
       reminderZilnic: { type: Boolean, default: true },
       milestones: { type: Boolean, default: true },
       intarziere: { type: Boolean, default: true }
