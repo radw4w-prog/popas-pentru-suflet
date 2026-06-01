@@ -2,6 +2,7 @@
 // frontend/src/pages/ProfilePage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import usePushNotifications from '../hooks/usePushNotifications';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -55,6 +56,15 @@ const formatDate = (date) => {
 
 const ProfilePage = () => {
   const { user: authUser, logout } = useAuth();
+  const {
+    supported: pushSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    loading: pushLoading,
+    serverConfigured: pushServerConfigured,
+    subscribe: enablePush,
+    unsubscribe: disablePush,
+  } = usePushNotifications();
 
   const [profil, setProfil] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +85,9 @@ const ProfilePage = () => {
   // Avatar
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [messageAvatar, setMessageAvatar] = useState('');
+
+  // Push notifications
+  const [pushMessage, setPushMessage] = useState('');
 
   // ═══════════════════════════════════════
   // LOAD
@@ -211,6 +224,18 @@ const ProfilePage = () => {
       setSavingAvatar(false);
       setTimeout(() => setMessageAvatar(''), 3000);
     }
+  };
+
+  const handleEnablePush = async () => {
+    const result = await enablePush();
+    setPushMessage(result.success ? '✅ Notificările au fost activate.' : `❌ ${result.message}`);
+    setTimeout(() => setPushMessage(''), 3500);
+  };
+
+  const handleDisablePush = async () => {
+    const result = await disablePush();
+    setPushMessage(result.success ? '✅ Notificările au fost dezactivate.' : `❌ ${result.message}`);
+    setTimeout(() => setPushMessage(''), 3500);
   };
 
   // ═══════════════════════════════════════
@@ -575,6 +600,55 @@ const ProfilePage = () => {
                   {user.facebookConectat ? 'Facebook OAuth' : 'Email + Parolă'}
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="pr-card">
+            <div className="pr-card-title">🔔 Notificări push</div>
+            <div className="pr-setari-row">
+              <div>
+                <div className="pr-setari-label">Suport browser</div>
+                <div className="pr-setari-sub">{pushSupported ? 'Disponibil' : 'Nesuportat pe acest dispozitiv/browser'}</div>
+              </div>
+            </div>
+            <div className="pr-setari-row">
+              <div>
+                <div className="pr-setari-label">Permisiune</div>
+                <div className="pr-setari-sub" style={{ textTransform: 'capitalize' }}>{pushPermission}</div>
+              </div>
+            </div>
+            <div className="pr-setari-row">
+              <div>
+                <div className="pr-setari-label">Abonare activă</div>
+                <div className="pr-setari-sub">{pushSubscribed ? 'Da, primești notificări' : 'Nu este activată încă'}</div>
+              </div>
+            </div>
+            <div className="pr-setari-row">
+              <div>
+                <div className="pr-setari-label">Server notificări</div>
+                <div className="pr-setari-sub">{pushServerConfigured ? 'Configurat corect' : 'Momentan indisponibil'}</div>
+              </div>
+            </div>
+            {pushMessage && <div className="pr-msg">{pushMessage}</div>}
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: 12 }}>
+              {!pushSubscribed ? (
+                <button
+                  className="pr-btn-primary"
+                  onClick={handleEnablePush}
+                  disabled={!pushSupported || !pushServerConfigured || pushLoading}
+                >
+                  {pushLoading ? '⏳ Se activează...' : '🔔 Activează notificările'}
+                </button>
+              ) : (
+                <button
+                  className="pr-btn-primary"
+                  onClick={handleDisablePush}
+                  disabled={pushLoading}
+                  style={{ background: 'linear-gradient(135deg, #374151, #111827)' }}
+                >
+                  {pushLoading ? '⏳ Se dezactivează...' : '🔕 Oprește notificările'}
+                </button>
+              )}
             </div>
           </div>
 

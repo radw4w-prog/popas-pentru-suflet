@@ -23,13 +23,13 @@ const Sidebar = ({ theme }) => {
   const userItems = [
     { path: '/reading', icon: '📗', label: 'Citire Biblie' },
     { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
+    { path: '/settings', icon: '⚙️', label: 'Setări cont' },
   ];
 
   const adminItems = [
     { path: '/schedule', icon: '📅', label: 'Programare' },
     { path: '/history', icon: '📜', label: 'Istoric' },
     { path: '/analytics', icon: '📊', label: 'Analytics' },
-    { path: '/settings', icon: '⚙️', label: 'Setări' },
     { path: '/admin', icon: '🛡️', label: 'Admin Panel' },
   ];
 
