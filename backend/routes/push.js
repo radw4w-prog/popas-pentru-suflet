@@ -113,12 +113,19 @@ router.post('/test', async (req, res) => {
       data: { url: '/notifications' }
     });
 
-    if (!result.delivered) {
-      return res.status(400).json({
-        success: false,
-        message: 'Nu există abonări push active pentru acest cont.'
-      });
-    }
+    if (!result.total) {
+  return res.status(400).json({
+    success: false,
+    message: 'Nu există abonări push active pentru acest cont.'
+  });
+}
+
+if (!result.delivered) {
+  return res.status(502).json({
+    success: false,
+    message: 'Există abonări push active, dar trimiterea a eșuat. Verifică cheile VAPID și logurile serverului.'
+  });
+}
 
     res.json({
       success: true,
