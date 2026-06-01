@@ -20,6 +20,17 @@ function ensureConfigured() {
   return true;
 }
 
+function decodeHtmlEntities(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/');
+}
+
 function normalizePayload(payload = {}) {
   return JSON.stringify({
     title: payload.title || 'Popas pentru Suflet',
@@ -48,14 +59,16 @@ async function sendNotificationToSubscription(subscriptionDoc, payload = {}) {
   }
 
   try {
+    const normalizedSubscription = {
+      endpoint: decodeHtmlEntities(subscriptionDoc.endpoint),
+      keys: {
+        p256dh: decodeHtmlEntities(subscriptionDoc.keys?.p256dh),
+        auth: decodeHtmlEntities(subscriptionDoc.keys?.auth)
+      }
+    };
+
     await webPush.sendNotification(
-      {
-        endpoint: subscriptionDoc.endpoint,
-        keys: {
-          p256dh: subscriptionDoc.keys.p256dh,
-          auth: subscriptionDoc.keys.auth
-        }
-      },
+      normalizedSubscription,
       normalizePayload(payload)
     );
 
@@ -74,7 +87,7 @@ async function sendNotificationToSubscription(subscriptionDoc, payload = {}) {
     const message = error.message || 'Fără mesaj';
     const endpointHost = (() => {
       try {
-        return new URL(subscriptionDoc.endpoint).host;
+        return new URL(decodeHtmlEntities(subscriptionDoc.endpoint)).host;
       } catch {
         return 'invalid-endpoint';
       }

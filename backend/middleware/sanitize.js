@@ -45,6 +45,11 @@ function sanitizeObject(obj, depth = 0) {
 }
 
 const sanitizeXss = (req, res, next) => {
+  // Push subscription-urile conțin URL-uri și chei criptografice care nu trebuie escapate.
+  if (req.path?.startsWith('/api/push/')) {
+    return next();
+  }
+
   if (req.body) req.body = sanitizeObject(req.body);
   if (req.query) req.query = sanitizeObject(req.query);
   if (req.params) req.params = sanitizeObject(req.params);
