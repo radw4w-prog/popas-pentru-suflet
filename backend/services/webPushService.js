@@ -68,23 +68,23 @@ async function sendNotificationToSubscription(subscriptionDoc, payload = {}) {
 
     return { success: true };
   } catch (error) {
-    const statusCode = error.statusCode || error.status || 0;
-    const reason = error.body || error.message;
+   const statusCode = error.statusCode || error.status || 0;
+const headers = error.headers || null;
+const body = error.body || null;
+const message = error.message || 'Fără mesaj';
+const endpointHost = (() => {
+  try { return new URL(subscriptionDoc.endpoint).host; } catch { return 'invalid-endpoint'; }
+})();
+const reason = body || message;
 
-    if (statusCode === 404 || statusCode === 410) {
-      await deactivateSubscription(subscriptionDoc._id, `expired:${statusCode}`);
-    } else {
-      await PushSubscription.findByIdAndUpdate(subscriptionDoc._id, {
-        lastUsedAt: new Date(),
-        lastError: String(reason).slice(0, 500)
-      });
-    }
-
-    console.error('Eroare sendNotificationToSubscription:', reason);
-    return { success: false, error: reason, statusCode };
-  }
-}
-
+console.error('Eroare sendNotificationToSubscription:', {
+  statusCode,
+  endpointHost,
+  message,
+  body,
+  headers,
+  endpoint: subscriptionDoc.endpoint?.slice(0, 120)
+});
 async function sendNotificationToUser(userId, payload = {}) {
   const subscriptions = await PushSubscription.find({ userId, active: true }).lean();
 
