@@ -219,6 +219,55 @@ const usePushNotifications = () => {
     }
   }, []);
 
+  const sendLocalNotification = useCallback(async () => {
+    if (!supported) {
+      return { success: false, message: 'Browserul nu suportă notificări locale.' };
+    }
+
+    let perm = permission;
+    if (perm === 'default') {
+      perm = await requestPermission();
+    }
+
+    if (perm !== 'granted') {
+      return { success: false, message: 'Permisiunea pentru notificări nu este acordată.' };
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification('🧪 Test local pe acest dispozitiv', {
+        body: 'Dacă vezi această notificare, problema NU este la Android/Chrome, ci pe fluxul web push extern.',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-72.png',
+        tag: 'local-debug-test',
+        data: { url: '/notifications' },
+        vibrate: [200, 100, 200],
+      });
+
+      return {
+        success: true,
+        message: 'Notificarea locală a fost cerută pe acest dispozitiv.'
+      };
+    } catch (error) {
+      try {
+        new Notification('🧪 Test local pe acest dispozitiv', {
+          body: 'Fallback Notification API — dacă vezi asta, notificările locale funcționează.',
+          icon: '/icons/icon-192.png'
+        });
+
+        return {
+          success: true,
+          message: 'Notificarea locală a fost afișată prin fallback.'
+        };
+      } catch (fallbackError) {
+        return {
+          success: false,
+          message: fallbackError.message || error.message || 'Nu am putut afișa notificarea locală.'
+        };
+      }
+    }
+  }, [supported, permission, requestPermission]);
+
   return {
     supported,
     permission,
@@ -232,7 +281,8 @@ const usePushNotifications = () => {
     refreshStatus,
     sendTestNotification,
     sendTestDevotional,
-    sendTestReading
+    sendTestReading,
+    sendLocalNotification
   };
 };
 

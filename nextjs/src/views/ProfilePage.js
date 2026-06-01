@@ -64,6 +64,7 @@ const ProfilePage = () => {
     serverConfigured: pushServerConfigured,
     subscribe: enablePush,
     unsubscribe: disablePush,
+    sendLocalNotification,
   } = usePushNotifications();
 
   const [profil, setProfil] = useState(null);
@@ -236,6 +237,12 @@ const ProfilePage = () => {
     const result = await disablePush();
     setPushMessage(result.success ? '✅ Notificările au fost dezactivate.' : `❌ ${result.message}`);
     setTimeout(() => setPushMessage(''), 3500);
+  };
+
+  const handleLocalPushTest = async () => {
+    const result = await sendLocalNotification();
+    setPushMessage(result.success ? `✅ ${result.message}` : `❌ ${result.message}`);
+    setTimeout(() => setPushMessage(''), 4500);
   };
 
   // ═══════════════════════════════════════
@@ -649,6 +656,15 @@ const ProfilePage = () => {
                   {pushLoading ? '⏳ Se dezactivează...' : '🔕 Oprește notificările'}
                 </button>
               )}
+
+              <button
+                className="pr-btn-primary"
+                onClick={handleLocalPushTest}
+                disabled={!pushSupported || pushLoading}
+                style={{ background: 'linear-gradient(135deg, #0ea5e9, #2563eb)' }}
+              >
+                📳 Test local pe acest dispozitiv
+              </button>
             </div>
           </div>
 
