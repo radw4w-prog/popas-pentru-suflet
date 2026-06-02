@@ -1,11 +1,18 @@
 import Link from 'next/link';
 import VersesPage from '@/views/VersesPage';
 import { getBibleBooksByTestament } from '@/data/bibleBooks';
+import { createSeoMetadata } from '@/lib/seoMetadata';
 
-export const metadata = {
-  title: 'Biblia Cornilescu online - 31.102 versete',
+export const metadata = createSeoMetadata({
+  title: 'Biblia Cornilescu online — 31.102 versete',
   description: 'Citește Biblia Cornilescu online gratuit. Explorează cele 66 de cărți ale Bibliei, accesează rapid capitolele și versetele importante.',
-};
+  path: '/biblia',
+  ogTitle: 'Biblia Cornilescu online — 66 de cărți',
+  ogDescription: 'Explorează cele 66 de cărți ale Bibliei și citește versetele rapid, online și gratuit.',
+  imageTitle: 'Biblia Cornilescu online',
+  imageSubtitle: '66 de cărți, 31.102 versete și acces rapid la capitole',
+  imageTag: 'Biblia online',
+});
 
 export const dynamic = 'force-dynamic';
 

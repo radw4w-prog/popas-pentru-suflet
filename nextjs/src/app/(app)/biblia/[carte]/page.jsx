@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getAdjacentBibleBooks, getBibleBookBySlug, getBibleBookDescription, bibleBooks } from '@/data/bibleBooks';
 import { getBibleBookSchemas } from '@/lib/structuredData';
+import { buildOgImageUrl } from '@/lib/seoMetadata';
 
 export const dynamicParams = false;
 
@@ -17,6 +18,11 @@ export function generateMetadata({ params }) {
 
   const description = getBibleBookDescription(book);
   const url = `https://popas-pentru-suflet.vercel.app/biblia/${book.slug}`;
+  const imageUrl = buildOgImageUrl({
+    title: `${book.name} — Biblia Cornilescu`,
+    subtitle: `${book.chapters} capitole din ${book.testament === 'VT' ? 'Vechiul Testament' : 'Noul Testament'}`,
+    tag: 'Biblia online',
+  });
 
   return {
     title: `${book.name} — Biblia Cornilescu online`,
@@ -27,10 +33,20 @@ export function generateMetadata({ params }) {
       description,
       url,
       type: 'article',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${book.name} — Biblia Cornilescu online`,
+        },
+      ],
     },
     twitter: {
+      card: 'summary_large_image',
       title: `${book.name} — Biblia Cornilescu online`,
       description,
+      images: [imageUrl],
     },
   };
 }

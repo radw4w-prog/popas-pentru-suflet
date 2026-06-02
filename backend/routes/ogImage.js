@@ -5,13 +5,56 @@ const router = express.Router();
 let currentOgImageUrl = null;
 
 router.get('/', (req, res) => {
-  if (currentOgImageUrl) {
+  const escapeXml = (value = '') => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+
+  const title = typeof req.query.title === 'string' && req.query.title.trim()
+    ? req.query.title.trim()
+    : null;
+  const subtitle = typeof req.query.subtitle === 'string' ? req.query.subtitle.trim() : '';
+  const tag = typeof req.query.tag === 'string' && req.query.tag.trim()
+    ? req.query.tag.trim()
+    : 'Popas pentru Suflet';
+
+  if (!title && currentOgImageUrl) {
     return res.redirect(302, currentOgImageUrl);
   }
+
+  const finalTitle = escapeXml(title || 'Popas pentru Suflet');
+  const finalSubtitle = escapeXml(subtitle || 'Biblia online, devoțional zilnic și rugăciuni în română');
+  const finalTag = escapeXml(tag);
+
   res.setHeader('Content-Type', 'image/svg+xml');
-  res.send(`<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-    <rect width="1200" height="630" fill="#0a0a0f"/>
-    <text x="600" y="315" font-family="serif" font-size="48" fill="#d4af37" text-anchor="middle">Popas pentru Suflet</text>
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(`<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${finalTitle}">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0a0a0f" />
+        <stop offset="55%" stop-color="#111827" />
+        <stop offset="100%" stop-color="#1f2937" />
+      </linearGradient>
+      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#d4af37" />
+        <stop offset="100%" stop-color="#f4d03f" />
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)" />
+    <circle cx="1040" cy="110" r="170" fill="rgba(212,175,55,0.08)" />
+    <circle cx="120" cy="540" r="210" fill="rgba(59,130,246,0.08)" />
+    <rect x="80" y="82" rx="24" ry="24" width="220" height="56" fill="rgba(212,175,55,0.10)" stroke="rgba(212,175,55,0.25)" />
+    <text x="190" y="117" font-family="Inter, Arial, sans-serif" font-size="22" fill="#d4af37" text-anchor="middle" font-weight="700">${finalTag}</text>
+    <text x="80" y="240" font-family="Georgia, serif" font-size="64" fill="#f9fafb" font-weight="700">${finalTitle}</text>
+    <foreignObject x="80" y="275" width="1040" height="180">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: Inter, Arial, sans-serif; font-size: 30px; line-height: 1.45; color: #d1d5db; max-width: 980px;">
+        ${finalSubtitle}
+      </div>
+    </foreignObject>
+    <rect x="80" y="520" width="1040" height="2" fill="url(#accent)" opacity="0.55" />
+    <text x="80" y="565" font-family="Inter, Arial, sans-serif" font-size="22" fill="#9ca3af">popas-pentru-suflet.vercel.app</text>
   </svg>`);
 });
 
