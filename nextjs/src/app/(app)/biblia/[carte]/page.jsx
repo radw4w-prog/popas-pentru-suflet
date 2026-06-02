@@ -69,19 +69,20 @@ export default async function BibleBookPage({ params, searchParams }) {
 
   return (
     <>
-      {schemas.map((schema, index) => (
-        <script
-          key={index}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
-      )}
+      {schemas.map((schema, index) => {
+        const schemaJson = JSON.stringify(schema);
+        return (
+          <script
+            key={index}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: schemaJson }}
+          />
+        );
+      })}
       
       <div className="book-page-container">
-        {/* Back Link */}
         <Link href="/biblia" className="back-link">← Înapoi la lista cărților</Link>
 
-        {/* Book Header */}
         <div className="book-header">
           <h1>{book.name}</h1>
           <p className="book-meta">
@@ -90,7 +91,6 @@ export default async function BibleBookPage({ params, searchParams }) {
           <p className="book-theme">{book.theme}</p>
         </div>
 
-        {/* Navigation */}
         <div className="book-navigation">
           {previous && (
             <Link href={`/biblia/${previous.slug}?capitol=${previous.chapters}`} className="nav-link prev">
@@ -107,7 +107,6 @@ export default async function BibleBookPage({ params, searchParams }) {
           )}
         </div>
 
-        {/* Chapter Grid */}
         <div className="chapter-grid-container">
           <h3>Selectează capitolul</h3>
           <div className="chapter-grid">
@@ -123,7 +122,6 @@ export default async function BibleBookPage({ params, searchParams }) {
           </div>
         </div>
 
-        {/* Verses Placeholder */}
         <div className="verses-section">
           <h2>Capitolul {currentChapter}</h2>
           <p className="verses-info">
