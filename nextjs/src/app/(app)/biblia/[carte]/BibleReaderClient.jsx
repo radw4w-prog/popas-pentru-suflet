@@ -94,7 +94,8 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet.onrender.com';
       
-      await fetch(`${apiUrl}/api/reading/mark-read`, {
+      // Use existing /api/reading/mark endpoint
+      await fetch(`${apiUrl}/api/reading/mark`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,19 +108,6 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
       });
       
       setSavedToJourney(true);
-      
-      // Also mark spiritual journey activity
-      await fetch(`${apiUrl}/api/journey/activity`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          type: 'biblia',
-          data: { carte: bookName, capitol: currentChapter }
-        })
-      });
     } catch (err) {
       console.log('Journey save failed:', err);
     }
