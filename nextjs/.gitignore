@@ -1,41 +1,163 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ===========================================
+# POPAS PENTRU SUFLET - .gitignore
+# Next.js + Vercel Deployment
+# ===========================================
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# ===========================================
+# NODE MODULES - toate proiectele
+# ===========================================
+**/node_modules/
+**/npm-debug.log*
+**/yarn-error.log
+.pnpm-store/
 
-# testing
-/coverage
+# ===========================================
+# BUILD OUTPUTS
+# ===========================================
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/.expo/
 
-# next.js
-/.next/
-/out/
+# ===========================================
+# CACHE & TEMP FILES
+# ===========================================
+**/.cache/
+**/.parcel-cache/
+**/.turbo/
+**/.vite/
+**/.svelte-kit/
+**/coverage/
+**/.nyc_output/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/__pycache__/
+**/*.pyc
+**/.tox/
 
-# production
-/build
+# ===========================================
+# ENVIRONMENT FILES - SECRETE
+# ===========================================
+**/.env
+**/.env.local
+**/.env.*.local
+# Păstrează .env.example dacă vrei să documentezi variabilele
+# !**/.env.example
 
-# misc
-.DS_Store
-*.pem
+# ===========================================
+# MONGODB DATA FILES - CRITICAL
+# ===========================================
+data/
+**/data/*.wt
+**/data/*-*.wt
+**/data/_mdb_catalog.wt
+**/data/WiredTiger*
+**/data/journal/
+**/data/sizeStorer.wt
+**/data/storage.bson
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# ===========================================
+# ANDROID TWA BUILD ARTIFACTS - NU SE COMMITĂ
+# ===========================================
+twa/**/*.apk
+twa/**/*.aab
+twa/**/*.keystore
+twa/.gradle/
+twa/build/
+twa/app/build/
+twa/.idea/
+twa/*.iml
+twa/local.properties
 
-# env files (can opt-in for committing if needed)
-.env*
+# Nu exclude tot twa/ pentru că vrei să păstrezi sursele Android
+# Dacă nu ai nevoie de sursele Android, poți exlua tot:
+# twa/
 
-# vercel
-.vercel
+# ===========================================
+# LEGACY FRONTEND (React/CRA) - Arhivează dacă vrei
+# ===========================================
+# Dacă păstrezi codul pentru referință, arhivează-l:
+# frontend/public/uploads/
+# frontend/public/images/
+# Nu exclude tot frontend/ - poate vrei să revii la el
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# ===========================================
+# VERCEL
+# ===========================================
+.vercel/
+
+# ===========================================
+# EDITOR FILES
+# ===========================================
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store
+**/Thumbs.db
+
+# ===========================================
+# LOGS
+# ===========================================
+**/*.log
+**/logs/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# ===========================================
+# DOCKER
+# ===========================================
+**/.dockerignore
+# docker-compose.yml ar trebui păstrat dacă îl folosești
+
+# ===========================================
+# SECURE FILES
+# ===========================================
+**/*.pem
+**/*.key
+**/credentials.json
+**/secrets.json
+
+# ===========================================
+# UPLOADS & MEDIA (pentru development local)
+# ===========================================
+**/uploads/
+**/public/uploads/
+**/*.png.bak
+**/*.jpg.bak
+**/*.jpeg.bak
+
+# ===========================================
+# NEW FOLDER (gol, de șters)
+# ===========================================
+New folder/
+
+# ===========================================
+# NOTES & DOCS (opțional - decomentează dacă vrei)
+# ===========================================
+# docs/de-adaugat.txt
+# *.md (exclud README-urile de la rădăcină)
+# README.md
+# LICENSE*
+# THIRD-PARTY-NOTICES
+
+# ===========================================
+# GITHUB
+# ===========================================
+.github/
+# Păstrează doar dacă ai workflows utile
+# !.github/workflows/
+
+# ===========================================
+# NPM / YARN / PNPM LOCK FILES
+# ===========================================
+# Poți alege un singur package manager:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+# Pentru monorepo, păstrează lock files la rădăcină
+lock files/
