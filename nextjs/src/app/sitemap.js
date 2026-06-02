@@ -1,3 +1,5 @@
+import { bibleBooks } from '@/data/bibleBooks';
+
 // ═══ Sitemap dinamic generat de Next.js ═══
 // Acesta va fi servit la /sitemap.xml automat de App Router
 
@@ -5,7 +7,7 @@ export default function sitemap() {
   const baseUrl = 'https://popas-pentru-suflet.vercel.app';
   const azi = new Date().toISOString().split('T')[0];
 
-  return [
+  const staticPages = [
     {
       url: `${baseUrl}/landing`,
       lastModified: azi,
@@ -27,8 +29,8 @@ export default function sitemap() {
     {
       url: `${baseUrl}/biblia`,
       lastModified: azi,
-      changeFrequency: 'monthly',
-      priority: 0.9,
+      changeFrequency: 'weekly',
+      priority: 0.95,
     },
     {
       url: `${baseUrl}/audio`,
@@ -55,4 +57,13 @@ export default function sitemap() {
       priority: 0.7,
     },
   ];
+
+  const bibleBookPages = bibleBooks.map((book) => ({
+    url: `${baseUrl}/biblia/${book.slug}`,
+    lastModified: azi,
+    changeFrequency: 'monthly',
+    priority: 0.85,
+  }));
+
+  return [...staticPages, ...bibleBookPages];
 }

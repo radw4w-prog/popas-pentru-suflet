@@ -14,7 +14,7 @@ const FONT_FAMILIES = {
   system: { label: 'System', value: 'system-ui, -apple-system, sans-serif' },
 };
 
-const BibleNavigator = ({ onSelectCapitol, onClose }) => {
+const BibleNavigator = ({ onSelectCapitol, onClose, initialCarteName = '', initialCapitol = null }) => {
   const [step, setStep] = useState('carti');
   const [ordineBiblie, setOrdineBiblie] = useState([]);
   const [cartiData, setCartiData] = useState([]);
@@ -32,6 +32,7 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   // Popup referință
   const [refPopup, setRefPopup] = useState(null);
   const popupRef = useRef(null);
+  const initialSelectionApplied = useRef(false);
   
   // ═══ SEARCH ═══
   const [searchQuery, setSearchQuery] = useState('');
@@ -297,48 +298,72 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
     });
   };
 
-  const handleSelectCarte = async (carte) => {
-    setSelectedCarte(carte); setSelectedCapitol(null); setVersete([]);
-    setStep('capitole'); setRefPopup(null);
-    // Fetch reading progress for this book
-    if (isAuthenticated) {
-      try {
-        const r = await api.get(`/api/reading/carti`, { headers: getHeaders() });
-        if (r.data?.success) {
-          const bookProgress = r.data.carti?.find(c => c.carte === carte.carte);
-          if (bookProgress?.capitoleCitite) {
-            setReadChapters(new Set(bookProgress.capitoleCitite));
-          } else {
-            setReadChapters(new Set());
-          }
+  const loadReadChaptersForBook = async (carte) => {
+    if (!isAuthenticated) return;
+    try {
+      const r = await api.get(`/api/reading/carti`, { headers: getHeaders() });
+      if (r.data?.success) {
+        const bookProgress = r.data.carti?.find(c => c.carte === carte.carte);
+        if (bookProgress?.capitoleCitite) {
+          setReadChapters(new Set(bookProgress.capitoleCitite));
+        } else {
+          setReadChapters(new Set());
         }
-      } catch { setReadChapters(new Set()); }
+      }
+    } catch {
+      setReadChapters(new Set());
     }
   };
 
-  const handleSelectCapitol = async (capitol) => {
-    setSelectedCapitol(capitol); setStep('versete'); setLoadingVersete(true);
-    setReferinteMap({}); setRefPopup(null); setEditingNote(null); setNoteText('');
-    // Scroll to top
+  const openChapterForBook = async (carte, capitol) => {
+    setSelectedCarte(carte);
+    setSelectedCapitol(capitol);
+    setStep('versete');
+    setLoadingVersete(true);
+    setReferinteMap({});
+    setRefPopup(null);
+    setEditingNote(null);
+    setNoteText('');
     document.querySelector('.bible-nav-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+
     try {
-      const r = await api.get(`/api/verses?carte=${encodeURIComponent(selectedCarte.carte)}&capitol=${capitol}&limit=500`);
+      const r = await api.get(`/api/verses?carte=${encodeURIComponent(carte.carte)}&capitol=${capitol}&limit=500`);
       setVersete(r.data?.versete || []);
-      await Promise.all([fetchBookmarks(selectedCarte.carte, capitol), fetchReferinte(selectedCarte.carte, capitol), fetchNotes(selectedCarte.carte, capitol)]);
-    } catch (e) { console.error(e); }
-    finally { setLoadingVersete(false); }
-    if (onSelectCapitol) onSelectCapitol(selectedCarte.carte, capitol);
-    // Marchează capitolul ca citit
+      await Promise.all([
+        loadReadChaptersForBook(carte),
+        fetchBookmarks(carte.carte, capitol),
+        fetchReferinte(carte.carte, capitol),
+        fetchNotes(carte.carte, capitol)
+      ]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingVersete(false);
+    }
+
+    if (onSelectCapitol) onSelectCapitol(carte.carte, capitol);
+
     if (isAuthenticated) {
       try {
         await api.post('/api/reading/mark', {
-          carte: selectedCarte.carte,
-          abreviere: selectedCarte.ab,
+          carte: carte.carte,
+          abreviere: carte.ab,
           capitol,
-          ordineBiblie: selectedCarte.ordine
+          ordineBiblie: carte.ordine
         }, { headers: getHeaders() });
       } catch {}
     }
+  };
+
+  const handleSelectCarte = async (carte) => {
+    setSelectedCarte(carte); setSelectedCapitol(null); setVersete([]);
+    setStep('capitole'); setRefPopup(null);
+    await loadReadChaptersForBook(carte);
+  };
+
+  const handleSelectCapitol = async (capitol) => {
+    if (!selectedCarte) return;
+    await openChapterForBook(selectedCarte, capitol);
   };
 
   const handleBack = () => {
@@ -366,6 +391,33 @@ const BibleNavigator = ({ onSelectCapitol, onClose }) => {
   };
 
   const carti = getCartiSorted();
+
+  useEffect(() => {
+    if (initialSelectionApplied.current) return;
+    if (!initialCarteName || !ordineBiblie.length || !cartiData.length) return;
+
+    const normalizedTarget = decodeURIComponent(initialCarteName).trim().toLowerCase();
+    const match = ordineBiblie.find((item) => item.carte.trim().toLowerCase() === normalizedTarget);
+    if (!match) {
+      initialSelectionApplied.current = true;
+      return;
+    }
+
+    const carteInfo = cartiData.find((c) => c.carte === match.carte);
+    const carteObj = {
+      ...match,
+      totalCapitole: carteInfo?.totalCapitole || 0,
+      totalVersete: carteInfo?.totalVersete || 0,
+    };
+
+    initialSelectionApplied.current = true;
+
+    if (initialCapitol && Number(initialCapitol) > 0) {
+      openChapterForBook(carteObj, Number(initialCapitol));
+    } else {
+      handleSelectCarte(carteObj);
+    }
+  }, [initialCarteName, initialCapitol, ordineBiblie, cartiData]);
 
   return (
     <div className="bible-nav">
