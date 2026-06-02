@@ -130,7 +130,7 @@ router.post('/test', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Notificare de test trimisă către ${result.delivered} dispozitiv(e).`,
+      message: `✅ Notificarea de test a fost trimisă către ${result.delivered} dispozitiv(e).`,
       ...result
     });
   } catch (error) {
@@ -148,7 +148,7 @@ router.post('/test-devotional', async (req, res) => {
       ? `${devotional.title} — acesta este un test pentru notificarea de devoțional.`
       : 'Acesta este un test pentru notificarea de devoțional.';
 
-    await createNotification(
+    const created = await createNotification(
       req.user._id,
       'devotional',
       titlu,
@@ -157,7 +157,14 @@ router.post('/test-devotional', async (req, res) => {
       { url: '/devotional', tag: 'daily-devotional-test' }
     );
 
-    res.json({ success: true, message: 'Notificarea de test pentru devoțional a fost trimisă.' });
+    if (!created) {
+      return res.status(409).json({
+        success: false,
+        message: '⚠️ Testul pentru devoțional nu a fost trimis: notificarea există deja recent sau trimiterea a eșuat.'
+      });
+    }
+
+    res.json({ success: true, message: '✅ Testul pentru devoțional a fost trimis.' });
   } catch (error) {
     console.error('Eroare test-devotional:', error.message);
     res.status(500).json({ success: false, message: 'Nu am putut trimite testul pentru devoțional.' });
@@ -167,7 +174,7 @@ router.post('/test-devotional', async (req, res) => {
 // POST /api/push/test-reading
 router.post('/test-reading', async (req, res) => {
   try {
-    await createNotification(
+    const created = await createNotification(
       req.user._id,
       'reminder',
       '📖 Test reminder citire',
@@ -176,7 +183,14 @@ router.post('/test-reading', async (req, res) => {
       { url: '/reading', tag: 'reading-reminder-test' }
     );
 
-    res.json({ success: true, message: 'Reminder-ul de test pentru citire a fost trimis.' });
+    if (!created) {
+      return res.status(409).json({
+        success: false,
+        message: '⚠️ Testul pentru citire nu a fost trimis: notificarea există deja recent sau trimiterea a eșuat.'
+      });
+    }
+
+    res.json({ success: true, message: '✅ Testul pentru reminder-ul de citire a fost trimis.' });
   } catch (error) {
     console.error('Eroare test-reading:', error.message);
     res.status(500).json({ success: false, message: 'Nu am putut trimite testul pentru citire.' });

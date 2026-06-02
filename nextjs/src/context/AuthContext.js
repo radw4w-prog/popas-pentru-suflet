@@ -231,7 +231,7 @@ export const AuthProvider = ({ children }) => {
               response.authResponse.userID
             ));
           })().catch(e => resolve({ success: false, message: e.message }));
-        }, { scope: 'public_profile', return_scopes: true });
+        }, { scope: 'public_profile,email', return_scopes: true });
       });
     } catch (error) {
       return { success: false, message: error.message };

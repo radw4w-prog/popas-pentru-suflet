@@ -5,6 +5,9 @@ const Post = require('../models/Post');
 const Template = require('../models/Template');
 const PrayerRequest = require('../models/PrayerRequest');
 const DailyDevotional = require('../models/DailyDevotional');
+const PushSubscription = require('../models/PushSubscription');
+const { isConfigured: isWebPushConfigured } = require('../services/webPushService');
+const schedulerService = require('../services/schedulerService');
 const { protect, adminOnly } = require('../middleware/auth');
 
 router.use(protect, adminOnly);
@@ -476,6 +479,164 @@ router.delete('/devotionals/:id', async (req, res) => {
     res.json({ success: true, message: `Devoțional "${devotional.title}" șters.` });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Eroare la ștergere.' });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// PUSH SUBSCRIPTIONS & NOTIFICATION HEALTH
+// ═══════════════════════════════════════════════
+
+// GET /api/admin/push-subscriptions
+router.get('/push-subscriptions', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, active = '', search = '' } = req.query;
+    const filter = {};
+
+    if (active !== '') {
+      filter.active = active === 'true';
+    }
+
+    if (search) {
+      const matchedUsers = await User.find({
+        $or: [
+          { nume: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      }).select('_id');
+
+      filter.userId = { $in: matchedUsers.map(u => u._id) };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [subscriptions, total, stats, devices] = await Promise.all([
+      PushSubscription.find(filter)
+        .populate('userId', 'nume email rol activ')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      PushSubscription.countDocuments(filter),
+      Promise.all([
+        PushSubscription.countDocuments(),
+        PushSubscription.countDocuments({ active: true }),
+        PushSubscription.countDocuments({ active: false }),
+        PushSubscription.countDocuments({ lastError: { $regex: 'expired', $options: 'i' } })
+      ]),
+      PushSubscription.aggregate([
+        {
+          $project: {
+            bucket: {
+              $switch: {
+                branches: [
+                  { case: { $regexMatch: { input: { $ifNull: ['$userAgent', ''] }, regex: 'Android', options: 'i' } }, then: 'Android' },
+                  { case: { $regexMatch: { input: { $ifNull: ['$userAgent', ''] }, regex: 'iPhone|iPad|iOS', options: 'i' } }, then: 'iOS' },
+                  { case: { $regexMatch: { input: { $ifNull: ['$userAgent', ''] }, regex: 'Windows', options: 'i' } }, then: 'Windows' },
+                  { case: { $regexMatch: { input: { $ifNull: ['$userAgent', ''] }, regex: 'Macintosh|Mac OS', options: 'i' } }, then: 'macOS' }
+                ],
+                default: 'Alt dispozitiv'
+              }
+            }
+          }
+        },
+        { $group: { _id: '$bucket', total: { $sum: 1 } } },
+        { $sort: { total: -1 } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      subscriptions,
+      total,
+      pagini: Math.ceil(total / parseInt(limit)),
+      paginaCurenta: parseInt(page),
+      stats: {
+        total: stats[0],
+        active: stats[1],
+        inactive: stats[2],
+        expired: stats[3]
+      },
+      devices
+    });
+  } catch (error) {
+    console.error('Eroare push-subscriptions:', error.message);
+    res.status(500).json({ success: false, message: 'Eroare la încărcarea abonărilor push.' });
+  }
+});
+
+// PUT /api/admin/push-subscriptions/:id/toggle
+router.put('/push-subscriptions/:id/toggle', async (req, res) => {
+  try {
+    const subscription = await PushSubscription.findById(req.params.id);
+    if (!subscription) {
+      return res.status(404).json({ success: false, message: 'Abonarea push nu a fost găsită.' });
+    }
+
+    subscription.active = !subscription.active;
+    subscription.lastError = subscription.active ? null : 'disabled-by-admin';
+    await subscription.save();
+
+    res.json({
+      success: true,
+      active: subscription.active,
+      message: subscription.active ? 'Abonarea push a fost reactivată.' : 'Abonarea push a fost dezactivată.'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Eroare la actualizarea abonării push.' });
+  }
+});
+
+// GET /api/admin/notifications/status
+router.get('/notifications/status', async (req, res) => {
+  try {
+    const [totalSubscriptions, activeSubscriptions, usersWithPush, recentErrors] = await Promise.all([
+      PushSubscription.countDocuments(),
+      PushSubscription.countDocuments({ active: true }),
+      PushSubscription.distinct('userId', { active: true }).then(ids => ids.length),
+      PushSubscription.find({ lastError: { $ne: null } })
+        .populate('userId', 'nume email')
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .lean()
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        vapidConfigured: isWebPushConfigured(),
+        schedulerEnabled: process.env.ENABLE_SCHEDULER === 'true',
+        timezone: 'Europe/Bucharest',
+        devotionalCron: '07:05',
+        readingCrons: ['08:00', '21:00'],
+        serverTime: new Date().toISOString(),
+        totalSubscriptions,
+        activeSubscriptions,
+        usersWithPush,
+        recentErrors
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Eroare la încărcarea statusului notificărilor.' });
+  }
+});
+
+// POST /api/admin/notifications/run-devotional
+router.post('/notifications/run-devotional', async (req, res) => {
+  try {
+    await schedulerService.runDevotionalNotificationsJob();
+    res.json({ success: true, message: 'Job-ul pentru devoțional a fost rulat manual.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Nu am putut rula job-ul de devoțional.' });
+  }
+});
+
+// POST /api/admin/notifications/run-reading
+router.post('/notifications/run-reading', async (req, res) => {
+  try {
+    await schedulerService.runNotificationsJob();
+    res.json({ success: true, message: 'Job-ul pentru reminder-ele de citire a fost rulat manual.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Nu am putut rula job-ul pentru citire.' });
   }
 });
 

@@ -24,6 +24,12 @@ const AdminPage = () => {
   const [prayers, setPrayers] = useState([]);
   const [prayerStats, setPrayerStats] = useState({});
   const [devotionals, setDevotionals] = useState([]);
+  const [pushSubscriptions, setPushSubscriptions] = useState([]);
+  const [pushOverview, setPushOverview] = useState({ total: 0, active: 0, inactive: 0, expired: 0 });
+  const [pushDevices, setPushDevices] = useState([]);
+  const [notificationHealth, setNotificationHealth] = useState(null);
+  const [notifActionLoading, setNotifActionLoading] = useState(false);
+  const [notifActionMessage, setNotifActionMessage] = useState('');
   const [showAddTemplate, setShowAddTemplate] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: '', url: '', categorie: 'spiritual' });
   const [editingDevotional, setEditingDevotional] = useState(null);
@@ -83,6 +89,22 @@ const AdminPage = () => {
     if (res.data.success) setDevotionals(res.data.devotionale || []);
   }, [getHeaders]);
 
+  const loadPushSubscriptions = useCallback(async () => {
+    const res = await axios.get(`${API_URL}/api/admin/push-subscriptions?limit=100`, getHeaders());
+    if (res.data.success) {
+      setPushSubscriptions(res.data.subscriptions || []);
+      setPushOverview(res.data.stats || { total: 0, active: 0, inactive: 0, expired: 0 });
+      setPushDevices(res.data.devices || []);
+    }
+  }, [getHeaders]);
+
+  const loadNotificationHealth = useCallback(async () => {
+    const res = await axios.get(`${API_URL}/api/admin/notifications/status`, getHeaders());
+    if (res.data.success) {
+      setNotificationHealth(res.data.data || null);
+    }
+  }, [getHeaders]);
+
   const loadAll = useCallback(async () => {
     try {
       setLoading(true);
@@ -94,7 +116,16 @@ const AdminPage = () => {
         return;
       }
 
-      await Promise.all([loadDashboard(), loadUsers(), loadPosts(), loadTemplates(), loadPrayers(), loadDevotionals()]);
+      await Promise.all([
+        loadDashboard(),
+        loadUsers(),
+        loadPosts(),
+        loadTemplates(),
+        loadPrayers(),
+        loadDevotionals(),
+        loadPushSubscriptions(),
+        loadNotificationHealth()
+      ]);
     } catch (err) {
       console.error(err);
       const status = err.response?.status;
@@ -114,7 +145,7 @@ const AdminPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadDashboard, loadUsers, loadPosts, loadTemplates, loadPrayers, loadDevotionals, logout]);
+  }, [loadDashboard, loadUsers, loadPosts, loadTemplates, loadPrayers, loadDevotionals, loadPushSubscriptions, loadNotificationHealth, logout]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -162,6 +193,34 @@ const AdminPage = () => {
       await loadDashboard();
     } catch (err) {
       alert(err.response?.data?.message || 'Eroare la ștergerea utilizatorului.');
+    }
+  };
+
+  const runNotificationJob = async (type) => {
+    try {
+      setNotifActionLoading(true);
+      setNotifActionMessage('');
+      const endpoint = type === 'devotional' ? 'run-devotional' : 'run-reading';
+      const res = await axios.post(`${API_URL}/api/admin/notifications/${endpoint}`, {}, getHeaders());
+      if (res.data.success) {
+        setNotifActionMessage(`✅ ${res.data.message}`);
+        await loadNotificationHealth();
+      }
+    } catch (err) {
+      setNotifActionMessage(`❌ ${err.response?.data?.message || 'Nu am putut rula job-ul.'}`);
+    } finally {
+      setNotifActionLoading(false);
+      setTimeout(() => setNotifActionMessage(''), 5000);
+    }
+  };
+
+  const togglePushSubscription = async (subscriptionId) => {
+    try {
+      await axios.put(`${API_URL}/api/admin/push-subscriptions/${subscriptionId}/toggle`, {}, getHeaders());
+      await loadPushSubscriptions();
+      await loadNotificationHealth();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Eroare la actualizarea abonării push.');
     }
   };
 
@@ -248,6 +307,7 @@ const AdminPage = () => {
           { key: 'prayers', label: '🙏 Rugăciuni' },
           { key: 'devotionals', label: '📋 Devoționale' },
           { key: 'posts', label: '📝 Postări' },
+          { key: 'push', label: '📲 Push & Automatizări' },
           { key: 'settings', label: '⚙️ Setări Site' }
         ].map(tab => (
           <button
@@ -920,6 +980,133 @@ const AdminPage = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ═══ PUSH & AUTOMATIZĂRI ═══ */}
+      {activeTab === 'push' && (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gap: '1rem'
+          }}>
+            <StatCard title="Subscriptions totale" value={pushOverview.total || 0} icon="📲" color="rgba(59,130,246,0.1)" />
+            <StatCard title="Subscriptions active" value={pushOverview.active || 0} icon="✅" color="rgba(34,197,94,0.1)" />
+            <StatCard title="Subscriptions inactive" value={pushOverview.inactive || 0} icon="⛔" color="rgba(156,163,175,0.1)" />
+            <StatCard title="Subscriptions expirate" value={pushOverview.expired || 0} icon="⌛" color="rgba(245,158,11,0.1)" />
+          </div>
+
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>📡 Status notificări & automatizări</h3>
+              <button onClick={async () => { await loadPushSubscriptions(); await loadNotificationHealth(); }} style={smallBtnStyle}>🔄 Reîncarcă</button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={settingRowStyle}><span style={{ color: 'var(--text-secondary)' }}>VAPID configurat</span><strong style={{ color: notificationHealth?.vapidConfigured ? '#22c55e' : '#ef4444' }}>{notificationHealth?.vapidConfigured ? 'Da' : 'Nu'}</strong></div>
+              <div style={settingRowStyle}><span style={{ color: 'var(--text-secondary)' }}>Scheduler activ</span><strong style={{ color: notificationHealth?.schedulerEnabled ? '#22c55e' : '#f59e0b' }}>{notificationHealth?.schedulerEnabled ? 'Da' : 'Nu'}</strong></div>
+              <div style={settingRowStyle}><span style={{ color: 'var(--text-secondary)' }}>Timezone</span><strong style={{ color: 'var(--text-primary)' }}>{notificationHealth?.timezone || 'Europe/Bucharest'}</strong></div>
+              <div style={settingRowStyle}><span style={{ color: 'var(--text-secondary)' }}>Utilizatori cu push activ</span><strong style={{ color: 'var(--text-primary)' }}>{notificationHealth?.usersWithPush || 0}</strong></div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <button onClick={() => runNotificationJob('devotional')} disabled={notifActionLoading} style={{ ...smallBtnStyle, color: '#f59e0b', borderColor: 'rgba(245,158,11,0.35)' }}>
+                {notifActionLoading ? '⏳...' : '☀️ Rulează test job devoțional'}
+              </button>
+              <button onClick={() => runNotificationJob('reading')} disabled={notifActionLoading} style={{ ...smallBtnStyle, color: '#6366f1', borderColor: 'rgba(99,102,241,0.35)' }}>
+                {notifActionLoading ? '⏳...' : '📖 Rulează test job citire'}
+              </button>
+            </div>
+
+            {notifActionMessage && (
+              <div style={{
+                padding: '0.85rem 1rem',
+                borderRadius: '10px',
+                marginBottom: '1rem',
+                fontSize: '0.82rem',
+                border: `1px solid ${notifActionMessage.startsWith('✅') ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)'}`,
+                background: notifActionMessage.startsWith('✅') ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                color: notifActionMessage.startsWith('✅') ? '#22c55e' : '#f87171'
+              }}>
+                {notifActionMessage}
+              </div>
+            )}
+
+            <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.18)', color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.7 }}>
+              <strong>Programări automate:</strong><br />
+              ☀️ Devoțional zilnic: <strong>{notificationHealth?.devotionalCron || '07:05'}</strong><br />
+              📖 Reminder citire: <strong>{notificationHealth?.readingCrons?.join(' și ') || '08:00 și 21:00'}</strong><br />
+              🕒 Ora serverului: <strong>{notificationHealth?.serverTime ? new Date(notificationHealth.serverTime).toLocaleString('ro-RO') : '—'}</strong>
+            </div>
+          </div>
+
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>📱 Abonări push active / recente</h3>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {pushDevices.map(device => (
+                  <span key={device._id} style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(212,175,55,0.1)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {device._id}: {device.total}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {pushSubscriptions.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)' }}>Nu există abonări push salvate încă.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                {pushSubscriptions.map(sub => (
+                  <div key={sub._id} style={{ border: `1px solid ${sub.active ? 'var(--border-color)' : 'rgba(239,68,68,0.28)'}`, borderRadius: '12px', padding: '1rem', background: sub.active ? 'transparent' : 'rgba(239,68,68,0.03)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
+                          {sub.userId?.nume || 'Utilizator necunoscut'}
+                          <span style={{ marginLeft: '0.5rem', fontSize: '0.72rem', padding: '2px 8px', borderRadius: '999px', background: sub.active ? 'rgba(34,197,94,0.14)' : 'rgba(239,68,68,0.14)', color: sub.active ? '#22c55e' : '#ef4444' }}>
+                            {sub.active ? 'Activă' : 'Inactivă'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>{sub.userId?.email || 'Fără email'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                          <span>🧭 {sub.userAgent?.match(/Android/i) ? 'Android' : sub.userAgent?.match(/iPhone|iPad|iOS/i) ? 'iOS' : sub.userAgent?.match(/Windows/i) ? 'Windows' : sub.userAgent?.match(/Mac/i) ? 'macOS' : 'Alt dispozitiv'}</span>
+                          <span>🕒 Ultim succes: {sub.lastSuccessAt ? new Date(sub.lastSuccessAt).toLocaleString('ro-RO') : 'niciunul'}</span>
+                          <span>🔄 Actualizat: {sub.updatedAt ? new Date(sub.updatedAt).toLocaleString('ro-RO') : '—'}</span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+                          Endpoint: {sub.endpoint?.slice(0, 90)}...
+                        </div>
+                        {sub.lastError && (
+                          <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#f59e0b' }}>
+                            Ultima eroare: {sub.lastError}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <button onClick={() => togglePushSubscription(sub._id)} style={{ ...smallBtnStyle, color: sub.active ? '#ef4444' : '#22c55e', borderColor: sub.active ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)' }}>
+                          {sub.active ? '⛔ Dezactivează' : '✅ Reactivează'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {notificationHealth?.recentErrors?.length > 0 && (
+              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary)' }}>⚠️ Erori recente push</h4>
+                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                  {notificationHealth.recentErrors.map(item => (
+                    <div key={item._id} style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>{item.userId?.email || 'Fără user'}</strong><br />
+                      {item.lastError || 'Fără detalii'}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

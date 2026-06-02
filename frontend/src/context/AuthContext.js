@@ -1,12 +1,81 @@
+'use client';
 // frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const FACEBOOK_APP_ID = process.env.REACT_APP_FACEBOOK_APP_ID || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '';
 
 let facebookSDKPromise = null;
+
+const supportsPushSync = () => (
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  'PushManager' in window
+);
+
+const getExistingPushSubscription = async () => {
+  if (!supportsPushSync()) return null;
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return null;
+    return await registration.pushManager.getSubscription();
+  } catch (error) {
+    console.error('Push sync: nu am putut citi subscription-ul curent.', error);
+    return null;
+  }
+};
+
+const syncPushSubscriptionWithBackend = async (token) => {
+  if (!token) return false;
+
+  const subscription = await getExistingPushSubscription();
+  if (!subscription) return false;
+
+  try {
+    await axios.post(
+      `${API_URL}/api/push/subscribe`,
+      { subscription: subscription.toJSON() },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return true;
+  } catch (error) {
+    console.error('Push sync: nu am putut reasocia subscription-ul la userul curent.', error.response?.data || error.message);
+    return false;
+  }
+};
+
+const detachPushSubscriptionFromBackend = async (token) => {
+  if (!token) return false;
+
+  const subscription = await getExistingPushSubscription();
+  const endpoint = subscription?.endpoint;
+  if (!endpoint) return false;
+
+  try {
+    await axios.post(
+      `${API_URL}/api/push/unsubscribe`,
+      { endpoint },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return true;
+  } catch (error) {
+    console.error('Push sync: nu am putut detașa subscription-ul la logout.', error.response?.data || error.message);
+    return false;
+  }
+};
 
 const loadFacebookSDK = (appId) => {
   if (typeof window === 'undefined') return Promise.reject(new Error('Browser only'));
@@ -43,6 +112,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(() => {
+    const token = localStorage.getItem('token');
+    detachPushSubscriptionFromBackend(token).catch(() => {});
+
     localStorage.removeItem('token');
     localStorage.removeItem('token_expiry');
     setAuthHeader(null);
@@ -67,6 +139,7 @@ export const AuthProvider = ({ children }) => {
         const res = await axios.get(`${API_URL}/api/auth/me`);
         if (res.data.success && res.data.user) {
           setAuthState({ user: res.data.user, loading: false });
+          syncPushSubscriptionWithBackend(savedToken).catch(() => {});
         } else {
           localStorage.removeItem('token');
           setAuthHeader(null);
@@ -95,6 +168,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token);
         setAuthHeader(token);
         setAuthState({ user: userData, loading: false });
+        syncPushSubscriptionWithBackend(token).catch(() => {});
         return { success: true, user: userData };
       }
       return { success: false, message: 'Autentificare eșuată.' };
@@ -111,6 +185,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token);
         setAuthHeader(token);
         setAuthState({ user: userData, loading: false });
+        syncPushSubscriptionWithBackend(token).catch(() => {});
         return { success: true, user: userData };
       }
       return { success: false, message: 'Înregistrare eșuată.' };
@@ -120,7 +195,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const ensureFacebookSDK = useCallback(async () => {
-    if (!FACEBOOK_APP_ID) throw new Error('Lipsește REACT_APP_FACEBOOK_APP_ID');
+    if (!FACEBOOK_APP_ID) throw new Error('Lipsește NEXT_PUBLIC_FACEBOOK_APP_ID');
     return await loadFacebookSDK(FACEBOOK_APP_ID);
   }, []);
 
@@ -132,6 +207,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token);
         setAuthHeader(token);
         setAuthState({ user: userData, loading: false });
+        syncPushSubscriptionWithBackend(token).catch(() => {});
         return { success: true, user: userData };
       }
       return { success: false, message: 'Autentificarea cu Facebook a eșuat.' };
@@ -155,7 +231,7 @@ export const AuthProvider = ({ children }) => {
               response.authResponse.userID
             ));
           })().catch(e => resolve({ success: false, message: e.message }));
-        }, { scope: 'public_profile', return_scopes: true });
+        }, { scope: 'public_profile,email', return_scopes: true });
       });
     } catch (error) {
       return { success: false, message: error.message };
