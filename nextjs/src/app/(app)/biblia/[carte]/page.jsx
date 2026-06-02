@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { getAdjacentBibleBooks, getBibleBookBySlug, getBibleBookDescription, bibleBooks } from '@/data/bibleBooks';
 import { getBibleBookSchemas } from '@/lib/structuredData';
@@ -50,6 +51,35 @@ export async function generateMetadata({ params }) {
   };
 }
 
+// Loading component for Suspense
+function LoadingFallback() {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '50vh',
+      gap: '1rem'
+    }}>
+      <div style={{
+        width: '40px',
+        height: '40px',
+        border: '3px solid var(--border-color)',
+        borderTopColor: '#d4af37',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+      <p>Se încarcă...</p>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default async function BibleBookPage({ params }) {
   const resolvedParams = await params;
   const book = getBibleBookBySlug(resolvedParams.carte);
@@ -66,7 +96,9 @@ export default async function BibleBookPage({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <BibleBookClient bookSlug={book.slug} />
+      <Suspense fallback={<LoadingFallback />}>
+        <BibleBookClient bookSlug={book.slug} />
+      </Suspense>
     </>
   );
 }
