@@ -10,8 +10,9 @@ export function generateStaticParams() {
   return bibleBooks.map((book) => ({ carte: book.slug }));
 }
 
-export function generateMetadata({ params }) {
-  const book = getBibleBookBySlug(params.carte);
+export async function generateMetadata({ params }) {
+  const resolvedParams = await params;
+  const book = getBibleBookBySlug(resolvedParams.carte);
   if (!book) {
     return { title: 'Carte negăsită' };
   }
@@ -55,8 +56,9 @@ function testamentLabel(testament) {
   return testament === 'VT' ? 'Vechiul Testament' : 'Noul Testament';
 }
 
-export default function BibleBookPage({ params }) {
-  const book = getBibleBookBySlug(params.carte);
+export default async function BibleBookPage({ params }) {
+  const resolvedParams = await params;
+  const book = getBibleBookBySlug(resolvedParams.carte);
   if (!book) notFound();
 
   const { previous, next } = getAdjacentBibleBooks(book.slug);
