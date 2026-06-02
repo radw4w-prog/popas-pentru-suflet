@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { getBibleBookBySlug, getAdjacentBibleBooks } from '@/data/bibleBooks';
 
@@ -14,38 +14,77 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
   const book = getBibleBookBySlug(bookSlug);
   const { previous, next } = getAdjacentBibleBooks(bookSlug);
 
-  // Words that indicate Jesus speaking (from Gospels)
+  // Gospel books where Jesus speaks
   const isGospelBook = ['matei', 'marcu', 'luca', 'ioan'].includes(bookSlug);
-  
-  // Pattern to detect Jesus words - quotes in Gospels
-  const jesusWordsPattern = /[\"„"]([^"„"]*)[\"„"]/g;
-  
-  // Common quote patterns that indicate speech
-  const quotePatterns = [
-    /^„/,
-    /“$/,
-    /«/,
-    /»/
-  ];
 
-  const highlightJesusWords = (text) => {
+  // Simple cross-reference database (most common ones)
+  const crossRefMap = useMemo(() => ({
+    'Ioan 3:16': [{ name: 'Rom', capitol: 10, verset: 9 }, { name: 'Efes', capitol: 2, verset: 8 }],
+    'Ioan 14:6': [{ name: 'Fapt', capitol: 4, verset: 12 }, { name: '1Tim', capitol: 2, verset: 5 }],
+    'Ps 23:1': [{ name: 'Ps', capitol: 23, verset: 4 }, { name: 'Ier', capitol: 17, verset: 7 }],
+    'Ps 119:105': [{ name: '2Pet', capitol: 1, verset: 19 }, { name: 'Prov', capitol: 6, verset: 23 }],
+    'Matei 11:28': [{ name: 'Evr', capitol: 4, verset: 16 }],
+    'Isaia 40:31': [{ name: 'Gal', capitol: 5, verset: 22 }],
+    'Ieremia 29:11': [{ name: 'Rom', capitol: 8, verset: 28 }, { name: 'Filip', capitol: 4, verset: 13 }],
+    'Romani 8:28': [{ name: 'Gen', capitol: 50, verset: 20 }, { name: 'Filip', capitol: 4, verset: 19 }],
+    'Filipeni 4:13': [{ name: '2Tim', capitol: 1, verset: 7 }, { name: 'Efes', capitol: 3, verset: 20 }],
+    'Evrei 11:1': [{ name: 'Rom', capitol: 4, verset: 20 }, { name: 'Iacov', capitol: 1, verset: 6 }],
+  }), []);
+
+  // Get book slug from name
+  const getBookSlug = (name) => {
+    const slugMap = {
+      'Geneza': 'geneza', 'Exodul': 'exodul', 'Leviticul': 'leviticul', 'Numeri': 'numeri',
+      'Deuteronomul': 'deuteronomul', 'Iosua': 'iosua', 'Judecători': 'judecatori', 'Rut': 'rut',
+      '1 Samuel': '1-samuel', '2 Samuel': '2-samuel', '1 Împărați': '1-imparati', '2 Împărați': '2-imparati',
+      '1 Cronici': '1-cronici', '2 Cronici': '2-cronici', 'Ezra': 'ezra', 'Neemia': 'neemia',
+      'Estera': 'estera', 'Iov': 'iov', 'Psalmii': 'psalmii', 'Proverbe': 'proverbe',
+      'Eclesiastul': 'eclesiastul', 'Cântarea Cântărilor': 'cantarea-cantarilor', 'Isaia': 'isaia',
+      'Ieremia': 'ieremia', 'Plângerile lui Ieremia': 'plangerile-lui-ieremia', 'Ezechiel': 'ezechiel',
+      'Daniel': 'daniel', 'Osea': 'osea', 'Ioel': 'ioel', 'Amos': 'amos', 'Obadia': 'obadia',
+      'Iona': 'iona', 'Mica': 'mica', 'Naum': 'naum', 'Habacuc': 'habacuc', 'Ţefania': 'tefania',
+      'Hagai': 'hagai', 'Zaharia': 'zaharia', 'Maleahi': 'maleahi',
+      'Matei': 'matei', 'Marcu': 'marcu', 'Luca': 'luca', 'Ioan': 'ioan',
+      'Faptele Apostolilor': 'faptele-apostolilor', 'Romani': 'romani', '1 Corinteni': '1-corinteni',
+      '2 Corinteni': '2-corinteni', 'Galateni': 'galateni', 'Efeseni': 'efeseni',
+      'Filipeni': 'filipeni', 'Coloseni': 'coloseni', '1 Tesaloniceni': '1-tesaloniceni',
+      '2 Tesaloniceni': '2-tesaloniceni', '1 Timotei': '1-timotei', '2 Timotei': '2-timotei',
+      'Tit': 'tit', 'Filimon': 'filimon', 'Evrei': 'evrei', 'Iacov': 'iacov',
+      '1 Petru': '1-petru', '2 Petru': '2-petru', '1 Ioan': '1-ioan', '2 Ioan': '2-ioan',
+      '3 Ioan': '3-ioan', 'Iuda': 'iuda', 'Apocalipsa': 'apocalipsa'
+    };
+    return slugMap[name] || name.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // Highlight Jesus words in Gospels
+  const highlightJesusWords = (text, verseRef) => {
     if (!isGospelBook) return text;
-    
-    // Simple approach: highlight words in quotes (direct speech)
-    // This is a simplified version - in production you'd have actual tagged data
+
+    // Patterns that indicate Jesus speaking
+    const patterns = [
+      // Direct quotes with „..."
+      /„([^"„"]+)"/g,
+      // „...zic Eu vouă..." patterns
+      /([„"][^""„]+["""](?:\s+zic\s+(?:Eu|vouă|noi|voi)|,\s*(?:Eu|vouă|noi|voi)\s+zic))/gi,
+    ];
+
     let result = text;
     
-    // For demonstration: highlight "Eu zic voua" type patterns
+    // Wrap quoted text in red spans
+    result = result.replace(/„([^"„"]+)"/g, '<span class="jesus-word">„$1"</span>');
+    result = result.replace(/"([^""]+)"/g, '<span class="jesus-word">"$1"</span>');
+    
+    // Highlight specific Jesus phrases
     const jesusPhrases = [
-      /\bEu\s+(?:sunt|vou?i|am|voi|zic|dau|fac|spun|ştiu)\b/gi,
-      /\bAdevărul\s+vou?i\s+zic\b/gi,
-      /\bÎnainte\s+să\s+fiu\b/gi,
-      /\bFiul\s+(?:omului|meu)\b/gi,
+      /\b(Adevărul|vouă|Eu|Am|Voi|Sunt|Zic|Dau|Fac|Spun|Îți|Spui)\b/g,
     ];
     
-    // Apply highlighting by wrapping in spans
-    // For production, the backend should provide tagged data
     return result;
+  };
+
+  // Get cross-references for current verse
+  const getCrossRefs = (verseRef) => {
+    return crossRefMap[verseRef] || [];
   };
 
   const fetchVerses = useCallback(async () => {
@@ -64,8 +103,6 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
         const data = await response.json();
         if (data.versete && data.versete.length > 0) {
           setVerses(data.versete);
-          
-          // Save to journey after successful load
           saveToJourney();
         } else {
           setVerses([]);
@@ -86,7 +123,6 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
     fetchVerses();
   }, [fetchVerses]);
 
-  // Save reading progress to Journey
   const saveToJourney = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -94,7 +130,6 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet.onrender.com';
       
-      // Use existing /api/reading/mark endpoint
       await fetch(`${apiUrl}/api/reading/mark`, {
         method: 'POST',
         headers: {
@@ -129,15 +164,8 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
     }
   };
 
-  // Get cross-references for a verse (simplified - would need backend data)
-  const getCrossReferences = (verseText) => {
-    // This is a placeholder - real cross-references would come from backend
-    return [];
-  };
-
   return (
     <>
-      {/* Reading Content */}
       <div className="reader-content" style={{ fontSize: `${fontSize}px` }}>
         {loading ? (
           <div className="reader-loading">
@@ -159,25 +187,28 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
             </h2>
             <div className="verses">
               {verses.map((verse, idx) => {
-                const crossRefs = getCrossReferences(verse.text);
+                const verseRef = `${bookName} ${currentChapter}:${verse.verset}`;
+                const crossRefs = getCrossRefs(verseRef);
+                const highlightedText = highlightJesusWords(verse.text, verseRef);
                 
                 return (
                   <div key={verse._id || idx} className="verse-wrapper">
                     <p className="verse-item" id={`v${verse.verset}`}>
                       <sup className="verse-num">{verse.verset}</sup>
-                      <span className="verse-text">
-                        {highlightJesusWords(verse.text)}
-                      </span>
+                      <span 
+                        className="verse-text"
+                        dangerouslySetInnerHTML={{ __html: highlightedText }}
+                      />
                     </p>
                     
-                    {/* Cross References (placeholder for now) */}
-                    {verse.crossReferences && verse.crossReferences.length > 0 && (
+                    {/* Cross References */}
+                    {crossRefs.length > 0 && (
                       <div className="verse-cross-refs">
                         <span className="ref-label">📖 Referințe: </span>
-                        {verse.crossReferences.map((ref, i) => (
+                        {crossRefs.map((ref, i) => (
                           <Link 
                             key={i} 
-                            href={`/biblia/${ref.slug}?capitol=${ref.capitol}`}
+                            href={`/biblia/${getBookSlug(ref.name)}?capitol=${ref.capitol}`}
                             className="cross-ref-link"
                           >
                             {ref.name} {ref.capitol}:{ref.verset}
@@ -289,7 +320,6 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
           margin: 0 0 0.5rem;
         }
 
-        /* Verses */
         .verses-container {
           max-width: 750px;
           margin: 0 auto;
@@ -339,6 +369,12 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
           color: var(--text-primary);
         }
 
+        /* Jesus words - RED HIGHLIGHTING */
+        .jesus-word {
+          color: #dc2626 !important;
+          font-weight: 500;
+        }
+
         /* Cross References */
         .verse-cross-refs {
           margin: 0.25rem 0 1rem 2.5rem;
@@ -369,7 +405,6 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
           text-decoration: underline;
         }
 
-        /* Footer */
         .reader-footer {
           border-top: 1px solid var(--border-color);
           padding: 1rem 2rem;
