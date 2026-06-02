@@ -1,4 +1,5 @@
 import LandingPage from '@/views/LandingPage';
+import { getLandingFaqSchema } from '@/lib/structuredData';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,5 +15,13 @@ export const metadata = {
 };
 
 export default function Landing() {
-  return <LandingPage />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(getLandingFaqSchema()) }}
+      />
+      <LandingPage />
+    </>
+  );
 }

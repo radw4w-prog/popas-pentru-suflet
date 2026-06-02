@@ -1,6 +1,7 @@
 import { Inter, Playfair_Display, Lora } from 'next/font/google';
 import Script from 'next/script';
 import PWAInstallBanner from '@/components/PWAInstallBanner';
+import { getWebApplicationSchema } from '@/lib/structuredData';
 import '@/styles/App.css';
 import '@/styles/Premium.css';
 import '@/styles/BottomNav.css';
@@ -39,19 +40,7 @@ export default function RootLayout({ children }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              "name": "Popas pentru Suflet",
-              "url": "https://popas-pentru-suflet.vercel.app",
-              "description": "Aplicație creștină gratuită pentru citirea Bibliei Cornilescu.",
-              "applicationCategory": "LifestyleApplication",
-              "operatingSystem": "Android, iOS, Web",
-              "inLanguage": "ro-RO",
-              "isAccessibleForFree": true,
-              "offers": { "@type": "Offer", "price": "0", "priceCurrency": "RON" },
-              "author": { "@type": "Organization", "name": "Popas pentru Suflet" }
-            })
+            __html: JSON.stringify(getWebApplicationSchema())
           }}
         />
       </head>

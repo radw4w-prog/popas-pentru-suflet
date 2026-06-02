@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getAdjacentBibleBooks, getBibleBookBySlug, getBibleBookDescription, bibleBooks } from '@/data/bibleBooks';
+import { getBibleBookSchemas } from '@/lib/structuredData';
 
 export const dynamicParams = false;
 
@@ -45,9 +46,15 @@ export default function BibleBookPage({ params }) {
   const { previous, next } = getAdjacentBibleBooks(book.slug);
   const description = getBibleBookDescription(book);
   const chapters = Array.from({ length: book.chapters }, (_, index) => index + 1);
+  const schemas = getBibleBookSchemas(book);
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gap: '1rem' }}>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
+      />
+      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gap: '1rem' }}>
       <section style={{
         position: 'relative',
         overflow: 'hidden',
@@ -157,7 +164,8 @@ export default function BibleBookPage({ params }) {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
 
