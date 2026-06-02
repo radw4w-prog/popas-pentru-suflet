@@ -28,8 +28,7 @@ export default function BibliaPage() {
         <span className="hero-badge">✨ 31.102 versete</span>
         <h1>Biblia Cornilescu</h1>
         <p className="hero-desc">
-          Descoperă fiecare carte a Bibliei, accesează capitolele rapid și citește online într-o interfață clară,
-          optimizată pentru mobil, desktop și PWA.
+          Descoperă fiecare carte a Bibliei, accesează capitolele rapid și citește online într-o interfață clară.
         </p>
         <div className="hero-actions">
           <Link href="/biblia/geneza?capitol=1" className="cta-primary">
@@ -41,57 +40,115 @@ export default function BibliaPage() {
         </div>
       </div>
 
-      {/* Books Grid */}
+      {/* Books - Collapsible Sections */}
       <div className="books-section">
         <h2>Cărțile Bibliei</h2>
-        <p className="section-desc">
-          Fiecare carte are propria pagină statică, indexabilă, cu prezentare și acces rapid la capitole.
-        </p>
 
-        {/* Old Testament */}
-        <div className="testament-block">
-          <h3 className="testament-heading">
-            <span>📜</span>
-            <span>Vechiul Testament</span>
-            <span className="book-count">39 cărți</span>
-          </h3>
-          <div className="books-grid">
-            {oldTestament.map((book) => (
-              <Link
-                key={book.slug}
-                href={`/biblia/${book.slug}`}
-                className="book-card"
-              >
-                <span className="book-abbr">{book.abbr}</span>
-                <span className="book-name">{book.name}</span>
-                <span className="book-chapters">{book.chapters} cap.</span>
-              </Link>
-            ))}
+        {/* New Testament - First (most popular) */}
+        <div className="testament-collapsible">
+          <button className="collapsible-header" id="nt-header">
+            <span className="header-left">
+              <span className="testament-icon">✝️</span>
+              <span className="testament-name">Noul Testament</span>
+              <span className="testament-count">27 cărți</span>
+            </span>
+            <span className="expand-icon">▼</span>
+          </button>
+          <div className="collapsible-content" id="nt-content">
+            <div className="books-grid">
+              {newTestament.map((book) => (
+                <Link
+                  key={book.slug}
+                  href={`/biblia/${book.slug}`}
+                  className="book-card"
+                >
+                  <span className="book-abbr">{book.abbr}</span>
+                  <span className="book-name">{book.name}</span>
+                  <span className="book-chapters">{book.chapters} cap.</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* New Testament */}
-        <div className="testament-block">
-          <h3 className="testament-heading">
-            <span>✝️</span>
-            <span>Noul Testament</span>
-            <span className="book-count">27 cărți</span>
-          </h3>
-          <div className="books-grid">
-            {newTestament.map((book) => (
-              <Link
-                key={book.slug}
-                href={`/biblia/${book.slug}`}
-                className="book-card"
-              >
-                <span className="book-abbr">{book.abbr}</span>
-                <span className="book-name">{book.name}</span>
-                <span className="book-chapters">{book.chapters} cap.</span>
-              </Link>
-            ))}
+        {/* Old Testament */}
+        <div className="testament-collapsible">
+          <button className="collapsible-header" id="vt-header">
+            <span className="header-left">
+              <span className="testament-icon">📜</span>
+              <span className="testament-name">Vechiul Testament</span>
+              <span className="testament-count">39 cărți</span>
+            </span>
+            <span className="expand-icon">▼</span>
+          </button>
+          <div className="collapsible-content" id="vt-content">
+            <div className="books-grid">
+              {oldTestament.map((book) => (
+                <Link
+                  key={book.slug}
+                  href={`/biblia/${book.slug}`}
+                  className="book-card"
+                >
+                  <span className="book-abbr">{book.abbr}</span>
+                  <span className="book-name">{book.name}</span>
+                  <span className="book-chapters">{book.chapters} cap.</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Features */}
+      <div className="features-section">
+        <h2>✨ Funcționalități</h2>
+        <div className="features-grid">
+          <div className="feature-card">
+            <span className="feature-icon">🔍</span>
+            <h3>Căutare rapidă</h3>
+            <p>Caută orice verset sau expresie în toată Biblia</p>
+          </div>
+          <div className="feature-card">
+            <span className="feature-icon">📱</span>
+            <h3>Responsive</h3>
+            <p>Citește pe mobil, tabletă sau desktop</p>
+          </div>
+          <div className="feature-card">
+            <span className="feature-icon">🔗</span>
+            <h3>Referințe</h3>
+            <p>Vezi versetele înrudite sub fiecare verset</p>
+          </div>
+          <div className="feature-card">
+            <span className="feature-icon">📊</span>
+            <h3>Progres</h3>
+            <p>Salvează progresul în Călătoria Spirituală</p>
+          </div>
+        </div>
+      </div>
+
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          document.addEventListener('DOMContentLoaded', function() {
+            const headers = document.querySelectorAll('.collapsible-header');
+            headers.forEach(function(header) {
+              header.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('.expand-icon');
+                const isOpen = !content.classList.contains('collapsed');
+                if (isOpen) {
+                  content.classList.add('collapsed');
+                  icon.textContent = '▶';
+                } else {
+                  content.classList.remove('collapsed');
+                  icon.textContent = '▼';
+                }
+              });
+            });
+            const ntHeader = document.getElementById('nt-header');
+            if (ntHeader) ntHeader.click();
+          });
+        `
+      }} />
 
       <style>{`
         .biblia-home {
@@ -195,34 +252,73 @@ export default function BibliaPage() {
         .books-section h2 {
           font-size: 1.75rem;
           color: var(--text-primary);
-          margin: 0 0 0.75rem;
+          margin: 0 0 1.5rem;
         }
 
-        .section-desc {
-          color: var(--text-secondary);
-          margin: 0 0 2rem;
+        .testament-collapsible {
+          margin-bottom: 1rem;
+          border: 1px solid var(--border-color);
+          border-radius: 16px;
+          overflow: hidden;
+          background: var(--bg-card);
         }
 
-        .testament-block {
-          margin-bottom: 2.5rem;
+        .collapsible-header {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.25rem 1.5rem;
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: background 0.2s;
         }
 
-        .testament-heading {
+        .collapsible-header:hover {
+          background: rgba(212,175,55,0.05);
+        }
+
+        .header-left {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          font-size: 1.1rem;
-          color: var(--text-primary);
-          margin: 0 0 1rem;
-          padding-bottom: 0.75rem;
-          border-bottom: 2px solid var(--border-color);
         }
 
-        .book-count {
-          margin-left: auto;
+        .testament-icon {
+          font-size: 1.5rem;
+        }
+
+        .testament-name {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .testament-count {
           font-size: 0.85rem;
           color: var(--text-secondary);
-          font-weight: 500;
+          background: var(--bg-input);
+          padding: 0.25rem 0.75rem;
+          border-radius: 999px;
+        }
+
+        .expand-icon {
+          font-size: 0.8rem;
+          color: var(--gold-primary);
+          transition: transform 0.2s;
+        }
+
+        .collapsible-content {
+          padding: 0 1.5rem 1.5rem;
+          transition: all 0.3s ease;
+        }
+
+        .collapsible-content.collapsed {
+          padding: 0 1.5rem;
+          max-height: 0;
+          overflow: hidden;
+          opacity: 0;
         }
 
         .books-grid {
@@ -325,35 +421,16 @@ export default function BibliaPage() {
           .books-grid {
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
           }
+
+          .collapsible-header {
+            padding: 1rem;
+          }
+
+          .testament-name {
+            font-size: 1rem;
+          }
         }
       `}</style>
-
-      {/* Features */}
-      <div className="features-section">
-        <h2>✨ Funcționalități</h2>
-        <div className="features-grid">
-          <div className="feature-card">
-            <span className="feature-icon">🔍</span>
-            <h3>Căutare rapidă</h3>
-            <p>Găsește orice verset sau expresie în toată Biblia</p>
-          </div>
-          <div className="feature-card">
-            <span className="feature-icon">📱</span>
-            <h3>Responsive</h3>
-            <p>Citește pe orice dispozitiv - mobil, tabletă sau desktop</p>
-          </div>
-          <div className="feature-card">
-            <span className="feature-icon">🔗</span>
-            <h3>Cross-references</h3>
-            <p>Vezi versetele înrudite și conexiunile biblice</p>
-          </div>
-          <div className="feature-card">
-            <span className="feature-icon">🎯</span>
-            <h3>Navigare ușoară</h3>
-            <p>Sară rapid la orice capitol sau verset</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
