@@ -262,6 +262,20 @@ const ProfilePage = () => {
 
   const { user, stats, journey } = profil;
 
+  const pushPermissionLabel = pushPermission === 'granted'
+    ? 'Permisă'
+    : pushPermission === 'denied'
+      ? 'Blocată'
+      : 'Nealeasă încă';
+
+  const pushHelperText = !pushSupported
+    ? 'Acest browser sau dispozitiv nu suportă notificări push.'
+    : pushPermission === 'denied'
+      ? 'Notificările sunt blocate. Le poți reactiva din setările browserului sau ale sistemului.'
+      : pushSubscribed
+        ? 'Primești devoționalul zilnic și reminder-ele de citire direct pe acest dispozitiv.'
+        : 'Activează notificările ca să primești devoționalul zilnic și reminder-ele de citire.';
+
   return (
     <div className="pr-page">
 
@@ -614,7 +628,7 @@ const ProfilePage = () => {
             <div className="pr-setari-row">
               <div>
                 <div className="pr-setari-label">Permisiune</div>
-                <div className="pr-setari-sub" style={{ textTransform: 'capitalize' }}>{pushPermission}</div>
+                <div className="pr-setari-sub">{pushPermissionLabel}</div>
               </div>
             </div>
             <div className="pr-setari-row">

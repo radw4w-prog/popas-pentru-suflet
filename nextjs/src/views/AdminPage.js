@@ -1010,13 +1010,16 @@ const AdminPage = () => {
               <div style={settingRowStyle}><span style={{ color: 'var(--text-secondary)' }}>Utilizatori cu push activ</span><strong style={{ color: 'var(--text-primary)' }}>{notificationHealth?.usersWithPush || 0}</strong></div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
               <button onClick={() => runNotificationJob('devotional')} disabled={notifActionLoading} style={{ ...smallBtnStyle, color: '#f59e0b', borderColor: 'rgba(245,158,11,0.35)' }}>
-                {notifActionLoading ? '⏳...' : '☀️ Rulează test job devoțional'}
+                {notifActionLoading ? '⏳...' : '☀️ Rulează acum jobul de devoțional'}
               </button>
               <button onClick={() => runNotificationJob('reading')} disabled={notifActionLoading} style={{ ...smallBtnStyle, color: '#6366f1', borderColor: 'rgba(99,102,241,0.35)' }}>
-                {notifActionLoading ? '⏳...' : '📖 Rulează test job citire'}
+                {notifActionLoading ? '⏳...' : '📖 Rulează acum jobul de citire'}
               </button>
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Aceste teste rulează imediat, fără să aștepți orele programate automat.
             </div>
 
             {notifActionMessage && (
@@ -1093,9 +1096,9 @@ const AdminPage = () => {
               </div>
             )}
 
-            {notificationHealth?.recentErrors?.length > 0 && (
-              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary)' }}>⚠️ Erori recente push</h4>
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary)' }}>⚠️ Erori recente push</h4>
+              {notificationHealth?.recentErrors?.length > 0 ? (
                 <div style={{ display: 'grid', gap: '0.5rem' }}>
                   {notificationHealth.recentErrors.map(item => (
                     <div key={item._id} style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
@@ -1104,8 +1107,12 @@ const AdminPage = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.18)', fontSize: '0.8rem', color: '#22c55e' }}>
+                  ✅ Nu există erori recente pentru notificările push.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

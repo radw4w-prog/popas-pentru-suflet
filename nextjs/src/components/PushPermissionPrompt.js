@@ -142,7 +142,7 @@ export default function PushPermissionPrompt() {
             lineHeight: 1.55
           }}
         >
-          Poți opri notificările oricând mai târziu din contul tău.
+          Primești doar notificări utile: devoționalul zilnic și reminder-ele de citire. Le poți opri oricând mai târziu din contul tău.
         </div>
 
         {message && (
