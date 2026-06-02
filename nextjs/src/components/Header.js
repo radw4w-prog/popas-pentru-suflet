@@ -141,7 +141,9 @@ const Header = ({ theme, toggleTheme }) => {
           <div onClick={() => { router.push('/profile'); setUserMenuOpen(false); }} className="header-dropdown-item">👤 Profilul meu</div>
           <div onClick={() => { router.push('/journey'); setUserMenuOpen(false); }} className="header-dropdown-item">🕊️ Călătoria spirituală</div>
           <div onClick={() => { router.push('/journal'); setUserMenuOpen(false); }} className="header-dropdown-item">📔 Jurnal spiritual</div>
-          <div onClick={() => { router.push('/settings'); setUserMenuOpen(false); }} className="header-dropdown-item">⚙️ Setări cont</div>
+          {isAdmin && (
+            <div onClick={() => { router.push('/settings'); setUserMenuOpen(false); }} className="header-dropdown-item">⚙️ Setări cont</div>
+          )}
           <div className="header-dropdown-divider" />
           <div onClick={handleLogout} className="header-dropdown-item header-dropdown-logout">🚪 Deconectare</div>
         </div>

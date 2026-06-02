@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +9,8 @@ import usePushNotifications from '../hooks/usePushNotifications';
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const SettingsPage = () => {
-  const { user, updateUser } = useAuth();
+  const router = useRouter();
+  const { user, updateUser, isAdmin, loading: authLoading } = useAuth();
   const {
     supported: pushSupported,
     permission: pushPermission,
@@ -48,9 +50,21 @@ const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('facebook');
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    if (!isAdmin) {
+      router.replace('/profile');
+    }
+  }, [authLoading, user, isAdmin, router]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
     checkStatus();
     refreshPushStatus();
-  }, [refreshPushStatus]);
+  }, [refreshPushStatus, isAdmin]);
 
   // Inițializează setările notificărilor din user
   useEffect(() => {
@@ -182,6 +196,17 @@ const SettingsPage = () => {
     setPushActionMessage({ type: result.success ? 'success' : 'error', text: result.message });
     setTimeout(() => setPushActionMessage(null), 5000);
   };
+
+  if (authLoading || !user || !isAdmin) {
+    return (
+      <div className="card" style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
+        <div className="loading-spinner">
+          <div className="spinner" />
+        </div>
+        <div className="loading-text">Se verifică accesul...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-in">
