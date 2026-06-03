@@ -1,40 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { getBibleBookBySlug, getAdjacentBibleBooks } from '@/data/bibleBooks';
+import { getChapterCrossRefs } from '@/lib/crossRefs';
+import { buildRedLetterSegments } from '@/lib/redLetter';
 
-// Fallback cross-references (when backend fails or doesn't have data)
-const LOCAL_CROSS_REFS = {
-  'Ioan 3:16': [{ carte: 'Rom', capitol: 10, versetStart: 9 }, { carte: 'Efes', capitol: 2, versetStart: 8 }, { carte: 'Ioan', capitol: 1, versetStart: 12 }],
-  'Ioan 14:6': [{ carte: 'Fapt', capitol: 4, versetStart: 12 }, { carte: '1Tim', capitol: 2, versetStart: 5 }],
-  'Ioan 10:10': [{ carte: 'Ier', capitol: 10, versetStart: 10 }, { carte: 'Ps', capitol: 23, versetStart: 1 }],
-  'Ioan 8:12': [{ carte: 'Ps', capitol: 27, versetStart: 1 }, { carte: 'Isaia', capitol: 60, versetStart: 1 }],
-  'Matei 11:28': [{ carte: 'Evr', capitol: 4, versetStart: 16 }, { carte: 'Ps', capitol: 55, versetStart: 22 }],
-  'Matei 6:33': [{ carte: '1Pet', capitol: 3, versetStart: 11 }, { carte: 'Filip', capitol: 4, versetStart: 19 }],
-  'Matei 5:14': [{ carte: 'Efes', capitol: 5, versetStart: 14 }, { carte: 'Filip', capitol: 2, versetStart: 15 }],
-  'Ps 23:1': [{ carte: 'Ps', capitol: 23, versetStart: 4 }, { carte: 'Ier', capitol: 17, versetStart: 7 }],
-  'Ps 119:105': [{ carte: '2Pet', capitol: 1, versetStart: 19 }, { carte: 'Prov', capitol: 6, versetStart: 23 }],
-  'Psalmii 23:1': [{ carte: 'Ier', capitol: 17, versetStart: 7 }],
-  'Ps 91:1': [{ carte: 'Ps', capitol: 91, versetStart: 2 }],
-  'Ps 46:1': [{ carte: 'Ps', capitol: 46, versetStart: 11 }],
-  'Isaia 40:31': [{ carte: 'Gal', capitol: 5, versetStart: 22 }, { carte: 'Efes', capitol: 3, versetStart: 20 }],
-  'Isaia 41:10': [{ carte: 'Deut', capitol: 31, versetStart: 6 }, { carte: 'Iosua', capitol: 1, versetStart: 9 }],
-  'Ieremia 29:11': [{ carte: 'Rom', capitol: 8, versetStart: 28 }, { carte: 'Filip', capitol: 4, versetStart: 13 }],
-  'Romani 8:28': [{ carte: 'Gen', capitol: 50, versetStart: 20 }, { carte: 'Filip', capitol: 4, versetStart: 19 }],
-  'Romani 8:1': [{ carte: 'Rom', capitol: 8, versetStart: 38 }, { carte: 'Gal', capitol: 2, versetStart: 16 }],
-  'Romani 10:9': [{ carte: 'Rom', capitol: 10, versetStart: 13 }, { carte: '1Cor', capitol: 12, versetStart: 3 }],
-  'Filipeni 4:13': [{ carte: '2Tim', capitol: 1, versetStart: 7 }, { carte: 'Efes', capitol: 3, versetStart: 20 }],
-  'Filipeni 4:6': [{ carte: '1Pet', capitol: 5, versetStart: 7 }, { carte: 'Filip', capitol: 4, versetStart: 4 }],
-  'Filipeni 4:7': [{ carte: 'Col', capitol: 3, versetStart: 15 }, { carte: 'Ioan', capitol: 14, versetStart: 27 }],
-  'Evrei 11:1': [{ carte: 'Rom', capitol: 4, versetStart: 20 }, { carte: 'Iacov', capitol: 1, versetStart: 6 }],
-  'Evrei 4:16': [{ carte: 'Evr', capitol: 10, versetStart: 22 }, { carte: 'Iacov', capitol: 1, versetStart: 5 }],
-  '1 Ioan 4:7': [{ carte: '1Cor', capitol: 13, versetStart: 13 }, { carte: 'Ioan', capitol: 13, versetStart: 34 }],
-  '1 Ioan 4:8': [{ carte: 'Ioan', capitol: 3, versetStart: 16 }, { carte: '1Cor', capitol: 13, versetStart: 4 }],
-  '1 Petru 5:7': [{ carte: 'Ps', capitol: 55, versetStart: 22 }, { carte: 'Matei', capitol: 11, versetStart: 30 }],
-  'Iacov 1:5': [{ carte: 'Prov', capitol: 2, versetStart: 3 }, { carte: 'Iacov', capitol: 4, versetStart: 3 }],
-  'Apocalipsa 21:4': [{ carte: 'Isaia', capitol: 25, versetStart: 8 }, { carte: 'Rom', capitol: 8, versetStart: 18 }],
-};
+// URL-ul corect al backend-ului (productie). Atentie: 'popas-pentru-suflet.onrender.com'
+// (fara '-backend') NU exista si returneaza 404 — de aceea trebuie sufixul '-backend'.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet-backend.onrender.com';
 
 export default function BibleReaderClient({ bookSlug, bookName, currentChapter, chapters }) {
   const [verses, setVerses] = useState([]);
@@ -58,10 +32,8 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
     setSavedToJourney(false);
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet.onrender.com';
-      
       const versesRes = await fetch(
-        `${apiUrl}/api/verses?carte=${encodeURIComponent(bookName)}&capitol=${currentChapter}&limit=500`,
+        `${API_URL}/api/verses?carte=${encodeURIComponent(bookName)}&capitol=${currentChapter}&limit=500`,
         { signal: AbortSignal.timeout(8000) }
       );
       
@@ -86,35 +58,38 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
   }, [bookSlug, bookName, currentChapter]);
 
   const fetchCrossRefs = useCallback(async () => {
+    // Sursa principala: setul local complet de referinte incrucisate
+    // (Treasury of Scripture Knowledge, ~278.000 referinte, offline).
+    const localMap = getChapterCrossRefs(bookName, currentChapter);
+    setCrossRefsMap(localMap);
+
+    // Optional: incearca sa imbogateasca cu date suplimentare din backend.
+    // Daca backend-ul nu raspunde, ramane setul local (deja complet).
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet.onrender.com';
-      
       const refsRes = await fetch(
-        `${apiUrl}/api/cross-references/capitol?carte=${encodeURIComponent(bookName)}&capitol=${currentChapter}`,
+        `${API_URL}/api/cross-references/capitol?carte=${encodeURIComponent(bookName)}&capitol=${currentChapter}`,
         { signal: AbortSignal.timeout(5000) }
       );
-      
+
       if (refsRes.ok) {
         const refsData = await refsRes.json();
-        if (refsData.referinteMap) {
-          setCrossRefsMap(refsData.referinteMap);
-          return;
+        const backendMap = refsData.referinteMap;
+        if (backendMap && Object.keys(backendMap).length > 0) {
+          // Pastreaza varianta cu cele mai multe referinte pentru fiecare verset.
+          const merged = { ...localMap };
+          for (const verseNum of Object.keys(backendMap)) {
+            const beRefs = backendMap[verseNum] || [];
+            const localRefs = merged[verseNum] || [];
+            if (beRefs.length > localRefs.length) {
+              merged[verseNum] = beRefs;
+            }
+          }
+          setCrossRefsMap(merged);
         }
       }
     } catch (err) {
-      console.log('Backend cross-refs unavailable, using local');
+      // Setul local este deja afisat — nu e nevoie de actiune.
     }
-    
-    // Fallback: build from LOCAL_CROSS_REFS
-    const localMap = {};
-    for (const refKey of Object.keys(LOCAL_CROSS_REFS)) {
-      const parts = refKey.split(' ');
-      if (parts.length >= 3 && parts[0] === bookName && parseInt(parts[1]) === currentChapter) {
-        const verseNum = parseInt(parts[2].replace(':', '').split('-')[0]);
-        localMap[verseNum] = LOCAL_CROSS_REFS[refKey];
-      }
-    }
-    setCrossRefsMap(localMap);
   }, [bookName, currentChapter]);
 
   useEffect(() => {
@@ -132,9 +107,7 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet.onrender.com';
-      
-      await fetch(`${apiUrl}/api/reading/mark`, {
+      await fetch(`${API_URL}/api/reading/mark`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -152,55 +125,35 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
     }
   };
 
-  // Highlight Jesus words - different approach
-  const highlightJesusWords = (text) => {
-    if (!isGospelBook) return text;
-    
-    let result = text;
-    
-    // Pattern 1: „text în ghilimele românești”
-    result = result.replace(/„([^"„"]+)"/g, '<span class="jesus-word">„$1"</span>');
-    
-    // Pattern 2: Words starting phrases that indicate Jesus is speaking
-    // Romanian Bible uses specific patterns for Jesus' words
-    const jesusPhrases = [
-      /\bEU\s+([A-ZĂÂÎȘȚ][a-zăâîșț]+)/g,
-      /\bADEVĂRUL\s+[VOUĂ]+\s+ZIC/g,
-      /\b[VOUĂ]+\s+ZIC\s+EU/g,
-      /\bSPUN\s+[VOUĂ]+/g,
-      /\bFRAȚI\s+[VOUĂ]+/g,
-      /\bCOPII\s+[VOUĂ]+/g,
-    ];
-    
-    // Simply wrap words that commonly appear in Jesus' speech
-    // In Romanian Cornilescu, Jesus often says "Eu" at start of sentences
-    result = result.replace(/\bEu\s+([a-zăâîșț]+)/gi, '<span class="jesus-word">Eu $1</span>');
-    
-    return result;
-  };
+  // Cuvintele Domnului Isus (red-letter), calculate corect pe baza setului \wj.
+  // Coloreaza DOAR versetele in care vorbeste Isus, respectand ghilimelele Cornilescu,
+  // astfel incat vorbirea altor persoane (ex. Ioan Botezatorul, Nicodim) NU este colorata.
+  const redLetterMap = useMemo(() => {
+    if (!isGospelBook || verses.length === 0) return {};
+    return buildRedLetterSegments(bookName, currentChapter, verses);
+  }, [isGospelBook, bookName, currentChapter, verses]);
 
   const handleRefClick = async (ref) => {
     setSelectedRef(ref);
     setRefVerseText(null);
     setLoadingRef(true);
-    
+
+    const verseNum = ref.versetStart || ref.verset;
+
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet.onrender.com';
-      
-      // Use versetStart instead of verset
-      const verseNum = ref.versetStart || ref.verset;
-      
       const res = await fetch(
-        `${apiUrl}/api/cross-references/verset?carte=${encodeURIComponent(ref.carte)}&capitol=${ref.capitol}&verset=${verseNum}`
+        `${API_URL}/api/cross-references/verset?carte=${encodeURIComponent(ref.carte)}&capitol=${ref.capitol}&verset=${verseNum}`,
+        { signal: AbortSignal.timeout(8000) }
       );
-      
+
       if (res.ok) {
         const data = await res.json();
         setRefVerseText(data.verset);
       } else {
-        // Try fetching directly from verses API
+        // Incearca direct din API-ul de versete
         const versesRes = await fetch(
-          `${apiUrl}/api/verses?carte=${encodeURIComponent(ref.carte)}&capitol=${ref.capitol}&limit=500`
+          `${API_URL}/api/verses?carte=${encodeURIComponent(ref.carte)}&capitol=${ref.capitol}&limit=500`,
+          { signal: AbortSignal.timeout(8000) }
         );
         if (versesRes.ok) {
           const versesData = await versesRes.json();
@@ -312,15 +265,25 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
             <div className="verses">
               {verses.map((verse, idx) => {
                 const refs = crossRefsMap[verse.verset] || [];
-                
+                const segments = redLetterMap[verse.verset];
+
                 return (
                   <div key={verse._id || idx} className="verse-wrapper">
                     <p className="verse-item" id={`v${verse.verset}`}>
                       <sup className="verse-num">{verse.verset}</sup>
-                      <span 
-                        className="verse-text"
-                        dangerouslySetInnerHTML={{ __html: highlightJesusWords(verse.text) }}
-                      />
+                      <span className="verse-text">
+                        {segments && segments.length > 0 ? (
+                          segments.map((seg, sIdx) =>
+                            seg.red ? (
+                              <span key={sIdx} className="jesus-word">{seg.text}</span>
+                            ) : (
+                              <span key={sIdx}>{seg.text}</span>
+                            )
+                          )
+                        ) : (
+                          verse.text
+                        )}
+                      </span>
                     </p>
                     
                     {refs.length > 0 && (
@@ -588,13 +551,12 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
           color: var(--text-primary);
         }
 
-        /* Jesus words - RED */
+        /* Cuvintele Domnului Isus - ROSU */
         .jesus-word {
-          color: #dc2626 !important;
-          font-weight: 600;
-          text-decoration: underline;
-          text-decoration-style: dotted;
-          text-underline-offset: 3px;
+          color: #c0392b !important;
+        }
+        [data-theme="dark"] .jesus-word {
+          color: #ff6b6b !important;
         }
 
         /* Cross References */
