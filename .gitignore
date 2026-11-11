@@ -1,26 +1,66 @@
-# Backend
-backend/node_modules/
-backend/.env
-backend/uploads/temp/
-backend/uploads/generated/
+# ============================================================
+# Popas pentru Suflet — .gitignore la rădăcină
+# ============================================================
 
-# Frontend
-frontend/node_modules/
-frontend/build/
+# --- Dependente ---
+node_modules/
+.next/
+out/
+dist/
+build/
 
-# MongoDB - IMPORTANT
+# --- Mediu / secrete ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Loguri ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Sistem de operare ---
+.DS_Store
+Thumbs.db
+
+# --- Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- MongoDB (date locale + binare) ---
 bin/
 *.pdb
 *.exe
-WiredTiger*
-mongod.lock
-diagnostic.data/
-journal/
+data/*.wt
+data/*.bson
+data/journal/
+data/WiredTiger*
 
-# General
-.DS_Store
-*.log
-npm-debug.log
-Thumbs.db
-# Local Netlify folder
-.netlify
+
+# --- Uploaduri generate ---
+uploads/
+backend/uploads/
+
+# --- Android / TWA ---
+*.keystore
+*.jks
+*.apk
+*.aab
+*.idsig
+.gradle/
+.kotlin/
+local.properties
+twa/app/build/
+twa/build/
+twa/app/.gradle/
+twa/.gradle/
+
+# --- Diverse ---
+coverage/
+*.tsbuildinfo
+next-env.d.ts
