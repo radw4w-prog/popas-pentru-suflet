@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Settings = require('../models/Settings');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // GET - Toate setările
 router.get('/', async (req, res) => {
@@ -33,8 +34,8 @@ router.get('/:key', async (req, res) => {
   }
 });
 
-// PUT - Actualizează/Creează o setare
-router.put('/:key', async (req, res) => {
+// PUT - Actualizează/Creează o setare — doar admin (setări globale ale aplicației)
+router.put('/:key', protect, adminOnly, async (req, res) => {
   try {
     const setting = await Settings.findOneAndUpdate(
       { key: req.params.key },
@@ -52,8 +53,8 @@ router.put('/:key', async (req, res) => {
   }
 });
 
-// POST - Inițializează setările implicite
-router.post('/init', async (req, res) => {
+// POST - Inițializează setările implicite — doar admin
+router.post('/init', protect, adminOnly, async (req, res) => {
   try {
     const defaults = [
       { key: 'page_name', value: 'Popas pentru Suflet', category: 'general', description: 'Numele paginii' },

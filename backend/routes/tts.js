@@ -2,15 +2,27 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const rateLimit = require('express-rate-limit');
+const { protect, adminOnly } = require('../middleware/auth');
+
+// /speak rămâne public (player-ul audio e folosit și de oaspeți), dar limitat
+// strict ca să nu se consume cota plătită VoiceRSS de către abuzatori.
+const speakLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Prea multe cereri TTS. Încearcă din nou în 1 oră.' }
+});
 
 // Cache audio în memorie
 const audioCache = new Map();
 const MAX_CACHE = 300;
 
 // ═══════════════════════════════════════
-// POST /api/tts/speak
+// POST /api/tts/speak — public, dar limitat per IP
 // ═══════════════════════════════════════
-router.post('/speak', async (req, res) => {
+router.post('/speak', speakLimiter, async (req, res) => {
   try {
     const { text, referinta, rate = 0 } = req.body;
 
@@ -140,9 +152,9 @@ router.get('/status', (req, res) => {
 });
 
 // ═══════════════════════════════════════
-// DELETE /api/tts/cache
+// DELETE /api/tts/cache — DOAR ADMIN
 // ═══════════════════════════════════════
-router.delete('/cache', (req, res) => {
+router.delete('/cache', protect, adminOnly, (req, res) => {
   const size = audioCache.size;
   audioCache.clear();
   console.log(`🗑️ TTS cache cleared: ${size} entries`);
@@ -154,9 +166,9 @@ router.delete('/cache', (req, res) => {
 });
 
 // ═══════════════════════════════════════
-// POST /api/tts/test — test rapid TTS
+// POST /api/tts/test — test rapid TTS — DOAR ADMIN
 // ═══════════════════════════════════════
-router.post('/test', async (req, res) => {
+router.post('/test', protect, adminOnly, async (req, res) => {
   try {
     const apiKey = process.env.VOICERSS_API_KEY;
 

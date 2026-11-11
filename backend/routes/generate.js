@@ -10,7 +10,8 @@ const path = require('path');
 const fs = require('fs');
 const Verse = require('../models/Verse');
 const multer = require('multer');
-const { protect, optionalAuth } = require('../middleware/auth');
+const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
 const { checkGenerateLimit, getGenerateStatus, registerGeneration } = require('../middleware/rateLimit');
 const geminiService = require('../services/geminiService');
 const Template = require('../models/Template');
@@ -62,6 +63,16 @@ const upload = multer({
     const ok = /\.(jpg|jpeg|png|webp)$/i.test(file.originalname);
     ok ? cb(null, true) : cb(new Error('Doar JPG/PNG/WEBP'));
   }
+});
+
+// Upload template-uri: rămâne accesibil oaspeților (fluxul de generare e public),
+// dar limitat strict ca să nu se umple discul serverului.
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Prea multe upload-uri. Încearcă din nou în 1 oră.' }
 });
 
 // ═══════════════════════════════════════
@@ -228,8 +239,8 @@ router.get('/ai-status', (req, res) => {
   });
 });
 
-// GET /api/generate/ai/test
-router.get('/ai/test', async (req, res) => {
+// GET /api/generate/ai/test — DOAR ADMIN (expune detalii despre chei AI)
+router.get('/ai/test', protect, adminOnly, async (req, res) => {
   try {
     console.log('🧪 Test Gemini');
     console.log('   Key exists:', !!process.env.GEMINI_API_KEY);
@@ -330,8 +341,8 @@ router.get('/teme', (req, res) => {
   });
 });
 
-// POST /api/generate/upload
-router.post('/upload', upload.single('template'), (req, res) => {
+// POST /api/generate/upload — limitat per IP (oaspeții pot încărca imagini proprii)
+router.post('/upload', uploadLimiter, upload.single('template'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Niciun fișier uploadat!' });
@@ -352,10 +363,20 @@ router.post('/upload', upload.single('template'), (req, res) => {
   }
 });
 
-// DELETE /api/generate/templates/:filename
-router.delete('/templates/:filename', (req, res) => {
+// DELETE /api/generate/templates/:filename — DOAR ADMIN + protecție path traversal
+router.delete('/templates/:filename', protect, adminOnly, (req, res) => {
   try {
-    const filePath = path.join(__dirname, '../uploads/templates', req.params.filename);
+    // Acceptăm doar numele de fișier simplu (fără căi, fără .., fără separatoare)
+    const safeName = path.basename(req.params.filename);
+    if (!safeName || safeName !== req.params.filename || safeName.startsWith('.')) {
+      return res.status(400).json({ error: 'Nume fișier invalid' });
+    }
+    const templatesDir = path.resolve(__dirname, '../uploads/templates');
+    const filePath = path.resolve(templatesDir, safeName);
+    // Verificare suplimentară: fișierul trebuie să rămână în directorul templates
+    if (!filePath.startsWith(templatesDir + path.sep)) {
+      return res.status(400).json({ error: 'Nume fișier invalid' });
+    }
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Fișierul nu există!' });
     }
@@ -415,8 +436,8 @@ router.post('/', optionalAuth, checkGenerateLimit, async (req, res) => {
 
 
 
-// Adaugă în backend/routes/generate.js
-router.post('/ai/reset', async (req, res) => {
+// Reset cooldown modele AI — DOAR ADMIN
+router.post('/ai/reset', protect, adminOnly, async (req, res) => {
   try {
     geminiService.resetExhaustedModels();
     res.json({

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../models/Post');
+const { protect } = require('../middleware/auth');
 
 // GET /api/posts
 router.get('/', async (req, res) => {
@@ -37,8 +38,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/posts
-router.post('/', async (req, res) => {
+// POST /api/posts — necesită autentificare (citirea rămâne publică: e feed-ul public)
+router.post('/', protect, async (req, res) => {
   try {
     const post = new Post(req.body);
     await post.save();
@@ -48,8 +49,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/posts/:id
-router.put('/:id', async (req, res) => {
+// PUT /api/posts/:id — necesită autentificare
+router.put('/:id', protect, async (req, res) => {
   try {
     const { content, hashtags, scheduledDate } = req.body;
     const post = await Post.findByIdAndUpdate(
@@ -64,8 +65,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/posts/:id
-router.delete('/:id', async (req, res) => {
+// DELETE /api/posts/:id — necesită autentificare
+router.delete('/:id', protect, async (req, res) => {
   try {
     const post = await Post.findByIdAndDelete(req.params.id);
     if (!post) return res.status(404).json({ error: 'Postare negăsită' });

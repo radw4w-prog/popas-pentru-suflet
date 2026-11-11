@@ -9,7 +9,7 @@ const {
   getRomaniaDateKey
 } = require('../services/devotionalService');
 
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 const { markDailyActivity } = require('../utils/spiritualJourneyService');
 
 // ═══════════════════════════════════════
@@ -40,9 +40,9 @@ router.get('/history', async (req, res) => {
 
 // ═══════════════════════════════════════
 // GET /api/devotionals/regenerate-today
-// Test regenerare cu prompt nou
+// Test regenerare cu prompt nou — DOAR ADMIN (șterge + regenerează cu cost AI)
 // ═══════════════════════════════════════
-router.get('/regenerate-today', async (req, res) => {
+router.get('/regenerate-today', protect, adminOnly, async (req, res) => {
   try {
     const DailyDevotional = require('../models/DailyDevotional');
 
@@ -64,9 +64,9 @@ router.get('/regenerate-today', async (req, res) => {
 });
 
 // ═══════════════════════════════════════
-// POST /api/devotionals/generate/manual
+// POST /api/devotionals/generate/manual — DOAR ADMIN
 // ═══════════════════════════════════════
-router.post('/generate/manual', async (req, res) => {
+router.post('/generate/manual', protect, adminOnly, async (req, res) => {
   try {
     const DailyDevotional = require('../models/DailyDevotional');
     const dateKey = getRomaniaDateKey();

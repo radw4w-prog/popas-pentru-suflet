@@ -1,6 +1,7 @@
 // backend/routes/ogImage.js
 const express = require('express');
 const router = express.Router();
+const { protect } = require('../middleware/auth');
 
 let currentOgImageUrl = null;
 
@@ -58,7 +59,8 @@ router.get('/', (req, res) => {
   </svg>`);
 });
 
-router.post('/upload', async (req, res) => {
+// Upload OG pe Cloudinary — necesită autentificare (altfel oricine arde cota Cloudinary)
+router.post('/upload', protect, async (req, res) => {
   try {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey    = process.env.CLOUDINARY_API_KEY;

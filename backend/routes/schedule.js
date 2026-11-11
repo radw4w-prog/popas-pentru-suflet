@@ -3,6 +3,11 @@ const express = require('express');
 const router = express.Router();
 const Schedule = require('../models/Schedule');
 const Post = require('../models/Post');
+const { protect } = require('../middleware/auth');
+
+// Programările declanșează publicare automată pe Facebook prin scheduler —
+// fără autentificare, oricine putea crea programări.
+router.use(protect);
 
 // GET - Toate programările
 router.get('/', async (req, res) => {

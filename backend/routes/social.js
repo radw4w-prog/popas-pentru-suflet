@@ -4,6 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const facebookService = require('../services/facebookService');
 const Post = require('../models/Post');
+const { protect } = require('../middleware/auth');
+
+// Toate operațiunile social (publicare, programare, analytics) necesită autentificare.
+// Fără protect, oricine putea publica pe pagina de Facebook cu token-ul de server.
+router.use(protect);
 
 // ═══ HELPER - salvează imagine ═══
 function saveBase64Image(imageBase64, prefix = 'generated') {

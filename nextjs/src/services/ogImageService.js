@@ -11,9 +11,15 @@ export async function uploadOgImage(dataUrl) {
 
     if (!dataUrl || !dataUrl.startsWith('data:image')) return;
 
+    // Endpoint-ul necesită autentificare — trimitem token-ul dacă există.
+    // Fără token, serverul răspunde 401 și upload-ul e sărit silențios (non-critical).
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const response = await fetch(`${API_URL}/api/og-image/upload`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ image: dataUrl, date: azi })
     });
 
