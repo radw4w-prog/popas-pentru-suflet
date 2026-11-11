@@ -111,10 +111,16 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3001'
 ];
 
+// Preview deployments Vercel ale acestui proiect au URL-uri de forma:
+// https://popas-pentru-suflet-<hash>-<team>.vercel.app
+// Le acceptăm pe toate (doar prefixul proiectului nostru, nu orice site vercel.app)
+const VERCEL_PREVIEW_REGEX = /^https:\/\/popas-pentru-suflet-[a-z0-9-]+\.vercel\.app$/;
+
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    if (VERCEL_PREVIEW_REGEX.test(origin)) return callback(null, true);
     if (!isProd && origin.startsWith('http://localhost')) return callback(null, true);
     console.warn('⚠️ CORS blocat:', origin);
     return callback(new Error('CORS: Origin nepermis'), false);
