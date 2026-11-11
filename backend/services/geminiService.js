@@ -1,11 +1,11 @@
 // backend/services/geminiService.js
 const axios = require('axios');
 
+// Groq a închis llama-3.3-70b-versatile și llama-3.1-8b-instant pe 16 aug 2026 (404).
+// Înlocuitori recomandați oficial de Groq: gpt-oss-120b (pentru 70B) și gpt-oss-20b (pentru 8B).
 const GROQ_MODELS = [
-  'llama-3.3-70b-versatile',
-  'llama-3.1-8b-instant',
-  //'gemma2-9b-it',
-  //'mixtral-8x7b-32768'
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
 ];
 
 const GEMINI_MODELS = [
