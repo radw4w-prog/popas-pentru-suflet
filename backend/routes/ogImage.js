@@ -10,11 +10,34 @@ const { protect } = require('../middleware/auth');
 // Fonturile sunt incluse în repo (assets/fonts) ca să nu depindem de fonturile
 // sistemului pe Render (Alpine nu are fonturi implicite → text invizibil).
 const { createCanvas, registerFont } = require('canvas');
+const fs = require('fs');
 
 const FONTS_DIR = path.join(__dirname, '..', 'assets', 'fonts');
-registerFont(path.join(FONTS_DIR, 'DejaVuSans.ttf'), { family: 'OG Sans' });
-registerFont(path.join(FONTS_DIR, 'DejaVuSans-Bold.ttf'), { family: 'OG Sans', weight: 'bold' });
-registerFont(path.join(FONTS_DIR, 'DejaVuSerif-Bold.ttf'), { family: 'OG Serif', weight: 'bold' });
+const FONT_FILES = [
+  { file: 'DejaVuSans.ttf', family: 'OG Sans' },
+  { file: 'DejaVuSans-Bold.ttf', family: 'OG Sans', weight: 'bold' },
+  { file: 'DejaVuSerif-Bold.ttf', family: 'OG Serif', weight: 'bold' },
+];
+
+// Fonturile sunt incluse în repo, dar NU trebuie să poată prăbuși serverul
+// dacă lipsesc (ex. deploy fără fișierele binare). Înregistrăm ce există;
+// dacă lipsesc, canvas folosește fontul implicit de sistem.
+let fontsReady = false;
+try {
+  let loaded = 0;
+  for (const { file, family, weight } of FONT_FILES) {
+    const fontPath = path.join(FONTS_DIR, file);
+    if (fs.existsSync(fontPath)) {
+      registerFont(fontPath, { family, weight });
+      loaded++;
+    } else {
+      console.warn(`⚠️ Font OG lipsă: ${fontPath} — imaginea folosește font de sistem`);
+    }
+  }
+  fontsReady = loaded === FONT_FILES.length;
+} catch (err) {
+  console.warn('⚠️ Fonturi OG neîncărcate, folosesc font de sistem:', err.message);
+}
 
 // Împarte textul în linii de max maxWidth (măsurat cu fontul curent)
 function wrapText(ctx, text, maxWidth) {
