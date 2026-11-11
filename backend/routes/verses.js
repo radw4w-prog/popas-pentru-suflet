@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Verse = require('../models/Verse');
 
 // ═══ HELPER - parsează referință biblică ═══
@@ -513,8 +514,11 @@ router.get('/', async (req, res) => {
         const diacriticMap = {
           'a': '[aăâ]', 'ă': '[aăâ]', 'â': '[aăâ]',
           'i': '[iî]', 'î': '[iî]',
-          's': '[sș]', 'ș': '[sș]', 'ş': '[sș]',
-          't': '[tț]', 'ț': '[tț]', 'ţ': '[tț]',
+          // Textul Cornilescu din DB folosește ș/ț cu cedilă (ş U+015F, ţ U+0163),
+          // iar utilizatorii tastează varianta modernă comma-below (ș U+0219, ț U+021B)
+          // sau fără diacritice — clasa trebuie să acopere TOATE variantele.
+          's': '[sșş]', 'ș': '[sșş]', 'ş': '[sșş]',
+          't': '[tțţ]', 'ț': '[tțţ]', 'ţ': '[tțţ]',
         };
         const searchText = search.trim().split('').map(c => diacriticMap[c.toLowerCase()] || c).join('');
         filter.$or = [
@@ -552,6 +556,10 @@ router.get('/', async (req, res) => {
 // ═══════════════════════════════════════
 router.get('/:id', async (req, res) => {
   try {
+    // Fără validare, /api/verses/search ajunge aici ca id="search" → CastError 500
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ error: 'Nu există' });
+    }
     const verse = await Verse.findById(req.params.id).lean();
     if (!verse) return res.status(404).json({ error: 'Nu există' });
     res.json(verse);
@@ -565,6 +573,9 @@ router.get('/:id', async (req, res) => {
 // ═══════════════════════════════════════
 router.put('/:id/favorit', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ error: 'Nu există' });
+    }
     const verse = await Verse.findById(req.params.id);
     if (!verse) return res.status(404).json({ error: 'Nu există' });
     verse.favorit = !verse.favorit;
