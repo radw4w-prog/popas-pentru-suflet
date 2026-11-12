@@ -71,6 +71,11 @@ router.post('/register', async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     console.log(`✅ User nou înregistrat: ${email}`);
+
+    // Email de bun venit (nu blochează răspunsul dacă eșuează)
+    const { sendWelcomeEmail } = require('../services/emailService');
+    sendWelcomeEmail(user).catch(() => {});
+
     sendTokenResponse(user, 201, res);
 
   } catch (error) {
@@ -370,9 +375,12 @@ router.post('/forgot-password', async (req, res) => {
     user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 oră
     await user.save({ validateBeforeSave: false });
 
-    // TODO: trimite email cu link-ul de resetare:
-    // `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`
-    console.log(`🔑 Reset parolă pentru ${email}: token=${rawToken} (valabil 1h)`);
+    // Trimite email cu link-ul de resetare (fallback: log în consolă)
+    const { sendPasswordResetEmail } = require('../services/emailService');
+    const result = await sendPasswordResetEmail(email.toLowerCase(), rawToken);
+    if (!result.sent) {
+      console.log(`🔑 Reset parolă pentru ${email}: token=${rawToken} (valabil 1h) [email neconfigurat]`);
+    }
 
     res.json({ success: true, message: 'Dacă există un cont cu acest email, vei primi instrucțiuni de resetare.' });
   } catch (error) {

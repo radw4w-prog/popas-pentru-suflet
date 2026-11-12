@@ -94,6 +94,11 @@ const LoginPage = () => {
               required
               autoComplete="current-password"
             />
+            <div style={{ textAlign: 'right', marginTop: '0.4rem' }}>
+              <Link href="/forgot-password" style={{ fontSize: '0.82rem', color: 'var(--gold-primary)', textDecoration: 'none' }}>
+                Am uitat parola
+              </Link>
+            </div>
           </div>
 
           <button
