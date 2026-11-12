@@ -416,6 +416,15 @@ export default function LandingPage() {
               <span key={i} className="lp-footer-link" onClick={() => router.push(x.p)}>{x.l}</span>
             ))}
           </div>
+          <div className="lp-footer-links">
+            {[
+              { l: 'Despre', p: '/despre' }, { l: 'FAQ', p: '/faq' },
+              { l: 'Contact', p: '/contact' }, { l: 'Confidențialitate', p: '/confidentialitate' },
+              { l: 'Termeni', p: '/termeni' },
+            ].map((x, i) => (
+              <span key={i} className="lp-footer-link" onClick={() => router.push(x.p)}>{x.l}</span>
+            ))}
+          </div>
           <div className="lp-footer-copy">
             © 2026 Popas pentru Suflet — Aplicație creștină gratuită în limba română
           </div>

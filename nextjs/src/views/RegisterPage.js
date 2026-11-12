@@ -180,6 +180,12 @@ const RegisterPage = () => {
               Autentifică-te
             </Link>
           </p>
+          <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            Prin înregistrare ești de acord cu{' '}
+            <Link href="/termeni" className="auth-link">Termenii</Link>
+            {' și '}
+            <Link href="/confidentialitate" className="auth-link">Politica de confidențialitate</Link>
+          </p>
         </div>
       </div>
     </div>

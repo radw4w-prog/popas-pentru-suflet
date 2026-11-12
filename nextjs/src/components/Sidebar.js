@@ -144,6 +144,11 @@ const Sidebar = ({ theme }) => {
           <div className="sb-version">
             {theme === 'dark' ? '🌙' : '☀️'} v2.0 • Premium
           </div>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem', fontSize: '0.7rem' }}>
+            <a href="/confidentialitate" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Confidențialitate</a>
+            <a href="/termeni" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Termeni</a>
+            <a href="/contact" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Contact</a>
+          </div>
         </div>
       </aside>
 

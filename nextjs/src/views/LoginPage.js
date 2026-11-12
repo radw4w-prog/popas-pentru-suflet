@@ -137,6 +137,13 @@ const LoginPage = () => {
               Înregistrează-te gratuit
             </Link>
           </p>
+          <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <Link href="/termeni" className="auth-link">Termeni</Link>
+            {' · '}
+            <Link href="/confidentialitate" className="auth-link">Confidențialitate</Link>
+            {' · '}
+            <Link href="/contact" className="auth-link">Contact</Link>
+          </p>
         </div>
       </div>
     </div>
