@@ -56,6 +56,36 @@ export default function sitemap() {
       changeFrequency: 'weekly',
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/despre`,
+      lastModified: azi,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: azi,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: azi,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/confidentialitate`,
+      lastModified: azi,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/termeni`,
+      lastModified: azi,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
   ];
 
   const bibleBookPages = bibleBooks.map((book) => ({
