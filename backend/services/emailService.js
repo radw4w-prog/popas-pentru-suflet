@@ -1,11 +1,12 @@
 // backend/services/emailService.js
-// Serviciu email cu nodemailer (SMTP configurabil via variabile de mediu).
-// Suportă orice furnizor SMTP: Brevo, SendGrid, Gmail, Mailgun, etc.
+// Serviciu email — suportă DOUĂ metode (în ordinea preferinței):
+//   1. Brevo HTTP API (recomandat — funcționează pe Render, port 443)
+//   2. nodemailer SMTP (fallback — poate fi blocat pe unele host-uri)
 //
-// Variabile necesare în .env:
-//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, FRONTEND_URL
-const nodemailer = require('nodemailer');
-
+// Variabile pentru HTTP API (Brevo):
+//   BREVO_API_KEY (format xkeysib-...), BREVO_SENDER_EMAIL, FRONTEND_URL
+// Variabile pentru SMTP (fallback):
+//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
 let transporter = null;
 
 function getTransporter() {
@@ -13,15 +14,21 @@ function getTransporter() {
 
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    return null; // email neconfigurat — apelantul decide fallback-ul
+    return null;
+  }
+
+  let nodemailer;
+  try {
+    nodemailer = require('nodemailer');
+  } catch {
+    return null; // nodemailer neinstalat — folosește HTTP API
   }
 
   transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: parseInt(SMTP_PORT, 10) || 587,
-    secure: parseInt(SMTP_PORT, 10) === 465, // true pentru 465 (SSL), false pentru 587 (STARTTLS)
+    secure: parseInt(SMTP_PORT, 10) === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
-    // Timeout-uri scurte ca să nu atârne request-ul dacă SMTP e indisponibil
     connectionTimeout: 5000,
     greetingTimeout: 5000,
     socketTimeout: 10000,
@@ -35,6 +42,36 @@ function fromAddress() {
 
 function frontendUrl() {
   return (process.env.FRONTEND_URL || 'https://popas-pentru-suflet.vercel.app').replace(/\/$/, '');
+}
+
+// ─── Trimitere via Brevo HTTP API (port 443 — nu e blocat) ─────────
+async function sendViaBrevoAPI({ to, subject, html, text }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_FROM || 'popaspentrusufle01@gmail.com';
+  const senderName = 'Popas pentru Suflet';
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Brevo API ${res.status}: ${errText.slice(0, 200)}`);
+  }
+  return { sent: true, via: 'brevo-api' };
 }
 
 const layout = (content) => `
@@ -59,15 +96,30 @@ const layout = (content) => `
 </html>`;
 
 async function sendMail({ to, subject, html, text }) {
+  const fullHtml = layout(html);
+
+  // 1. Încearcă Brevo HTTP API (recomandat — funcționează pe Render)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const r = await sendViaBrevoAPI({ to, subject, html: fullHtml, text });
+      console.log(`📧 Email trimis către ${to}: ${subject} [${r.via}]`);
+      return r;
+    } catch (err) {
+      console.error(`❌ Brevo API eșuat pentru ${to}:`, err.message);
+      // Continuă la fallback SMTP
+    }
+  }
+
+  // 2. Fallback SMTP (nodemailer)
   const tx = getTransporter();
   if (!tx) {
     console.log(`📧 [email neconfigurat] Către: ${to} | Subiect: ${subject}`);
     return { sent: false, reason: 'not_configured' };
   }
   try {
-    await tx.sendMail({ from: fromAddress(), to, subject, html: layout(html), text });
-    console.log(`📧 Email trimis către ${to}: ${subject}`);
-    return { sent: true };
+    await tx.sendMail({ from: fromAddress(), to, subject, html: fullHtml, text });
+    console.log(`📧 Email trimis către ${to}: ${subject} [smtp]`);
+    return { sent: true, via: 'smtp' };
   } catch (err) {
     console.error(`❌ Eroare trimitere email către ${to}:`, err.message);
     return { sent: false, reason: err.message };
@@ -117,4 +169,9 @@ async function sendWelcomeEmail(user) {
   });
 }
 
-module.exports = { sendMail, sendPasswordResetEmail, sendWelcomeEmail, isConfigured: () => !!getTransporter() };
+module.exports = {
+  sendMail,
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
+  isConfigured: () => !!(process.env.BREVO_API_KEY || getTransporter()),
+};
