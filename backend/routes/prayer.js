@@ -185,7 +185,8 @@ router.post('/', protect, async (req, res) => {
       numeAfisat,
       userId: req.user._id,
       vizibilitate,
-      aprobat: true
+      // Moderare: cererile noi sunt aprobate de admin înainte de publicare
+      aprobat: false
     });
 
     res.status(201).json({ success: true, data: cerereNoua });

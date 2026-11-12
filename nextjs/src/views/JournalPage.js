@@ -110,8 +110,8 @@ const JournalPage = () => {
         setNotita(d.notita || '');
         setCuvant(d.cuvantDeLaDumnezeu || '');
         setStare(d.stare || 'recunoscator');
-        setVersetText(d.vpierset?.text || '');
-        setVersetRef(d.vpierset?.referinta || '');
+        setVersetText(d.verset?.text || '');
+        setVersetRef(d.verset?.referinta || '');
         setRugaciune(d.rugaciune || '');
         setEditing(true);
       } else {
@@ -136,8 +136,8 @@ const JournalPage = () => {
         setNotita(d.notita || '');
         setCuvant(d.cuvantDeLaDumnezeu || '');
         setStare(d.stare || 'recunoscator');
-        setVersetText(d.vpierset?.text || '');
-        setVersetRef(d.vpierset?.referinta || '');
+        setVersetText(d.verset?.text || '');
+        setVersetRef(d.verset?.referinta || '');
         setRugaciune(d.rugaciune || '');
         setEditing(true);
       } else {
@@ -217,7 +217,7 @@ const JournalPage = () => {
         notita,
         cuvantDeLaDumnezeu: cuvant,
         stare,
-        vpierset: { text: versetText, referinta: versetRef },
+        verset: { text: versetText, referinta: versetRef },
         rugaciune
       });
 
@@ -584,9 +584,9 @@ const JournalPage = () => {
                         </p>
                       )}
 
-                      {entry.vpierset?.referinta && (
+                      {entry.verset?.referinta && (
                         <div className="jn-entry-verset">
-                          📖 {entry.vpierset.referinta}
+                          📖 {entry.verset.referinta}
                         </div>
                       )}
 

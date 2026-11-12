@@ -35,7 +35,7 @@ const journalEntrySchema = new mongoose.Schema({
   },
 
   // Verset asociat
-  vpierset: {
+  verset: {
     text: { type: String, default: '' },
     referinta: { type: String, default: '' }
   },

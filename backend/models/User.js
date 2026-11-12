@@ -63,6 +63,17 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: null
+  },
+  // Resetare parolă (token hash + expirare)
+  resetToken: {
+    type: String,
+    default: null,
+    select: false
+  },
+  resetTokenExpiry: {
+    type: Date,
+    default: null,
+    select: false
   }
 }, {
   timestamps: true

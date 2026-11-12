@@ -7,9 +7,9 @@ import '@/styles/Premium.css';
 import '@/styles/BottomNav.css';
 import '@/components/Sidebar.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', display: 'swap', style: ['normal', 'italic'], weight: ['400', '600', '700'] });
-const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap', style: ['normal', 'italic'], weight: ['400', '700'] });
+const inter = Inter({ subsets: ['latin', 'latin-ext'], variable: '--font-inter', display: 'swap' });
+const playfair = Playfair_Display({ subsets: ['latin', 'latin-ext'], variable: '--font-playfair', display: 'swap', style: ['normal', 'italic'], weight: ['400', '600', '700'] });
+const lora = Lora({ subsets: ['latin', 'latin-ext'], variable: '--font-lora', display: 'swap', style: ['normal', 'italic'], weight: ['400', '700'] });
 
 export const metadata = {
   metadataBase: new URL('https://popas-pentru-suflet.vercel.app'),

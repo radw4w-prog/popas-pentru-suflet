@@ -109,6 +109,8 @@ router.post('/login', async (req, res) => {
     }).select('+parola');
 
     if (!user) {
+      // Înregistrează eșecul pentru limitatorul de brute-force
+      req.app.locals.recordAuthFailure?.(email.toLowerCase(), req.app.locals.authAttempts);
       return res.status(401).json({
         success: false,
         message: 'Email sau parolă incorectă.'
@@ -124,6 +126,8 @@ router.post('/login', async (req, res) => {
 
     const parolaCorecta = await user.compareParola(parola);
     if (!parolaCorecta) {
+      // Înregistrează eșecul pentru limitatorul de brute-force
+      req.app.locals.recordAuthFailure?.(email.toLowerCase(), req.app.locals.authAttempts);
       return res.status(401).json({
         success: false,
         message: 'Email sau parolă incorectă.'
@@ -338,6 +342,81 @@ router.post('/logout', protect, (req, res) => {
     success: true,
     message: 'Deconectat cu succes.'
   });
+});
+
+// ─────────────────────────────────────────────
+// POST /api/auth/forgot-password
+// Generează token de resetare (valabil 1 oră)
+// NOTĂ: trimiterea email-ului necesită configurare serviciu email
+// (ex: nodemailer + SMTP). Token-ul e logat în consolă pentru dev.
+// ─────────────────────────────────────────────
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email-ul este obligatoriu.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    // Răspuns generic (nu dezvăluim dacă email-ul există)
+    if (!user) {
+      return res.json({ success: true, message: 'Dacă există un cont cu acest email, vei primi instrucțiuni de resetare.' });
+    }
+
+    // Generează token aleatoriu și stochează doar hash-ul lui
+    const crypto = require('crypto');
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.resetToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 oră
+    await user.save({ validateBeforeSave: false });
+
+    // TODO: trimite email cu link-ul de resetare:
+    // `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`
+    console.log(`🔑 Reset parolă pentru ${email}: token=${rawToken} (valabil 1h)`);
+
+    res.json({ success: true, message: 'Dacă există un cont cu acest email, vei primi instrucțiuni de resetare.' });
+  } catch (error) {
+    console.error('Eroare forgot-password:', error);
+    res.status(500).json({ success: false, message: 'Eroare server. Încearcă din nou.' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/auth/reset-password
+// Resetează parola cu token-ul primit
+// ─────────────────────────────────────────────
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, parolaNoua } = req.body;
+    if (!token || !parolaNoua) {
+      return res.status(400).json({ success: false, message: 'Token-ul și parola nouă sunt obligatorii.' });
+    }
+    if (parolaNoua.length < 6) {
+      return res.status(400).json({ success: false, message: 'Parola trebuie să aibă minim 6 caractere.' });
+    }
+
+    const crypto = require('crypto');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetToken: hashedToken,
+      resetTokenExpiry: { $gt: Date.now() }
+    }).select('+resetToken +resetTokenExpiry');
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Token invalid sau expirat. Cere un nou link de resetare.' });
+    }
+
+    user.parola = parolaNoua; // hook-ul pre('save') face hash
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    res.json({ success: true, message: 'Parola a fost resetată cu succes. Te poți autentifica acum.' });
+  } catch (error) {
+    console.error('Eroare reset-password:', error);
+    res.status(500).json({ success: false, message: 'Eroare server. Încearcă din nou.' });
+  }
 });
 
 module.exports = router;

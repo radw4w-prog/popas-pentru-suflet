@@ -4,8 +4,8 @@ const router = express.Router();
 const Settings = require('../models/Settings');
 const { protect, adminOnly } = require('../middleware/auth');
 
-// GET - Toate setările
-router.get('/', async (req, res) => {
+// GET - Toate setările (doar admin — pot conține valori sensibile)
+router.get('/', protect, adminOnly, async (req, res) => {
   try {
     const { category } = req.query;
     const query = category ? { category } : {};
@@ -21,8 +21,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET - O setare specifică
-router.get('/:key', async (req, res) => {
+// GET - O setare specifică (doar admin)
+router.get('/:key', protect, adminOnly, async (req, res) => {
   try {
     const setting = await Settings.findOne({ key: req.params.key });
     if (!setting) {
@@ -48,6 +48,29 @@ router.put('/:key', protect, adminOnly, async (req, res) => {
       { new: true, upsert: true }
     );
     res.json({ success: true, data: setting });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// POST - Salvează mai multe setări odată (obiect key-value) — doar admin
+// Folosit de SettingsPage (handleSaveConfig)
+router.post('/', protect, adminOnly, async (req, res) => {
+  try {
+    const entries = Object.entries(req.body || {});
+    if (entries.length === 0) {
+      return res.status(400).json({ success: false, error: 'Nicio setare de salvat' });
+    }
+    const saved = [];
+    for (const [key, value] of entries) {
+      const setting = await Settings.findOneAndUpdate(
+        { key },
+        { key, value },
+        { new: true, upsert: true }
+      );
+      saved.push(setting.key);
+    }
+    res.json({ success: true, message: `${saved.length} setări salvate`, keys: saved });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }

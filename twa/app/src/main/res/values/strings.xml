@@ -34,7 +34,7 @@
         \"relation\": [\"delegate_permission/common.handle_all_urls\"],
         \"target\": {
             \"namespace\": \"web\",
-            \"site\": \"https://serene-khapse-8c6464.netlify.app\"
+            \"site\": \"https://popas-pentru-suflet.vercel.app\"
         }
     }]
     

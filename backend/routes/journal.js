@@ -26,8 +26,8 @@ router.get('/', protect, async (req, res) => {
         { notita: regex },
         { cuvantDeLaDumnezeu: regex },
         { rugaciune: regex },
-        { 'vpierset.text': regex },
-        { 'vpierset.referinta': regex }
+        { 'verset.text': regex },
+        { 'verset.referinta': regex }
       ];
     }
 
@@ -140,7 +140,7 @@ router.post('/', protect, async (req, res) => {
       notita = '',
       cuvantDeLaDumnezeu = '',
       stare = 'recunoscator',
-      vpierset = {},
+      verset = {},
       rugaciune = ''
     } = req.body;
 
@@ -161,9 +161,9 @@ router.post('/', protect, async (req, res) => {
         notita: notita.trim(),
         cuvantDeLaDumnezeu: cuvantDeLaDumnezeu.trim(),
         stare,
-        vpierset: {
-          text: vpierset.text || '',
-          referinta: vpierset.referinta || ''
+        verset: {
+          text: verset.text || '',
+          referinta: verset.referinta || ''
         },
         rugaciune: rugaciune.trim()
       },

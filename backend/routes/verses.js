@@ -439,7 +439,7 @@ router.get('/carti', async (req, res) => {
           carte: '$_id.carte',
           abreviere: '$_id.abreviere',
           testament: '$_id.testament',
-          totalVersete: 1,
+          totalVersete: '$totalVersete',
           totalCapitole: { $size: '$capitole' }
         }
       },

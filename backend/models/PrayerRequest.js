@@ -47,10 +47,10 @@ const prayerRequestSchema = new mongoose.Schema(
       ref: 'User'
     }],
 
-    // Moderare
+    // Moderare — implicit neaprobate, admin aprobă din /api/admin/prayers
     aprobat: {
       type: Boolean,
-      default: true
+      default: false
     },
     rezolvat: {
       type: Boolean,

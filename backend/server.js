@@ -200,6 +200,7 @@ app.use('/api/profile', require('./routes/profile'));
 app.use('/api/cross-references', require('./routes/crossReferences'));
 app.use('/api/red-letter', require('./routes/redLetter'));
 app.use('/api/verse-notes', require('./routes/verseNotes'));
+app.use('/api/settings', require('./routes/settings'));
 
 // ═══════════════════════════════════════
 // SCHEDULER
