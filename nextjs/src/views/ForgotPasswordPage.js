@@ -19,6 +19,7 @@ export default function ForgotPasswordPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(20000), // max 20s (acoperă cold start Render)
       });
       const data = await res.json();
       if (res.ok && data.success) {

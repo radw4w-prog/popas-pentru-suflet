@@ -375,12 +375,15 @@ router.post('/forgot-password', async (req, res) => {
     user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 oră
     await user.save({ validateBeforeSave: false });
 
-    // Trimite email cu link-ul de resetare (fallback: log în consolă)
+    // Trimite email cu link-ul de resetare în FUNDAL (nu blochează răspunsul)
     const { sendPasswordResetEmail } = require('../services/emailService');
-    const result = await sendPasswordResetEmail(email.toLowerCase(), rawToken);
-    if (!result.sent) {
-      console.log(`🔑 Reset parolă pentru ${email}: token=${rawToken} (valabil 1h) [email neconfigurat]`);
-    }
+    sendPasswordResetEmail(email.toLowerCase(), rawToken)
+      .then((result) => {
+        if (!result.sent) {
+          console.log(`🔑 Reset parolă pentru ${email}: token=${rawToken} (valabil 1h) [email neconfigurat]`);
+        }
+      })
+      .catch(() => {});
 
     res.json({ success: true, message: 'Dacă există un cont cu acest email, vei primi instrucțiuni de resetare.' });
   } catch (error) {

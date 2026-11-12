@@ -21,6 +21,10 @@ function getTransporter() {
     port: parseInt(SMTP_PORT, 10) || 587,
     secure: parseInt(SMTP_PORT, 10) === 465, // true pentru 465 (SSL), false pentru 587 (STARTTLS)
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Timeout-uri scurte ca să nu atârne request-ul dacă SMTP e indisponibil
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
   });
   return transporter;
 }
