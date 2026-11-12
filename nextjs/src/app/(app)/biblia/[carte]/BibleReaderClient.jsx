@@ -10,9 +10,10 @@ import { buildRedLetterSegments } from '@/lib/redLetter';
 // (fara '-backend') NU exista si returneaza 404 — de aceea trebuie sufixul '-backend'.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet-backend.onrender.com';
 
-export default function BibleReaderClient({ bookSlug, bookName, currentChapter, chapters }) {
-  const [verses, setVerses] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function BibleReaderClient({ bookSlug, bookName, currentChapter, chapters, initialVerses }) {
+  // SSR: dacă avem versete de pe server, le folosim direct (fără fetch inițial)
+  const [verses, setVerses] = useState(initialVerses || []);
+  const [loading, setLoading] = useState(!initialVerses || initialVerses.length === 0);
   const [error, setError] = useState(null);
   const [fontSize, setFontSize] = useState(18);
   const [savedToJourney, setSavedToJourney] = useState(false);
@@ -92,8 +93,19 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
     }
   }, [bookName, currentChapter]);
 
+  // Sincronizează versetele SSR când se schimbă capitolul (navigare)
   useEffect(() => {
-    fetchVerses();
+    if (initialVerses && initialVerses.length > 0) {
+      setVerses(initialVerses);
+      setLoading(false);
+    }
+  }, [initialVerses]);
+
+  useEffect(() => {
+    // Dacă avem deja versete SSR, nu mai facem fetch inițial
+    if (!initialVerses || initialVerses.length === 0) {
+      fetchVerses();
+    }
   }, [fetchVerses]);
 
   useEffect(() => {

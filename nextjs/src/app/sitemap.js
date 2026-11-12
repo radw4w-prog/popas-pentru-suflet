@@ -65,5 +65,15 @@ export default function sitemap() {
     priority: 0.85,
   }));
 
-  return [...staticPages, ...bibleBookPages];
+  // Pagini capitole (1.189 capitole) — pentru indexare SEO completă
+  const bibleChapterPages = bibleBooks.flatMap((book) =>
+    Array.from({ length: book.chapters }, (_, i) => ({
+      url: `${baseUrl}/biblia/${book.slug}?capitol=${i + 1}`,
+      lastModified: azi,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    }))
+  );
+
+  return [...staticPages, ...bibleBookPages, ...bibleChapterPages];
 }

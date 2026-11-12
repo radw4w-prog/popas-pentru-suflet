@@ -12,27 +12,37 @@ export function generateStaticParams() {
   return bibleBooks.map((book) => ({ carte: book.slug }));
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const book = getBibleBookBySlug(resolvedParams.carte);
   if (!book) {
     return { title: 'Carte negăsită' };
   }
 
-  const description = getBibleBookDescription(book);
-  const url = `https://popas-pentru-suflet.vercel.app/biblia/${book.slug}`;
+  const chapter = parseInt(resolvedSearchParams?.capitol) || 1;
+  const hasChapter = resolvedSearchParams?.capitol && chapter >= 1 && chapter <= book.chapters;
+  const chapterSuffix = hasChapter ? ` — Capitolul ${chapter}` : '';
+  const title = `${book.name}${chapterSuffix} — Biblia Cornilescu online`;
+  const baseDescription = getBibleBookDescription(book);
+  const description = hasChapter
+    ? `${book.name} capitolul ${chapter} — citește online Biblia Cornilescu. ${baseDescription}`
+    : baseDescription;
+  const url = `https://popas-pentru-suflet.vercel.app/biblia/${book.slug}${hasChapter ? `?capitol=${chapter}` : ''}`;
   const imageUrl = buildOgImageUrl({
-    title: `${book.name} — Biblia Cornilescu`,
-    subtitle: `${book.chapters} capitole din ${book.testament === 'VT' ? 'Vechiul Testament' : 'Noul Testament'}`,
+    title: `${book.name}${chapterSuffix} — Biblia Cornilescu`,
+    subtitle: hasChapter
+      ? `Capitolul ${chapter} din ${book.chapters} • ${book.testament === 'VT' ? 'Vechiul Testament' : 'Noul Testament'}`
+      : `${book.chapters} capitole din ${book.testament === 'VT' ? 'Vechiul Testament' : 'Noul Testament'}`,
     tag: 'Biblia online',
   });
 
   return {
-    title: `${book.name} — Biblia Cornilescu online`,
+    title,
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: `${book.name} — Biblia Cornilescu online`,
+      title,
       description,
       url,
       type: 'article',
@@ -40,12 +50,12 @@ export async function generateMetadata({ params }) {
         url: imageUrl,
         width: 1200,
         height: 630,
-        alt: `${book.name} — Biblia Cornilescu online`,
+        alt: title,
       }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${book.name} — Biblia Cornilescu online`,
+      title,
       description,
       images: [imageUrl],
     },
@@ -85,6 +95,23 @@ function LoadingFallback() {
   );
 }
 
+// URL backend pentru fetch server-side (SSR) — versetele ajung în HTML pentru SEO
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://popas-pentru-suflet-backend.onrender.com';
+
+async function fetchChapterVerses(bookName, chapter) {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/verses?carte=${encodeURIComponent(bookName)}&capitol=${chapter}&limit=500`,
+      { next: { revalidate: 86400 } } // cache 24h — Biblia nu se schimbă
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.versete || [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function BibleBookPage({ params, searchParams }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
@@ -96,6 +123,9 @@ export default async function BibleBookPage({ params, searchParams }) {
   const { previous, next } = getAdjacentBibleBooks(book.slug);
   const schemas = getBibleBookSchemas(book);
   const chapters = Array.from({ length: book.chapters }, (_, i) => i + 1);
+
+  // SSR: versetele sunt randate pe server → apar în HTML pentru Google
+  const initialVerses = await fetchChapterVerses(book.name, currentChapter);
 
   return (
     <>
@@ -172,6 +202,7 @@ export default async function BibleBookPage({ params, searchParams }) {
               currentChapter={currentChapter}
               chapters={chapters.length}
               testament={book.testament}
+              initialVerses={initialVerses}
             />
           </Suspense>
         </div>
