@@ -41,6 +41,13 @@ data/*.bson
 data/journal/
 data/WiredTiger*
 
+# --- Date mari de import (surse re-seed, nu runtime) ---
+# Backend-ul citește din MongoDB, nu din aceste fișiere.
+# Păstrează-le local pentru re-import, dar nu în git (49M).
+backend/data/crossReferences.json
+backend/data/cornilescu.json
+backend/data/versete_complete.json
+backend/data/templates_backup.json
 
 # --- Uploaduri generate ---
 uploads/
