@@ -18,6 +18,25 @@ const DashboardPage = () => {
   const [readingProgress, setReadingProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFullRug, setShowFullRug] = useState(false);
+  const [shareStatus, setShareStatus] = useState('');
+  const [shareFallback, setShareFallback] = useState('');
+  const shareDailyVerse = async () => {
+    if (!verset) return;
+    const text = `„${verset.text}”\n— ${verset.carte} ${verset.capitol}:${verset.verset}\n\nPopas pentru Suflet`;
+    const url = 'https://popas-pentru-suflet.vercel.app/';
+    setShareStatus(''); setShareFallback('');
+    if (typeof navigator.share === 'function') {
+      try { await navigator.share({title: 'Versetul zilei', text, url}); return; }
+      catch (error) { if (error.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setShareStatus('Verset copiat! Îl poți trimite celor dragi.');
+    } catch {
+      setShareFallback(`${text}\n${url}`);
+      setShareStatus('Selectează și copiază textul de mai jos.');
+    }
+  };
 
   const getHeaders = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -146,6 +165,11 @@ const DashboardPage = () => {
               <cite className="dash-verset-ref">
                 — {verset.carte} {verset.capitol}:{verset.verset}
               </cite>
+              <button type="button" onClick={shareDailyVerse} style={{display: 'block', margin: '1rem auto', minHeight: 44, padding: '.65rem 1.2rem', border: '1px solid var(--gold-primary)', borderRadius: 999, background: 'var(--gold-subtle)', color: 'var(--text-primary)', font: 'inherit', cursor: 'pointer'}}>
+                <span aria-hidden="true">📤 </span>Distribuie versetul
+              </button>
+              <p role="status" aria-live="polite" style={{color: 'var(--text-primary)', fontSize: '.9rem'}}>{shareStatus}</p>
+              {shareFallback && <textarea aria-label="Verset de copiat manual" readOnly value={shareFallback} onFocus={event => event.target.select()} style={{width: '100%', minHeight: 150, padding: '.8rem', background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 12}} />}
               <div className="dash-verset-deco" />
             </div>
           )}
