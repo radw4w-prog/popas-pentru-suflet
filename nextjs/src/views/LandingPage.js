@@ -71,13 +71,20 @@ export default function LandingPage() {
           position: absolute; inset: 0;
           background: linear-gradient(
             to bottom,
-            rgba(0,0,0,0.55) 0%,
-            rgba(0,0,0,0.4) 40%,
-            rgba(0,0,0,0.75) 80%,
-            rgba(0,0,0,0.95) 100%
-          );
+            rgba(5,4,2,0.72) 0%,
+            rgba(8,6,3,0.55) 35%,
+            rgba(5,4,2,0.72) 70%,
+            rgba(3,2,1,0.97) 100%
+          ), radial-gradient(ellipse at 50% 38%, rgba(212,175,55,0.14) 0%, rgba(0,0,0,0) 55%);
         }
-        .lp-hero-content { position: relative; z-index: 2; max-width: 780px; }
+        .lp-hero-content { position: relative; z-index: 2; max-width: 820px; }
+        .lp-hero-content > * { animation: lpFadeUp 0.8s cubic-bezier(0.22,1,0.36,1) both; }
+        .lp-hero-content > *:nth-child(2) { animation-delay: 0.1s; }
+        .lp-hero-content > *:nth-child(3) { animation-delay: 0.2s; }
+        .lp-hero-content > *:nth-child(4) { animation-delay: 0.3s; }
+        .lp-hero-content > *:nth-child(5) { animation-delay: 0.4s; }
+        @keyframes lpFadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { .lp-hero-content > * { animation: none; } }
         .lp-badge {
           display: inline-flex; align-items: center; gap: 0.4rem;
           background: rgba(244,208,63,0.15); border: 1px solid rgba(244,208,63,0.35);
@@ -87,9 +94,10 @@ export default function LandingPage() {
         }
         .lp-h1 {
           font-family: 'Playfair Display', serif;
-          font-size: clamp(2rem, 6vw, 4rem);
-          font-weight: 700; line-height: 1.2; margin-bottom: 1.25rem;
-          text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+          font-size: clamp(2.2rem, 6.5vw, 4.4rem);
+          font-weight: 700; line-height: 1.15; margin-bottom: 1.4rem;
+          letter-spacing: -0.015em;
+          text-shadow: 0 4px 30px rgba(0,0,0,0.65);
         }
         .lp-h1 em { color: #f4d03f; font-style: normal; }
         .lp-hero-sub {
@@ -99,12 +107,12 @@ export default function LandingPage() {
         }
         .lp-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3.5rem; }
         .lp-btn-main {
-          padding: 1rem 2rem; background: linear-gradient(135deg, #f4d03f, #d4af37);
-          border: none; border-radius: 14px; color: #1a0000; cursor: pointer;
-          font-size: 1rem; font-weight: 700;
-          box-shadow: 0 6px 25px rgba(244,208,63,0.4); transition: all 0.25s;
+          padding: 1.05rem 2.2rem; background: linear-gradient(135deg, #f4d03f 0%, #d4af37 50%, #b8960c 100%);
+          border: none; border-radius: 16px; color: #1a0000; cursor: pointer;
+          font-size: 1.02rem; font-weight: 700;
+          box-shadow: 0 8px 30px rgba(244,208,63,0.45), inset 0 1px 0 rgba(255,255,255,0.35); transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
         }
-        .lp-btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 35px rgba(244,208,63,0.5); }
+        .lp-btn-main:hover { transform: translateY(-3px); box-shadow: 0 14px 42px rgba(244,208,63,0.55), inset 0 1px 0 rgba(255,255,255,0.4); }
         .lp-btn-sec {
           padding: 1rem 2rem; background: rgba(255,255,255,0.12);
           border: 1px solid rgba(255,255,255,0.3); border-radius: 14px;
@@ -115,15 +123,16 @@ export default function LandingPage() {
 
         /* Verset card în hero */
         .lp-verset {
-          background: rgba(0,0,0,0.45); backdrop-filter: blur(20px);
-          border: 1px solid rgba(244,208,63,0.25); border-radius: 20px;
-          padding: 1.5rem 2rem; max-width: 560px; margin: 0 auto;
-          cursor: pointer; transition: all 0.2s;
+          background: rgba(8,7,4,0.55); backdrop-filter: blur(24px) saturate(150%);
+          border: 1px solid rgba(244,208,63,0.4); border-radius: 24px;
+          padding: 1.75rem 2.25rem; max-width: 620px; margin: 0 auto;
+          box-shadow: 0 16px 50px rgba(0,0,0,0.5), 0 0 40px rgba(212,175,55,0.1), inset 0 1px 0 rgba(255,255,255,0.08);
+          cursor: pointer; transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
         }
-        .lp-verset:hover { border-color: rgba(244,208,63,0.5); background: rgba(0,0,0,0.55); }
-        .lp-verset-label { color: #f4d03f; font-size: 0.65rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.75rem; }
-        .lp-verset-text { font-family: 'Lora', serif; font-style: italic; font-size: clamp(0.9rem, 2.5vw, 1.05rem); line-height: 1.85; color: #fff; margin-bottom: 0.75rem; }
-        .lp-verset-ref { color: #f4d03f; font-weight: 700; font-size: 0.85rem; }
+        .lp-verset:hover { border-color: rgba(244,208,63,0.65); background: rgba(8,7,4,0.65); transform: translateY(-3px); box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 50px rgba(212,175,55,0.16); }
+        .lp-verset-label { color: #f4d03f; font-size: 0.68rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.85rem; }
+        .lp-verset-text { font-family: 'Lora', serif; font-style: italic; font-size: clamp(1rem, 2.8vw, 1.2rem); line-height: 1.9; color: #fff; margin-bottom: 0.85rem; }
+        .lp-verset-ref { color: #f4d03f; font-weight: 700; font-size: 0.9rem; }
 
         /* Scroll indicator */
         .lp-scroll {
