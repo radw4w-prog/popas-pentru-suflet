@@ -98,6 +98,21 @@ const DashboardPage = () => {
 
   return (
     <div className="animate-in dashboard-page">
+      {/* Stiluri hero livrate prin JS (ca pe landing) — se actualizează
+          și la navigare în aplicație, nu doar la reload complet */}
+      <style>{`
+        .dashboard-page .dash-hero { border-radius: 28px !important; box-shadow: 0 16px 48px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(212,175,55,0.12) !important; }
+        [data-theme="light"] .dashboard-page .dash-hero { box-shadow: 0 10px 32px rgba(90,70,20,0.14), inset 0 0 0 1px rgba(184,134,11,0.14) !important; }
+        .dashboard-page .dash-hero:before { height: 5px !important; }
+        .dashboard-page .dash-hero-content { padding: 2.5rem 2rem !important; }
+        .dashboard-page .dash-verset { position: relative; padding: 0.5rem 1.5rem !important; }
+        .dashboard-page .dash-verset:before { content: '❝'; position: absolute; top: -1.4rem; left: 50%; transform: translateX(-50%); font-family: 'Playfair Display', serif; font-size: 4.5rem; line-height: 1; color: var(--gold-primary); opacity: 0.18; pointer-events: none; }
+        .dashboard-page .dash-verset-text { font-size: 1.5rem !important; line-height: 1.9 !important; max-width: 720px; margin: 0 auto !important; }
+        .dashboard-page .dash-verset-deco { width: 110px !important; height: 3px !important; border-radius: 3px; }
+        .dashboard-page .dash-verset-ref { display: inline-block !important; margin-top: 1rem !important; padding: 0.35rem 1.1rem; border-radius: 999px; background: var(--gold-subtle); border: 1px solid var(--border-color); font-size: 0.95rem !important; }
+        .dashboard-page .dash-greeting-text { font-size: 1.8rem !important; }
+        .dashboard-page .dash-greeting-icon { font-size: 3.2rem !important; }
+      `}</style>
 
       {/* ═══ HERO ═══ */}
       <div className="dash-hero">
