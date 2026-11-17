@@ -437,6 +437,9 @@ export default function LandingPage() {
           <div className="lp-footer-copy">
             © 2026 Popas pentru Suflet — Aplicație creștină gratuită în limba română
           </div>
+          <div style={{ marginTop: '0.6rem', color: '#f4d03f', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+            ✨ DESIGN NOU v13 ✨
+          </div>
         </footer>
 
       </div>

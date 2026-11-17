@@ -345,6 +345,9 @@ const DashboardPage = () => {
       {/* ═══ FOOTER ═══ */}
       <div className="dash-footer">
         🕊️ Popas pentru Suflet
+        <div style={{ marginTop: '0.4rem', color: 'var(--gold-primary)', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+          ✨ DESIGN NOU v13 ✨
+        </div>
       </div>
     </div>
   );
