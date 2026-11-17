@@ -4,6 +4,7 @@ import PWAInstallBanner from '@/components/PWAInstallBanner';
 import { getWebApplicationSchema } from '@/lib/structuredData';
 import '@/styles/App.css';
 import '@/styles/Premium.css';
+import '@/styles/DesignSystem.css';
 import '@/styles/BottomNav.css';
 import '@/components/Sidebar.css';
 

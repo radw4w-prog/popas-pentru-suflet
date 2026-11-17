@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — Redesign ultra premium (Pasul 13)
+   Două teme: DARK „Midnight & Gold" / LIGHT „Ivory & Bronze"
+   ⚠️ Paleta e definită PE TEME ([data-theme]), niciodată pe :root.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────────
+   TEMA 1 — DARK: „Midnight & Gold"
+   Negru adânc cu subton cald, auriu șampanie, sticlă mată.
+   ─────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-primary: #07070c;
+  --bg-secondary: #0b0b12;
+  --bg-card: #10101a;
+  --bg-card-hover: #161622;
+  --bg-elevated: #0c0c14;
+  --bg-input: #090910;
+  --gold-primary: #d4af37;
+  --gold-light: #f0d060;
+  --gold-dark: #a8871f;
+  --gold-glow: rgba(212, 175, 55, 0.30);
+  --gold-subtle: rgba(212, 175, 55, 0.08);
+  --text-primary: #f7f4ec;
+  --text-secondary: #b9b4a6;
+  --text-muted: #7d7869;
+  --text-gold: #e8c84a;
+  --border-color: rgba(212, 175, 55, 0.16);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --shadow-card: 0 10px 36px rgba(0, 0, 0, 0.45);
+  --shadow-gold: 0 0 32px rgba(212, 175, 55, 0.12);
+  --shadow-elevated: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --glass-bg: rgba(16, 16, 26, 0.72);
+  --glass-border: rgba(212, 175, 55, 0.14);
+  --ambient-1: rgba(212, 175, 55, 0.07);
+  --ambient-2: rgba(124, 58, 237, 0.05);
+  --ambient-3: rgba(59, 130, 246, 0.04);
+}
+
+/* ───────────────────────────────────────────────────────────────
+   TEMA 2 — LIGHT: „Ivory & Bronze"
+   Fildeș cald, bronz profund, umbre moi ca hârtia premium.
+   ─────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-primary: #faf7f1;
+  --bg-secondary: #f3eee3;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fbf9f4;
+  --bg-elevated: #ffffff;
+  --bg-input: #f7f3ea;
+  --gold-primary: #a67c1a;
+  --gold-light: #c9a227;
+  --gold-dark: #7d5f10;
+  --gold-glow: rgba(166, 124, 26, 0.25);
+  --gold-subtle: rgba(166, 124, 26, 0.07);
+  --text-primary: #191921;
+  --text-secondary: #4c4c58;
+  --text-muted: #8a8578;
+  --text-gold: #a67c1a;
+  --border-color: rgba(166, 124, 26, 0.20);
+  --border-subtle: rgba(25, 25, 33, 0.08);
+  --shadow-card: 0 6px 24px rgba(120, 95, 30, 0.10);
+  --shadow-gold: 0 0 22px rgba(166, 124, 26, 0.10);
+  --shadow-elevated: 0 16px 48px rgba(120, 95, 30, 0.14);
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(166, 124, 26, 0.16);
+  --ambient-1: rgba(201, 162, 39, 0.10);
+  --ambient-2: rgba(124, 58, 237, 0.05);
+  --ambient-3: rgba(59, 130, 246, 0.04);
+}
+
+/* ─── Fundal ambiental premium (străluciri aurii în pagină) ─── */
+body:before {
+  background:
+    radial-gradient(ellipse 60% 45% at 18% 42%, var(--ambient-1) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 82% 18%, var(--ambient-2) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 50% 85%, var(--ambient-3) 0%, transparent 60%) !important;
+}
+
+/* ─── Selecție text aurie ─── */
+::selection {
+  background: var(--gold-primary);
+  color: #fff;
+}
+[data-theme="light"] ::selection { color: #fff; }
+
+/* ─── Suprafețe din sticlă (header, sidebar, carduri) ─── */
+.header {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(22px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(160%) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.sidebar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+}
+
+.card, .stat-card, .dash-card, .dash-hero, .devotional-card, .prayer-card {
+  background: linear-gradient(150deg, var(--bg-card) 0%, var(--bg-secondary) 130%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--shadow-card) !important;
+  border-radius: 22px !important;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s, border-color 0.4s !important;
+}
+
+.card:hover, .stat-card:hover, .dash-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow-elevated), var(--shadow-gold) !important;
+}
+
+/* Linia aurie de sus pe carduri (semnătura premium) */
+.card:before {
+  background: linear-gradient(90deg, transparent, var(--gold-primary), transparent) !important;
+  height: 2px !important;
+}
+
+/* ─── Tipografie premium ─── */
+.header-title, .card-title, .dash-card-title, .dash-section-title {
+  font-family: 'Playfair Display', serif !important;
+  letter-spacing: -0.01em;
+}
+
+.header-title {
+  font-weight: 700;
+  background: linear-gradient(115deg, var(--text-primary) 20%, var(--gold-primary) 115%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dash-greeting-text {
+  background: linear-gradient(115deg, var(--text-primary) 30%, var(--gold-primary) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dash-name { -webkit-text-fill-color: var(--gold-primary); }
+
+/* Versetul zilei — piesa centrală */
+.dashboard-page .dash-verset-text {
+  font-family: 'Lora', serif !important;
+  font-weight: 500;
+}
+.dashboard-page .dash-verset-ref {
+  letter-spacing: 0.04em;
+}
+
+/* ─── Butoane premium ─── */
+.btn-gold, .auth-btn, .auth-btn-primary {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 48%, var(--gold-dark) 100%) !important;
+  color: #1a1405 !important;
+  box-shadow: 0 6px 22px var(--gold-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s !important;
+}
+.btn-gold:hover, .auth-btn:hover, .auth-btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 32px var(--gold-glow), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+.btn-gold:active, .auth-btn:active, .auth-btn-primary:active { transform: translateY(0) !important; }
+
+.btn-outline {
+  border: 1px solid var(--border-color) !important;
+  border-radius: 14px !important;
+  transition: all 0.3s !important;
+}
+.btn-outline:hover {
+  border-color: var(--gold-primary) !important;
+  color: var(--gold-primary) !important;
+  box-shadow: var(--shadow-gold) !important;
+}
+
+/* Butoanele de acțiune de pe dashboard */
+.dash-action-btn {
+  border-radius: 20px !important;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s, border-color 0.35s !important;
+}
+.dash-action-btn:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: var(--shadow-elevated), var(--shadow-gold) !important;
+}
+
+/* ─── Navigare laterală ─── */
+.nav-item {
+  border-radius: 14px !important;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.nav-item:hover { transform: translateX(3px); }
+.nav-item.active {
+  background: linear-gradient(120deg, var(--gold-subtle), transparent) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-gold) !important;
+}
+
+/* ─── Cititorul Bibliei ─── */
+.verse-wrapper {
+  border-radius: 12px;
+  transition: background 0.3s;
+}
+.verse-wrapper:hover { background: var(--gold-subtle); }
+.verse-item {
+  font-family: 'Lora', serif;
+  font-size: 1.08em;
+  line-height: 1.9;
+  letter-spacing: 0.005em;
+}
+
+/* ─── Formulare ─── */
+.form-input, .form-select, .form-textarea {
+  border-radius: 14px !important;
+  transition: border-color 0.3s, box-shadow 0.3s !important;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--gold-primary) !important;
+  box-shadow: 0 0 0 3px var(--gold-subtle), var(--shadow-gold) !important;
+  outline: none !important;
+}
+
+/* ─── Animații de intrare (cascadă pe pagini) ─── */
+@keyframes dsFadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-content > * {
+  animation: dsFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page-content > *:nth-child(2) { animation-delay: 0.07s; }
+.page-content > *:nth-child(3) { animation-delay: 0.14s; }
+.page-content > *:nth-child(4) { animation-delay: 0.21s; }
+.page-content > *:nth-child(5) { animation-delay: 0.28s; }
+.page-content > *:nth-child(6) { animation-delay: 0.35s; }
+
+.dashboard-page > * {
+  animation: dsFadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.dashboard-page > *:nth-child(2) { animation-delay: 0.09s; }
+.dashboard-page > *:nth-child(3) { animation-delay: 0.18s; }
+.dashboard-page > *:nth-child(4) { animation-delay: 0.27s; }
+.dashboard-page > *:nth-child(5) { animation-delay: 0.36s; }
+.dashboard-page > *:nth-child(6) { animation-delay: 0.45s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-content > *, .dashboard-page > * { animation: none !important; }
+  .card, .stat-card, .dash-card, .dash-action-btn, .nav-item { transition: none !important; }
+}
+
+/* ─── Focus vizibil ─── */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ─── Scrollbar subțire, auriu ─── */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-primary), var(--gold-dark));
+  border-radius: 10px;
+  border: 2px solid var(--bg-primary);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--gold-light); }
+
+/* ─── Landing (îmbunătățiri peste stilul inline) ─── */
+.lp-h1 {
+  background: linear-gradient(115deg, #ffffff 25%, #f0d060 110%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.lp-h1 em {
+  background: linear-gradient(115deg, #f0d060, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.lp-verset {
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.55), 0 0 45px rgba(212, 175, 55, 0.12) !important;
+}
+.lp-feature-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(212, 175, 55, 0.10) !important;
+}
+.lp-feature-card:hover {
+  border-color: rgba(212, 175, 55, 0.35) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45), 0 0 30px rgba(212, 175, 55, 0.08) !important;
+}
+.lp-feature-card:hover::before {
+  background: linear-gradient(90deg, transparent, #d4af37, transparent) !important;
+}
