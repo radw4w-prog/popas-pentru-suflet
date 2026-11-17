@@ -2,7 +2,7 @@
    SERVICE WORKER - PROD
    ═══════════════════════════════════════ */
 
-const CACHE_NAME = 'popas-suflet-prod-v1';
+const CACHE_NAME = 'popas-suflet-prod-v2';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_CACHE = [
