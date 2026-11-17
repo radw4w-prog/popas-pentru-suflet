@@ -21,6 +21,8 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
   const [selectedRef, setSelectedRef] = useState(null);
   const [refVerseText, setRefVerseText] = useState(null);
   const [loadingRef, setLoadingRef] = useState(false);
+  const [shareVerse, setShareVerse] = useState(null); // versetul pentru meniul de share
+  const [copied, setCopied] = useState(false);
 
   const book = getBibleBookBySlug(bookSlug);
   const { previous, next } = getAdjacentBibleBooks(bookSlug);
@@ -182,6 +184,51 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
     setLoadingRef(false);
   };
 
+  // ─── Share verset (creștere virală) ──────────────────────────────
+  const getShareText = (verse) => {
+    const ref = `${bookName} ${currentChapter}:${verse.verset}`;
+    return `„${verse.text}"\n— ${ref} (Biblia Cornilescu)\n\nCitește mai mult pe Popas pentru Suflet:\nhttps://popas-pentru-suflet.vercel.app/biblia/${bookSlug}?capitol=${currentChapter}`;
+  };
+
+  const handleShare = async (verse) => {
+    const text = getShareText(verse);
+    // Web Share API (mobil) — deschide meniul nativ de share
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Verset biblic', text });
+        return;
+      } catch {
+        // utilizatorul a anulat — nu facem nimic
+        return;
+      }
+    }
+    // Fallback: deschide meniul custom
+    setShareVerse(verse);
+  };
+
+  const shareToWhatsApp = (verse) => {
+    const url = `https://wa.me/?text=${encodeURIComponent(getShareText(verse))}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setShareVerse(null);
+  };
+
+  const shareToFacebook = (verse) => {
+    const pageUrl = `https://popas-pentru-suflet.vercel.app/biblia/${bookSlug}?capitol=${currentChapter}`;
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}&quote=${encodeURIComponent(`„${verse.text}" — ${bookName} ${currentChapter}:${verse.verset}`)}`;
+    window.open(url, '_blank', 'noopener,noreferrer,width=600,height=500');
+    setShareVerse(null);
+  };
+
+  const copyVerseText = async (verse) => {
+    try {
+      await navigator.clipboard.writeText(getShareText(verse));
+      setCopied(true);
+      setTimeout(() => { setCopied(false); setShareVerse(null); }, 1500);
+    } catch {
+      setShareVerse(null);
+    }
+  };
+
   const goToPreviousChapter = () => {
     if (currentChapter > 1) {
       window.location.href = `/biblia/${bookSlug}?capitol=${currentChapter - 1}`;
@@ -255,6 +302,33 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
         </div>
       )}
 
+      {/* ─── Meniu share verset ─── */}
+      {shareVerse && (
+        <div className="share-modal-overlay" onClick={() => setShareVerse(null)}>
+          <div className="share-modal" onClick={e => e.stopPropagation()}>
+            <div className="share-modal-header">
+              <span>Distribuie versetul</span>
+              <button className="ref-modal-close" onClick={() => setShareVerse(null)}>✕</button>
+            </div>
+            <div className="share-modal-verse">
+              „{shareVerse.text}"
+              <div className="share-modal-ref">— {bookName} {currentChapter}:{shareVerse.verset}</div>
+            </div>
+            <div className="share-modal-actions">
+              <button className="share-action-btn whatsapp" onClick={() => shareToWhatsApp(shareVerse)}>
+                <span className="share-action-icon">💬</span> WhatsApp
+              </button>
+              <button className="share-action-btn facebook" onClick={() => shareToFacebook(shareVerse)}>
+                <span className="share-action-icon">f</span> Facebook
+              </button>
+              <button className="share-action-btn copy" onClick={() => copyVerseText(shareVerse)}>
+                <span className="share-action-icon">{copied ? '✅' : '📋'}</span> {copied ? 'Copiat!' : 'Copiază textul'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="reader-content" style={{ fontSize: `${fontSize}px` }}>
         {loading ? (
           <div className="reader-loading">
@@ -296,6 +370,14 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
                           verse.text
                         )}
                       </span>
+                      <button
+                        className="verse-share-btn"
+                        onClick={() => handleShare(verse)}
+                        title="Distribuie versetul"
+                        aria-label={`Distribuie ${bookName} ${currentChapter}:${verse.verset}`}
+                      >
+                        📤
+                      </button>
                     </p>
                     
                     {refs.length > 0 && (
@@ -541,12 +623,110 @@ export default function BibleReaderClient({ bookSlug, bookName, currentChapter, 
 
         .verse-wrapper {
           margin-bottom: 0.5rem;
+          position: relative;
         }
 
         .verse-item {
           margin: 0 0 0.25rem;
           text-align: justify;
           line-height: 1.9;
+        }
+
+        /* Buton share verset — apare la hover (desktop), mereu vizibil pe mobil */
+        .verse-share-btn {
+          position: absolute;
+          right: 0;
+          top: 0.15rem;
+          background: rgba(212,175,55,0.1);
+          border: 1px solid rgba(212,175,55,0.25);
+          border-radius: 8px;
+          padding: 0.2rem 0.45rem;
+          font-size: 0.85rem;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s, background 0.2s;
+          line-height: 1;
+        }
+        .verse-wrapper:hover .verse-share-btn { opacity: 1; }
+        .verse-share-btn:hover { background: rgba(212,175,55,0.25); }
+        @media (hover: none) {
+          .verse-share-btn { opacity: 0.55; }
+        }
+
+        /* Modal share */
+        .share-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 1rem;
+        }
+        .share-modal {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 20px;
+          padding: 1.5rem;
+          max-width: 420px;
+          width: 100%;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .share-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-family: 'Playfair Display', serif;
+          font-size: 1.15rem;
+          color: var(--text-primary);
+          margin-bottom: 1rem;
+        }
+        .share-modal-verse {
+          font-family: 'Lora', serif;
+          font-style: italic;
+          color: var(--text-secondary);
+          line-height: 1.7;
+          padding: 1rem;
+          background: var(--bg-input);
+          border-radius: 12px;
+          margin-bottom: 1.25rem;
+          font-size: 0.95rem;
+        }
+        .share-modal-ref {
+          text-align: right;
+          color: var(--gold-primary);
+          font-weight: 600;
+          font-style: normal;
+          margin-top: 0.5rem;
+          font-size: 0.85rem;
+        }
+        .share-modal-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+        .share-action-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.85rem 1.25rem;
+          border-radius: 12px;
+          border: 1px solid var(--border-color);
+          background: var(--bg-input);
+          color: var(--text-primary);
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: left;
+        }
+        .share-action-btn:hover { border-color: var(--gold-primary); background: rgba(212,175,55,0.08); }
+        .share-action-btn.whatsapp:hover { border-color: #25D366; }
+        .share-action-btn.facebook:hover { border-color: #1877F2; }
+        .share-action-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+        .share-action-btn.facebook .share-action-icon {
+          color: #1877F2; font-weight: 800; font-family: sans-serif;
         }
 
         .verse-num {
