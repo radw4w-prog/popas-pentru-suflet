@@ -2,6 +2,7 @@ const Notification = require('../models/Notification');
 const ReadingPlan = require('../models/ReadingPlan');
 const ReadingProgress = require('../models/ReadingProgress');
 const User = require('../models/User');
+const Verse = require('../models/Verse');
 const { getTodayDevotional } = require('./devotionalService');
 const { sendNotificationToUser } = require('./webPushService');
 
@@ -13,6 +14,8 @@ function getNotificationUrl(tip) {
       return '/reading';
     case 'devotional':
       return '/devotional';
+    case 'verset':
+      return '/biblia';
     default:
       return '/notifications';
   }
@@ -273,9 +276,57 @@ async function checkMilestoneAfterMark(userId, totalCitite) {
   }
 }
 
+// ─── Versetul zilei (notificare la prânz) ──────────────────────────
+// Verset stabil pentru toată ziua (seed pe zi), din lista de zidire.
+const VERSETE_ZIDIRE = [
+  { carte: 'Psalmii', capitol: 23, verset: 1 }, { carte: 'Psalmii', capitol: 46, verset: 1 },
+  { carte: 'Psalmii', capitol: 91, verset: 1 }, { carte: 'Psalmii', capitol: 119, verset: 105 },
+  { carte: 'Isaia', capitol: 40, verset: 31 }, { carte: 'Isaia', capitol: 41, verset: 10 },
+  { carte: 'Ieremia', capitol: 29, verset: 11 }, { carte: 'Matei', capitol: 11, verset: 28 },
+  { carte: 'Ioan', capitol: 3, verset: 16 }, { carte: 'Ioan', capitol: 14, verset: 27 },
+  { carte: 'Romani', capitol: 8, verset: 28 }, { carte: 'Filipeni', capitol: 4, verset: 13 },
+  { carte: 'Evrei', capitol: 11, verset: 1 }, { carte: '1 Ioan', capitol: 4, verset: 8 },
+];
+
+async function runVerseOfDayJob() {
+  try {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+    const ref = VERSETE_ZIDIRE[dayOfYear % VERSETE_ZIDIRE.length];
+
+    const verset = await Verse.findOne({
+      carte: ref.carte, capitol: ref.capitol, verset: ref.verset
+    }).lean();
+    if (!verset) return;
+
+    const useri = await User.find({ activ: true });
+    const referinta = `${ref.carte} ${ref.capitol}:${ref.verset}`;
+    const textScurt = verset.text.length > 120 ? verset.text.slice(0, 117) + '...' : verset.text;
+
+    for (const user of useri) {
+      const setari = user.setari?.notificari;
+      if (!setari?.active || setari?.verset === false) continue;
+
+      await createNotification(
+        user._id,
+        'verset',
+        `📖 Versetul zilei — ${referinta}`,
+        textScurt,
+        '📖',
+        { url: '/biblia', tag: 'verse-of-day' }
+      );
+    }
+    console.log(`✅ Versetul zilei (${referinta}) trimis la ${useri.length} useri.`);
+  } catch (error) {
+    console.error('❌ Eroare job verset zilei:', error.message);
+  }
+}
+
 module.exports = {
   runNotificationsJob,
   runDevotionalNotificationsJob,
+  runVerseOfDayJob,
   checkMilestoneAfterMark,
   createNotification
 };

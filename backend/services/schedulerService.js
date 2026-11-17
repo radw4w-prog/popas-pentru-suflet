@@ -28,6 +28,11 @@ function init() {
     await runDevotionalNotificationsJob();
   }, { timezone: TZ });
 
+  cron.schedule('0 12 * * *', async () => {
+    console.log('📖 Job versetul zilei (12:00)...');
+    await runVerseOfDayJob();
+  }, { timezone: TZ });
+
   cron.schedule('0 8 * * *', async () => {
     console.log('🔔 Job notificări dimineață (08:00)...');
     await runNotificationsJob();
@@ -135,6 +140,21 @@ async function runDevotionalNotificationsJob() {
     console.error('❌ Eroare job devoțional:', error.message);
   } finally {
     runningDevotional = false;
+  }
+}
+
+let runningVerse = false;
+async function runVerseOfDayJob() {
+  if (runningVerse) return;
+  runningVerse = true;
+
+  try {
+    const { runVerseOfDayJob: run } = require('./notificationService');
+    await run();
+  } catch (error) {
+    console.error('❌ Eroare job verset zilei:', error.message);
+  } finally {
+    runningVerse = false;
   }
 }
 
