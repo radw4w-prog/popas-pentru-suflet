@@ -176,8 +176,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-{/* ═══ CĂLĂTORIA SPIRITUALĂ ═══ */}
-{isAuthenticated && <SpiritualJourneyCard />}
+
 
 
 
@@ -240,7 +239,7 @@ const DashboardPage = () => {
       {/* ═══ QUICK ACTIONS ═══ */}
       <div className="dash-actions">
         <button className="dash-action-btn dash-action-primary"
-          onClick={() => router.push('/verses')}>
+          onClick={() => router.push('/biblia')}>
           <span className="dash-action-icon">📖</span>
           <span className="dash-action-label">Biblia</span>
           <span className="dash-action-sub">31.102 versete</span>
@@ -317,6 +316,9 @@ const DashboardPage = () => {
           )}
         </div>
       )}
+
+      {/* Progresul detaliat vine după conținutul zilei și planul de citire. */}
+      {isAuthenticated && <SpiritualJourneyCard />}
 
       {/* ═══ PROMPT REGISTER ═══ */}
       {!isAuthenticated && (

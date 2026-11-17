@@ -3,35 +3,15 @@ import React, { useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
+import Link from 'next/link';
+import { navigationGroups, isNavActive } from '../lib/navigation';
 
 const Sidebar = ({ theme }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
 
-  const publicItems = [
-    { path: '/dashboard', icon: '🏠', label: 'Dashboard' },
-    { path: '/generate', icon: '✨', label: 'Generează' },
-    { path: '/biblia', icon: '📖', label: 'Biblia' },
-    { path: '/audio', icon: '🎧', label: 'Audio Biblie' },
-    { path: '/devotional', icon: '🙏', label: 'Devoțional zilnic' },
-    { path: '/journey', icon: '🕊️', label: 'Călătoria mea' },
-    { path: '/journal', icon: '📔', label: 'Jurnal' },
-    { path: '/rugaciuni', icon: '🙏', label: 'Cereri rugăciune' },
-  ];
-
-  const userItems = [
-    { path: '/reading', icon: '📗', label: 'Citire Biblie' },
-    { path: '/bookmarks', icon: '🔖', label: 'Semnele mele' },
-  ];
-
-  const adminItems = [
-    { path: '/schedule', icon: '📅', label: 'Programare' },
-    { path: '/history', icon: '📜', label: 'Istoric' },
-    { path: '/analytics', icon: '📊', label: 'Analytics' },
-    { path: '/settings', icon: '⚙️', label: 'Setări cont' },
-    { path: '/admin', icon: '🛡️', label: 'Admin Panel' },
-  ];
+  const groups = navigationGroups(isAuthenticated, isAdmin);
 
   const closeSidebar = useCallback(() => {
     const sidebar = document.querySelector('.sidebar');
@@ -62,17 +42,13 @@ const Sidebar = ({ theme }) => {
 
   // Folosim clasele din Sidebar.css: sb-nav-item, sb-active, sb-nav-icon, sb-nav-label
   const NavItem = ({ item }) => (
-    <div
-      className={`sb-nav-item ${pathname === item.path ? 'sb-active' : ''}`}
-      onClick={() => handleNavigate(item.path)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && handleNavigate(item.path)}
-    >
-      <span className="sb-nav-icon">{item.icon}</span>
+    <Link href={item.path} className={`sb-nav-item ${isNavActive(pathname, item.path) ? 'sb-active' : ''}`}
+      aria-current={isNavActive(pathname, item.path) ? 'page' : undefined}
+      onClick={closeSidebar} style={{textDecoration: 'none'}}>
+      <span className="sb-nav-icon" aria-hidden="true">{item.icon}</span>
       <span className="sb-nav-label">{item.label}</span>
-      {pathname === item.path && <span className="sb-nav-indicator" />}
-    </div>
+      {isNavActive(pathname, item.path) && <span className="sb-nav-indicator" />}
+    </Link>
   );
 
   const NavSection = ({ title, items }) => (
@@ -91,17 +67,15 @@ const Sidebar = ({ theme }) => {
             <span className="sb-logo-icon">🕊️</span>
             <div className="sb-logo-text">
               <div className="sb-logo-title">Popas pentru Suflet</div>
-              <div className="sb-logo-sub">Content Manager</div>
+              <div className="sb-logo-sub">Hrană pentru suflet</div>
             </div>
           </div>
           <button className="sb-close-btn" onClick={closeSidebar} aria-label="Închide">✕</button>
         </div>
 
         {/* Nav */}
-        <nav className="sb-nav">
-          <NavSection title="Principal" items={publicItems} />
-          {isAuthenticated && <NavSection title="Contul meu" items={userItems} />}
-          {isAdmin && <NavSection title="Administrare" items={adminItems} />}
+        <nav className="sb-nav" aria-label="Navigare principală">
+          {groups.map(group => <NavSection key={group.title} title={group.title} items={group.items} />)}
 
           {!isAuthenticated && (
             <div className="sb-auth-prompt">
