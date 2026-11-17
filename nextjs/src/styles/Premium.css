@@ -97,3 +97,141 @@ button:active {
     font-size: 0.75rem !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN POLISH PREMIUM — Pasul 12
+   Ridicarea identității dark/auriu la nivel premium:
+   paletă rafinată, glassmorphism, animații fluide, tipografie.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. Paletă rafinată (tonuri mai adânci, auriu mai bogat) ─── */
+:root {
+  --bg-primary: #08080d;
+  --bg-secondary: #0e0e16;
+  --bg-card: #14141f;
+  --bg-card-hover: #1a1a28;
+  --bg-elevated: #101018;
+  --bg-input: #0c0c14;
+  --gold-primary: #d4af37;
+  --gold-light: #f0d060;
+  --gold-dark: #a8871f;
+  --text-primary: #f5f2ea;
+  --text-secondary: #b8b4a8;
+  --text-muted: #7a766a;
+  --border-color: rgba(212, 175, 55, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-gold: 0 0 28px rgba(212, 175, 55, 0.14);
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+/* ─── 2. Glassmorphism pe suprafețe cheie ─── */
+.header {
+  background: rgba(10, 10, 15, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12) !important;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, rgba(13,13,20,0.92), rgba(10,10,16,0.96)) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.card, .stat-card {
+  background: linear-gradient(145deg, rgba(26,26,40,0.85), rgba(16,16,26,0.9)) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(212, 175, 55, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s, border-color 0.35s !important;
+}
+
+.card:hover, .stat-card:hover {
+  border-color: rgba(212, 175, 55, 0.28) !important;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5), 0 0 24px rgba(212, 175, 55, 0.08) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* ─── 3. Animații de intrare fluide ─── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-content > * {
+  animation: fadeSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page-content > *:nth-child(2) { animation-delay: 0.06s; }
+.page-content > *:nth-child(3) { animation-delay: 0.12s; }
+.page-content > *:nth-child(4) { animation-delay: 0.18s; }
+.page-content > *:nth-child(5) { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-content > * { animation: none !important; }
+  .card, .stat-card { transition: none !important; }
+}
+
+/* ─── 4. Tipografie premium ─── */
+h1, h2, h3, .header-title, .card-title {
+  letter-spacing: -0.01em;
+}
+
+.header-title {
+  font-weight: 700;
+  background: linear-gradient(120deg, #f5f2ea 0%, #d4af37 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── 5. Butoane premium ─── */
+.btn-gold, .auth-btn, .auth-btn-primary {
+  background: linear-gradient(135deg, #e8c84a 0%, #d4af37 45%, #b8960c 100%) !important;
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.28), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s !important;
+}
+.btn-gold:hover, .auth-btn:hover, .auth-btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 28px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+}
+.btn-gold:active, .auth-btn:active, .auth-btn-primary:active {
+  transform: translateY(0) !important;
+}
+
+/* ─── 6. Versete — lizibilitate îmbunătățită ─── */
+.verse-item {
+  font-size: 1.06em;
+  letter-spacing: 0.005em;
+}
+.verse-wrapper {
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  transition: background 0.25s;
+}
+.verse-wrapper:hover {
+  background: rgba(212, 175, 55, 0.04);
+}
+
+/* ─── 7. Focus vizibil (accesibilitate) ─── */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ─── 8. Scrollbar rafinat ─── */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b8960c, #8a6d0a);
+  border-radius: 10px;
+  border: 2px solid #08080d;
+}
+::-webkit-scrollbar-thumb:hover { background: #d4af37; }
