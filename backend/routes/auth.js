@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+router.use('/google', require('./googleAuth'));
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
@@ -122,10 +123,10 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    if (!user.parola && user.facebookId) {
+    if (!user.parola && (user.facebookId || user.googleId)) {
       return res.status(401).json({
         success: false,
-        message: 'Acest cont folosește autentificarea prin Facebook.'
+        message: user.googleId ? 'Acest cont folosește autentificarea prin Google.' : 'Acest cont folosește autentificarea prin Facebook.'
       });
     }
 

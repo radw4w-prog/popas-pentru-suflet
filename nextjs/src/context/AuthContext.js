@@ -238,6 +238,23 @@ export const AuthProvider = ({ children }) => {
     }
   }, [ensureFacebookSDK, loginWithFacebookToken]);
 
+  const loginWithGoogle = useCallback(async (credential) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/google`, {credential}, {timeout: 25000});
+      if (!res.data?.success || !res.data.token || !res.data.user) {
+        return {success: false, message: 'Răspuns de autentificare invalid.'};
+      }
+      const {token, user: userData} = res.data;
+      localStorage.setItem('token', token);
+      setAuthHeader(token);
+      setAuthState({user: userData, loading: false});
+      syncPushSubscriptionWithBackend(token).catch(() => {});
+      return {success: true, user: userData};
+    } catch (error) {
+      return {success: false, message: error.response?.data?.message || 'Google nu a putut fi verificat. Verifică conexiunea și reîncearcă.'};
+    }
+  }, [setAuthHeader]);
+
   const updateUser = useCallback((userData) => {
     setAuthState(prev => ({ ...prev, user: { ...prev.user, ...userData } }));
   }, []);
@@ -255,6 +272,7 @@ export const AuthProvider = ({ children }) => {
       register,
       loginWithFacebook,
       loginWithFacebookToken,
+      loginWithGoogle,
       updateUser
     }}>
       {children}

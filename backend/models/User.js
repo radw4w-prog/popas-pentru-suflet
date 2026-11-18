@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Email invalid']
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email invalid']
   },
   parola: {
     type: String,
@@ -31,6 +31,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Optional, absent for existing accounts; sparse uniqueness prevents duplicate identities.
+  googleId: { type: String, unique: true, sparse: true },
   // Facebook OAuth
   facebookId: {
     type: String,

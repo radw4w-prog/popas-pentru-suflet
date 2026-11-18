@@ -43,6 +43,7 @@ export default function ConfidentialitatePage() {
         <li style={styles.li}><strong>Date de utilizare:</strong> pagini vizitate, funcții folosite, progresul de citire, semne de carte, intrări în jurnal.</li>
         <li style={styles.li}><strong>Date tehnice:</strong> tip dispozitiv, sistem de operare, adresă IP (pentru securitate și limitare abuzuri).</li>
         <li style={styles.li}><strong>Autentificare Facebook (opțional):</strong> dacă alegi login cu Facebook, primim numele, emailul și ID-ul de Facebook.</li>
+        <li style={styles.li}><strong>Autentificare Google (opțional):</strong> primim identificatorul Google al contului, numele, emailul verificat și adresa imaginii de profil, dacă este disponibilă. Folosim aceste informații pentru crearea sau accesarea contului. Tokenul Google este verificat pe server și nu este salvat în profilul contului. Nu solicităm acces la Gmail, Drive sau contacte.</li>
         <li style={styles.li}><strong>Cookie-uri / stocare locală:</strong> token-ul de sesiune, preferințe (temă, dimensiune font) și date pentru funcționarea aplicației.</li>
       </ul>
 
@@ -60,13 +61,15 @@ export default function ConfidentialitatePage() {
         <li style={styles.li}><strong>Render</strong> — găzduirea serverului (backend).</li>
         <li style={styles.li}><strong>MongoDB Atlas</strong> — baza de date (datele sunt stocate în Uniunea Europeană / regiuni conforme).</li>
         <li style={styles.li}><strong>Google Analytics</strong> — statistici anonime de utilizare (ID-ul GA4 este anonimizat).</li>
+        <li style={styles.li}><strong>Google Identity Services</strong> — autentificare opțională prin contul Google, distinctă de Google Analytics.</li>
         <li style={styles.li}><strong>Facebook</strong> — doar dacă folosești autentificarea cu Facebook.</li>
       </ul>
 
       <h2 style={styles.h2}>4. Cât timp păstrăm datele</h2>
       <p style={styles.p}>
-        Păstrăm datele de cont cât timp ai cont activ. Le poți șterge oricând din setări sau contactându-ne,
-        iar noi le eliminăm din sistemele noastre în maximum 30 de zile.
+        Păstrăm datele de cont cât timp ai cont activ. Poți solicita ștergerea contactându-ne;
+        instrucțiunile sunt disponibile pe <a href="/data-deletion.html" style={styles.a}>pagina de ștergere a datelor</a>.
+        Nu este necesar să ne trimiți parola sau tokenuri de autentificare.
       </p>
 
       <h2 style={styles.h2}>5. Drepturile tale</h2>
@@ -88,7 +91,7 @@ export default function ConfidentialitatePage() {
       <div style={styles.card}>
         <p style={{ ...styles.p, marginBottom: 0 }}>
           <strong>Contact pentru confidențialitate:</strong>{' '}
-          <a href="mailto:contact@popas-pentru-suflet.vercel.app" style={styles.a}>contact@popas-pentru-suflet.vercel.app</a>
+          <a href="mailto:popaspentrusuflet01@gmail.com" style={styles.a}>popaspentrusuflet01@gmail.com</a>
         </p>
       </div>
 

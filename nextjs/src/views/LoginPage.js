@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
@@ -109,6 +110,8 @@ const LoginPage = () => {
             {loading ? '⏳ Se autentifică...' : '🔑 Autentifică-te'}
           </button>
         </form>
+
+        <GoogleLoginButton />
 
         <div className="auth-divider">
           <span>sau</span>
