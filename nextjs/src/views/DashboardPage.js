@@ -1,22 +1,37 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import useDashboardResources, {dashboardResources} from '../hooks/useDashboardResources';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import SpiritualJourneyCard from '../components/SpiritualJourneyCard';
 
-const API = process.env.NEXT_PUBLIC_API_URL || '';
+function ResourceNotice({resourceKey, item, reload}) {
+  const resource = dashboardResources[resourceKey];
+  const pending = !item || item.loading;
+  if (!pending && !item.error) return null;
+  return <div className="dash-resource-notice" aria-busy={pending}>
+    <p role="status" aria-live="polite" style={{margin: 0}}>
+      <strong>{resource.label}: </strong>
+      {pending ? (item?.data ? 'Se actualizează…' : 'Se încarcă…') : item.error.message}
+      {!pending && item?.data && ' Conținutul afișat provine din ultima încărcare reușită.'}
+    </p>
+    {!pending && (item.error.kind === 'session'
+      ? <Link className="dash-resource-retry" href="/login">Autentifică-te</Link>
+      : item.error.kind !== 'permission' && <button className="dash-resource-retry" type="button" onClick={() => reload(resourceKey)}>Reîncearcă</button>)}
+  </div>;
+}
 
 const DashboardPage = () => {
   const router = useRouter();
   const { isAuthenticated, isAdmin, user } = useAuth();
 
-  const [verset, setVerset] = useState(null);
-  const [gandZilei, setGandZilei] = useState(null);
-  const [rugaciune, setRugaciune] = useState(null);
-  const [todayPlan, setTodayPlan] = useState(null);
-  const [readingProgress, setReadingProgress] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {items, reload} = useDashboardResources(isAuthenticated, user);
+  const verset = items.verse?.data?.verset;
+  const gandZilei = items.thought?.data?.gand;
+  const rugaciune = items.thought?.data?.rugaciune;
+  const todayPlan = items.plan?.data;
+  const readingProgress = items.progress?.data;
   const [showFullRug, setShowFullRug] = useState(false);
   const [shareStatus, setShareStatus] = useState('');
   const [shareFallback, setShareFallback] = useState('');
@@ -38,61 +53,12 @@ const DashboardPage = () => {
     }
   };
 
-  const getHeaders = useCallback(() => {
-    const token = localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, []);
-
   // Redirecționează vizitatorii neautentificați la landing
   useEffect(() => {
     if (!isAuthenticated && !localStorage.getItem('token')) {
       router.replace('/landing');
     }
   }, [isAuthenticated, router]);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const headers = { headers: getHeaders() };
-
-        const [versetR, gandR] = await Promise.all([
-          axios.get(`${API}/api/verses/versetul-zilei`).catch(() => null),
-          axios.get(`${API}/api/verses/gandul-zilei`).catch(() => null)
-        ]);
-
-        if (versetR?.data?.success) setVerset(versetR.data.verset);
-        if (gandR?.data?.success) {
-          setGandZilei(gandR.data.gand);
-          setRugaciune(gandR.data.rugaciune);
-        }
-
-        if (isAuthenticated) {
-          const [todayR, progressR] = await Promise.all([
-            axios.get(`${API}/api/reading/today`, headers).catch(() => null),
-            axios.get(`${API}/api/reading/progress`, headers).catch(() => null)
-          ]);
-          if (todayR?.data?.success) setTodayPlan(todayR.data);
-          if (progressR?.data?.success) setReadingProgress(progressR.data);
-        }
-      } catch (e) {
-        console.error('Dashboard error:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [isAuthenticated, getHeaders]);
-
-  // Refresh verset la 30 min
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const r = await axios.get(`${API}/api/verses/versetul-zilei`);
-        if (r.data?.success) setVerset(r.data.verset);
-      } catch (e) {}
-    }, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const getGreeting = () => {
     const h = new Date().getHours();
@@ -103,23 +69,14 @@ const DashboardPage = () => {
 
   const userName = isAuthenticated ? (user?.nume || 'prietene') : '';
 
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '70vh', flexDirection: 'column', gap: '1rem'
-      }}>
-        <div style={{ fontSize: '4rem' }}>🕊️</div>
-        <div className="spinner" />
-      </div>
-    );
-  }
-
   return (
     <div className="animate-in dashboard-page">
       {/* Stiluri hero livrate prin JS (ca pe landing) — se actualizează
           și la navigare în aplicație, nu doar la reload complet */}
       <style>{`
+        .dashboard-page .dash-resource-notice { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-card); color: var(--text-primary); line-height: 1.6; }
+        .dashboard-page .dash-resource-retry { display: inline-flex; align-items: center; min-height: 44px; margin-top: .6rem; padding: .5rem 1rem; border: 1px solid var(--gold-primary); border-radius: 12px; background: var(--gold-subtle); color: var(--text-primary); font: inherit; cursor: pointer; text-decoration: none; }
+
         .dashboard-page .dash-hero { border-radius: 28px !important; box-shadow: 0 16px 48px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(212,175,55,0.12) !important; }
         [data-theme="light"] .dashboard-page .dash-hero { box-shadow: 0 10px 32px rgba(90,70,20,0.14), inset 0 0 0 1px rgba(184,134,11,0.14) !important; }
         .dashboard-page .dash-hero:before { height: 5px !important; }
@@ -154,6 +111,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
+          <ResourceNotice resourceKey="verse" item={items.verse} reload={reload} />
           {/* Verset de încurajare */}
           {verset && (
             <div className="dash-verset">
@@ -180,6 +138,7 @@ const DashboardPage = () => {
 
 
 
+     <ResourceNotice resourceKey="thought" item={items.thought} reload={reload} />
      {/* ═══ GÂNDUL ZILEI ═══ */}
 {gandZilei && (
   <div className="dash-card dash-gand">
@@ -269,6 +228,10 @@ const DashboardPage = () => {
         )}
       </div>
 
+      {isAuthenticated && <>
+        <ResourceNotice resourceKey="plan" item={items.plan} reload={reload} />
+        <ResourceNotice resourceKey="progress" item={items.progress} reload={reload} />
+      </>}
       {/* ═══ PLAN CITIRE AZI ═══ */}
       {isAuthenticated && todayPlan && todayPlan.capitole?.length > 0 && (
         <div className="dash-card dash-reading">
@@ -314,6 +277,14 @@ const DashboardPage = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {isAuthenticated && todayPlan && todayPlan.capitole.length === 0 && (
+        <div className="dash-card" style={{padding: '1.25rem'}}>
+          <h2 style={{fontSize: '1.15rem'}}>Planul de citire</h2>
+          <p>Nu sunt capitole programate pentru azi. Vezi planul și opțiunile de lectură.</p>
+          <Link className="dash-resource-retry" href="/reading">Deschide planul</Link>
         </div>
       )}
 
