@@ -5,6 +5,9 @@ import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
+// Ascuns implicit; activează doar după aprobarea accesului public Meta.
+const FACEBOOK_LOGIN_ENABLED = process.env.NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN === 'true';
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', parola: '' });
   const [eroare, setEroare] = useState('');
@@ -113,6 +116,7 @@ const LoginPage = () => {
 
         <GoogleLoginButton />
 
+        {FACEBOOK_LOGIN_ENABLED && <>
         <div className="auth-divider">
           <span>sau</span>
         </div>
@@ -125,6 +129,7 @@ const LoginPage = () => {
         >
           {loadingFacebook ? '⏳ Se deschide Facebook...' : '📘 Continuă cu Facebook'}
         </button>
+        </>}
 
         <div className="auth-divider">
           <span>sau</span>
