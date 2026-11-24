@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import ReelGenerator from '../components/ReelGenerator';
+import {SOCIAL_FORMATS, drawVerticalSocialImage} from '../lib/socialImage';
 import { DEFAULT_TEMPLATES, CATEGORII_TEMPLATE, CITATE_TEOLOGI } from '../data/templates';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -30,6 +31,17 @@ const GeneratePage = () => {
   const { isAuthenticated, isAdmin } = useAuth();
 
   const [step, setStep] = useState(1);
+  const [exportFormat, setExportFormat] = useState('feed');
+  const [renderedFormat, setRenderedFormat] = useState(null);
+  const [exportError, setExportError] = useState('');
+  const [exportWarnings, setExportWarnings] = useState([]);
+  const renderVersion = useRef(0);
+  const changeExportFormat = event => {
+    renderVersion.current += 1;
+    setGeneratedImageBase64(null); setRenderedFormat(null);
+    setExportError(''); setExportWarnings([]);
+    setExportFormat(event.target.value);
+  };
   const [templates, setTemplates] = useState({ builtIn: DEFAULT_TEMPLATES, uploadate: [] });
   const [templateSelectat, setTemplateSelectat] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -97,6 +109,8 @@ const GeneratePage = () => {
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !templateSelectat) return;
+    const version = ++renderVersion.current;
+    setGeneratedImageBase64(null); setRenderedFormat(null); setExportError(''); setExportWarnings([]);
 
     const textDePus = versetEditat || versetSelectat?.text;
     const refDePus = referintaEditata || versetSelectat?.referintaCompleta || versetSelectat?.referinta;
@@ -106,7 +120,19 @@ const GeneratePage = () => {
     const citat = citatSelectat || (afiseazaCitat ? CITATE_TEOLOGI[Math.floor(Math.random() * CITATE_TEOLOGI.length)] : null);
 
     const drawOnCanvas = (img) => {
+      if (version !== renderVersion.current || canvasRef.current !== canvas) return;
       const ctx = canvas.getContext('2d');
+      if (exportFormat === 'vertical') {
+        const result = drawVerticalSocialImage(ctx, img, {
+          text: textDePus, reference: refDePus, font: stilText.font,
+          fontSize: stilText.fontSize, color: stilText.culoare, position: stilText.pozitie,
+          symbol: afiseazaSimbol, logo: loadedLogoRef.current,
+          thought: gandZilei2, quote: afiseazaCitat ? citat : null,
+        });
+        setExportError(result.error || ''); setExportWarnings(result.warnings || []);
+        if (!result.error) saveCanvasImage();
+        return;
+      }
       const W = 1080;
       const H = 1350;
       canvas.width = W;
@@ -469,8 +495,8 @@ if (citat && afiseazaCitat) {
     img._src = src;
     img.src = src;
     img.onload = () => { loadedImgRef.current = img; drawOnCanvas(img); };
-    img.onerror = () => console.error('Eroare încărcare imagine template');
-  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat, citatFontSize]);
+    img.onerror = () => { if (version === renderVersion.current) setExportError('Fundalul nu s-a încărcat. Alege alt template sau reîncearcă.'); };
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat, citatFontSize, exportFormat]);
 
   // Helper rounded rect
   function roundRect(ctx, x, y, w, h, r) {
@@ -491,7 +517,7 @@ if (citat && afiseazaCitat) {
     const textExists = versetEditat || versetSelectat?.text;
     if (templateSelectat && textExists && (step === 2 || step === 3)) {
       const timeout = setTimeout(() => renderCanvas(), 150);
-      return () => clearTimeout(timeout);
+      return () => {clearTimeout(timeout); renderVersion.current += 1;};
     }
   }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, step, renderKey, afiseazaCitat, afiseazaSimbol, citatSelectat, renderCanvas]);
 
@@ -644,6 +670,7 @@ if (citat && afiseazaCitat) {
   };
 
   const handlePublish = async () => {
+    if (!generatedImageBase64 || renderedFormat !== exportFormat || exportError) { alert('Așteaptă imaginea finală sau corectează eroarea de export.'); return; }
     if (!isAdmin) { alert('Publicarea pe Facebook este disponibilă doar pentru administratori.'); return; }
     if (!generated) return;
     if (!window.confirm('Publici pe Facebook?')) return;
@@ -663,6 +690,7 @@ if (citat && afiseazaCitat) {
   };
 
   const handleSchedule = async () => {
+    if (!generatedImageBase64 || renderedFormat !== exportFormat || exportError) { alert('Așteaptă imaginea finală sau corectează eroarea de export.'); return; }
     if (!isAdmin) { alert('Programarea pe Facebook este disponibilă doar pentru administratori.'); return; }
     if (!generated) { alert('Generează mai întâi!'); return; }
     if (!scheduledAt) { alert('Alege data și ora!'); return; }
@@ -689,18 +717,19 @@ if (citat && afiseazaCitat) {
     try {
       const base64 = canvas.toDataURL('image/jpeg', 0.92);
       setGeneratedImageBase64(base64);
+      setRenderedFormat(exportFormat);
       setPreviewUrl(base64);
     } catch (e) {
-      console.error('Canvas save error:', e);
+      setExportError('Imaginea nu poate fi exportată. Fundalul poate bloca accesul canvas (CORS). Încearcă alt template.');
       setGeneratedImageBase64(null);
       setPreviewUrl(templateSelectat?.thumbnail || null);
     }
   };
 
   const downloadImage = () => {
-    if (generatedImageBase64) {
+    if (generatedImageBase64 && renderedFormat === exportFormat && !exportError) {
       const link = document.createElement('a');
-      link.download = `popas-suflet-${Date.now()}.jpg`;
+      link.download = `popas-suflet-${exportFormat}-${SOCIAL_FORMATS[exportFormat].width}x${SOCIAL_FORMATS[exportFormat].height}-${Date.now()}.jpg`;
       link.href = generatedImageBase64;
       link.click();
     } else { alert('Nu există imagine de descărcat!'); }
@@ -793,6 +822,16 @@ const ReelSection = () => (
       </div>
 
       <LimitBanner />
+      <section aria-label="Format export social" style={{padding: '1rem', margin: '1rem 0', border: '1px solid var(--border-color)', borderRadius: 14, background: 'var(--bg-card)'}}>
+        <label htmlFor="social-export-format" style={{fontWeight: 700}}>Format imagine</label>{' '}
+        <select id="social-export-format" value={exportFormat} onChange={changeExportFormat} style={{maxWidth: '100%', minHeight: 44, padding: '.5rem', background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 8}}>
+          <option value="feed">Facebook Feed — 1080 × 1350 (4:5)</option>
+          <option value="vertical">Vertical Reels / TikTok — 1080 × 1920 (9:16)</option>
+        </select>
+        <p style={{color: 'var(--text-secondary)', fontSize: '.85rem'}}>Export JPG. Formatul vertical recompune imaginea; nu produce video și nu publică automat pe TikTok sau ca Reel. Interfața platformelor poate acoperi marginile.</p>
+        {exportError && <p role="alert" style={{color: 'var(--text-primary)'}}>⚠️ {exportError}</p>}
+        {exportWarnings.map((message,i)=><p key={i} role="status">⚠️ {message}</p>)}
+      </section>
 
       {/* ═══ STEP 1: ALEGE IMAGINEA ═══ */}
       {step === 1 && (
@@ -815,7 +854,7 @@ const ReelSection = () => (
           </div>
 
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <span>📐 Imagine verticală <strong>1080×1350</strong> — ideal pentru Facebook, Instagram, TikTok</span>
+            <span>📐 {SOCIAL_FORMATS[exportFormat].label} — <strong>1080×{SOCIAL_FORMATS[exportFormat].height}</strong></span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>{totalTemplates} template-uri • Pagina {paginaCurenta}/{totalPagini}</span>
               <button onClick={() => setPaginaCurenta(p => Math.max(1, p-1))} disabled={paginaCurenta <= 1} style={{ padding: '0.3rem 0.65rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: paginaCurenta <= 1 ? 'default' : 'pointer', opacity: paginaCurenta <= 1 ? 0.4 : 1, fontSize: '0.78rem' }}>←</button>
@@ -1066,7 +1105,7 @@ const ReelSection = () => (
                 </div>
               )}
             </div>
-            <button onClick={downloadImage} disabled={!generatedImageBase64} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: !generatedImageBase64 ? 'var(--text-muted)' : 'var(--gold-primary)', cursor: !generatedImageBase64 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+            <button onClick={downloadImage} disabled={!generatedImageBase64 || renderedFormat !== exportFormat || !!exportError} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: !generatedImageBase64 ? 'var(--text-muted)' : 'var(--gold-primary)', cursor: !generatedImageBase64 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
               ⬇️ Descarcă imaginea (JPG)
             </button>
           </div>
@@ -1145,7 +1184,7 @@ const ReelSection = () => (
             <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
               <canvas ref={canvasRef} style={{ width: '100%', height: 'auto', display: 'block' }} />
             </div>
-            <button onClick={downloadImage} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+            <button onClick={downloadImage} disabled={!generatedImageBase64 || renderedFormat !== exportFormat || !!exportError} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
               ⬇️ Descarcă imaginea (JPG)
             </button>
           </div>
