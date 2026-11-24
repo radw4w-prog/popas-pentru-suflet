@@ -1,3 +1,4 @@
+import {checkVerseReadability, readabilityMessages} from './socialReadability';
 export const SOCIAL_FORMATS = {
   feed: {label: 'Facebook Feed', width: 1080, height: 1350},
   vertical: {label: 'Vertical Reels / TikTok', width: 1080, height: 1920},
@@ -47,8 +48,9 @@ export function drawVerticalSocialImage(ctx, img, options) {
   if (options.symbol !== 'none' && options.symbol) ctx.fillText(options.symbol === 'cruce' ? '✝' : options.symbol === 'porumbel' ? '🕊' : '✦', center, 270);
   const blockH = fit.lines.length * fit.lineHeight;
   const top = options.position === 'top' ? 380 : options.position === 'bottom' ? 1210 - blockH : 380 + (790-blockH)/2;
+  const readability = checkVerseReadability(ctx, {x: center-width/2, y: top, width, height: blockH}, options.color || '#FFFFFF', options.autoContrast);
   ctx.font = `italic ${fit.size}px '${options.font}', Georgia, serif`;
-  ctx.fillStyle = options.color || '#ffffff';
+  ctx.fillStyle = readability.color;
   ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 14;
   fit.lines.forEach((line,i)=>ctx.fillText(line,center,top+fit.size+i*fit.lineHeight));
   const refY = top+blockH+65;
@@ -71,5 +73,5 @@ export function drawVerticalSocialImage(ctx, img, options) {
   ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 2; ctx.beginPath();ctx.moveTo(360,1600);ctx.lineTo(640,1600);ctx.stroke();
   if (options.logo) ctx.drawImage(options.logo,465,1630,70,70);
   ctx.font = '600 28px Georgia';ctx.fillStyle='#f4e9d2';ctx.fillText('Popas pentru Suflet',center,1740);
-  return {warnings};
+  return {warnings, readability: readabilityMessages(readability, fit.size)};
 }
