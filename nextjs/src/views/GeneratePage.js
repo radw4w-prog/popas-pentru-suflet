@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import ReelGenerator from '../components/ReelGenerator';
 import SocialPreviewFrame from '../components/SocialPreviewFrame';
-import {SOCIAL_FORMATS, drawVerticalSocialImage} from '../lib/socialImage';
+import {checkVerseReadability, readabilityMessages} from '../lib/socialReadability';
+import {SOCIAL_FORMATS, drawVerticalSocialImage, wrapSocialText} from '../lib/socialImage';
 import { DEFAULT_TEMPLATES, CATEGORII_TEMPLATE, CITATE_TEOLOGI } from '../data/templates';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -34,6 +35,8 @@ const GeneratePage = () => {
   const [step, setStep] = useState(1);
   const [exportFormat, setExportFormat] = useState('feed');
   const [showSafeGuides, setShowSafeGuides] = useState(false);
+  const [autoContrast, setAutoContrast] = useState(false);
+  const [readabilityInfo, setReadabilityInfo] = useState([]);
   const [phonePreview, setPhonePreview] = useState(false);
   const [renderedFormat, setRenderedFormat] = useState(null);
   const [exportError, setExportError] = useState('');
@@ -42,7 +45,7 @@ const GeneratePage = () => {
   const changeExportFormat = event => {
     renderVersion.current += 1;
     setGeneratedImageBase64(null); setRenderedFormat(null);
-    setExportError(''); setExportWarnings([]);
+    setExportError(''); setExportWarnings([]); setReadabilityInfo([]);
     setExportFormat(event.target.value);
   };
   const [templates, setTemplates] = useState({ builtIn: DEFAULT_TEMPLATES, uploadate: [] });
@@ -113,7 +116,7 @@ const GeneratePage = () => {
     const canvas = canvasRef.current;
     if (!canvas || !templateSelectat) return;
     const version = ++renderVersion.current;
-    setGeneratedImageBase64(null); setRenderedFormat(null); setExportError(''); setExportWarnings([]);
+    setGeneratedImageBase64(null); setRenderedFormat(null); setExportError(''); setExportWarnings([]); setReadabilityInfo([]);
 
     const textDePus = versetEditat || versetSelectat?.text;
     const refDePus = referintaEditata || versetSelectat?.referintaCompleta || versetSelectat?.referinta;
@@ -129,10 +132,11 @@ const GeneratePage = () => {
         const result = drawVerticalSocialImage(ctx, img, {
           text: textDePus, reference: refDePus, font: stilText.font,
           fontSize: stilText.fontSize, color: stilText.culoare, position: stilText.pozitie,
-          symbol: afiseazaSimbol, logo: loadedLogoRef.current,
+          symbol: afiseazaSimbol, logo: loadedLogoRef.current, autoContrast,
           thought: gandZilei2, quote: afiseazaCitat ? citat : null,
         });
         setExportError(result.error || ''); setExportWarnings(result.warnings || []);
+        setReadabilityInfo(result.readability || []);
         if (!result.error) saveCanvasImage();
         return;
       }
@@ -266,7 +270,12 @@ const GeneratePage = () => {
 
       const versetText2 = `\u201C${textDePus}\u201D`;
       ctx.font = `italic ${fz}px '${stilText.font}', Georgia, serif`;
-      const lines = wrapLines(versetText2, maxW, 8);
+      const lines = wrapSocialText(ctx, versetText2, maxW);
+      if (lines.length > 8 || lines.some(line => ctx.measureText(line).width > maxW)) {
+        setExportError('Versetul nu încape în compoziția Feed la mărimea aleasă. Textul nu este tăiat: alege formatul vertical, alt pasaj sau ajustează fontul.');
+        ctx.clearRect(0,0,W,H);
+        return;
+      }
       const totalH = lines.length * lh;
 
       let startY;
@@ -334,6 +343,11 @@ const drawLineColored = (line, x, y, fz, font, defaultColor, accentColor) => {
   ctx.textAlign = 'center';
 };
 
+const readability = checkVerseReadability(ctx, {
+  x: W/2-maxW/2, y: startY-fz-8, width: maxW, height: totalH+16,
+}, stilText.culoare, autoContrast, ['#F4D03F']);
+setReadabilityInfo(readabilityMessages(readability, fz));
+
 // Desenează fiecare linie cu cuvinte colorate
 lines.forEach((line, i) => {
   const y = startY + i * lh;
@@ -343,7 +357,7 @@ lines.forEach((line, i) => {
     y,
     fz,
     stilText.font,
-    stilText.culoare,  // culoarea normală (alb de obicei)
+    readability.color,  // corectarea este opțională
     '#F4D03F'          // auriu pentru cuvinte cheie
   );
 });
@@ -499,7 +513,7 @@ if (citat && afiseazaCitat) {
     img.src = src;
     img.onload = () => { loadedImgRef.current = img; drawOnCanvas(img); };
     img.onerror = () => { if (version === renderVersion.current) setExportError('Fundalul nu s-a încărcat. Alege alt template sau reîncearcă.'); };
-  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat, citatFontSize, exportFormat]);
+  }, [templateSelectat, versetEditat, versetSelectat, referintaEditata, stilText, generated, afiseazaCitat, afiseazaSimbol, citatSelectat, citatFontSize, exportFormat, autoContrast]);
 
   // Helper rounded rect
   function roundRect(ctx, x, y, w, h, r) {
@@ -844,6 +858,17 @@ const ReelSection = () => (
             Previzualizare telefon
           </label>
         </fieldset>
+        <label style={{display: 'flex', alignItems: 'center', gap: '.5rem', minHeight: 44, cursor: 'pointer'}}>
+          <input type="checkbox" checked={autoContrast} onChange={event => {
+            renderVersion.current += 1; setGeneratedImageBase64(null); setRenderedFormat(null);
+            setAutoContrast(event.target.checked);
+          }} />
+          Corectează automat contrastul slab al versetului
+        </label>
+        <div aria-live="polite" style={{fontSize: '.85rem', color: 'var(--text-secondary)'}}>
+          {readabilityInfo.map((message,i)=><p key={i}>{message}</p>)}
+          <p>Estimare orientativă a fundalului din spatele versetului, nu certificare WCAG a imaginii. Referința, citatul, logo-ul și fonturile decorative trebuie verificate separat. Corectarea modifică și JPG-ul exportat.</p>
+        </div>
         {exportError && <p role="alert" style={{color: 'var(--text-primary)'}}>⚠️ {exportError}</p>}
         {exportWarnings.map((message,i)=><p key={i} role="status">⚠️ {message}</p>)}
       </section>
