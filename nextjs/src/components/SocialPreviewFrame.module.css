@@ -1,0 +1,11 @@
+.outer { min-width: 0; width: 100%; }
+.frame { position: relative; width: 100%; margin: 0 auto; overflow: hidden; isolation: isolate; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg, 16px); background: var(--bg-input); }
+.frame canvas { width: 100%; height: auto; display: block; }
+.phone { max-width: 320px; border: 5px solid #30292b; border-radius: 24px; box-shadow: 0 8px 24px #0003; }
+.guides { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; user-select: none; }
+.safe { position: absolute; border: 2px dashed #76f4be; box-shadow: 0 0 0 2000px #23101a75; }
+.topLabel, .bottomLabel, .rightLabel { position: absolute; color: #fff; background: #24101de8; padding: 3px 6px; border-radius: 4px; font: 10px/1.4 system-ui, sans-serif; text-align: center; }
+.topLabel { top: 2%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 90%; }
+.bottomLabel { bottom: 3%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 90%; }
+.rightLabel { right: 1%; top: 46%; writing-mode: vertical-rl; }
+.caption { color: var(--text-secondary); font-size: .8rem; line-height: 1.6; margin: .5rem 0; }

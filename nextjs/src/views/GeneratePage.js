@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import ReelGenerator from '../components/ReelGenerator';
+import SocialPreviewFrame from '../components/SocialPreviewFrame';
 import {SOCIAL_FORMATS, drawVerticalSocialImage} from '../lib/socialImage';
 import { DEFAULT_TEMPLATES, CATEGORII_TEMPLATE, CITATE_TEOLOGI } from '../data/templates';
 
@@ -32,6 +33,8 @@ const GeneratePage = () => {
 
   const [step, setStep] = useState(1);
   const [exportFormat, setExportFormat] = useState('feed');
+  const [showSafeGuides, setShowSafeGuides] = useState(false);
+  const [phonePreview, setPhonePreview] = useState(false);
   const [renderedFormat, setRenderedFormat] = useState(null);
   const [exportError, setExportError] = useState('');
   const [exportWarnings, setExportWarnings] = useState([]);
@@ -803,6 +806,7 @@ const ReelSection = () => (
   return (
     <div className="animate-in" style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
 
+      <style>{`@media(max-width: 700px) { .social-editor-grid { grid-template-columns: minmax(0, 1fr) !important; } }`}</style>
       {/* ═══ STEPS BAR ═══ */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '0.5rem', border: '1px solid var(--border-subtle)', alignItems: 'center' }}>
         {[{ nr: 1, label: 'Imaginea', icon: '🖼️' }, { nr: 2, label: 'Versetul', icon: '📖' }, { nr: 3, label: 'Publică', icon: '✨' }].map((s, idx) => (
@@ -829,6 +833,17 @@ const ReelSection = () => (
           <option value="vertical">Vertical Reels / TikTok — 1080 × 1920 (9:16)</option>
         </select>
         <p style={{color: 'var(--text-secondary)', fontSize: '.85rem'}}>Export JPG. Formatul vertical recompune imaginea; nu produce video și nu publică automat pe TikTok sau ca Reel. Interfața platformelor poate acoperi marginile.</p>
+        <fieldset style={{border: 0, padding: 0, margin: '.75rem 0', display: 'flex', gap: '.75rem', flexWrap: 'wrap'}}>
+          <legend style={{fontSize: '.85rem', color: 'var(--text-secondary)'}}>Previzualizare — fără efect asupra fișierului exportat</legend>
+          <label style={{display: 'inline-flex', alignItems: 'center', gap: '.5rem', minHeight: 44, cursor: 'pointer'}}>
+            <input type="checkbox" checked={showSafeGuides} onChange={event => setShowSafeGuides(event.target.checked)} />
+            Arată zonele de siguranță
+          </label>
+          <label style={{display: 'inline-flex', alignItems: 'center', gap: '.5rem', minHeight: 44, cursor: 'pointer'}}>
+            <input type="checkbox" checked={phonePreview} onChange={event => setPhonePreview(event.target.checked)} />
+            Previzualizare telefon
+          </label>
+        </fieldset>
         {exportError && <p role="alert" style={{color: 'var(--text-primary)'}}>⚠️ {exportError}</p>}
         {exportWarnings.map((message,i)=><p key={i} role="status">⚠️ {message}</p>)}
       </section>
@@ -899,7 +914,7 @@ const ReelSection = () => (
 
       {/* ═══ STEP 2: VERSET + CANVAS ═══ */}
       {step === 2 && (
-        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+        <div className="social-editor-grid" style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.25rem' }}>
 
           {/* Stânga — controale */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1096,7 +1111,7 @@ const ReelSection = () => (
 
           {/* Dreapta — preview canvas */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+            <SocialPreviewFrame format={exportFormat} showGuides={showSafeGuides} phonePreview={phonePreview}>
               <canvas ref={canvasRef} style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 'var(--radius-lg)' }} />
               {!versetSelectat && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', flexDirection: 'column', gap: '0.5rem' }}>
@@ -1104,7 +1119,7 @@ const ReelSection = () => (
                   <span>Selectează un verset pentru preview</span>
                 </div>
               )}
-            </div>
+            </SocialPreviewFrame>
             <button onClick={downloadImage} disabled={!generatedImageBase64 || renderedFormat !== exportFormat || !!exportError} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: !generatedImageBase64 ? 'var(--text-muted)' : 'var(--gold-primary)', cursor: !generatedImageBase64 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
               ⬇️ Descarcă imaginea (JPG)
             </button>
@@ -1114,7 +1129,7 @@ const ReelSection = () => (
 
       {/* ═══ STEP 3: PUBLICĂ ═══ */}
       {step === 3 && generated && (
-        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+        <div className="social-editor-grid" style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.25rem' }}>
 
           {/* Stânga — text generat */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1181,9 +1196,9 @@ const ReelSection = () => (
 
           {/* Dreapta — preview imagine */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}>
+            <SocialPreviewFrame format={exportFormat} showGuides={showSafeGuides} phonePreview={phonePreview}>
               <canvas ref={canvasRef} style={{ width: '100%', height: 'auto', display: 'block' }} />
-            </div>
+            </SocialPreviewFrame>
             <button onClick={downloadImage} disabled={!generatedImageBase64 || renderedFormat !== exportFormat || !!exportError} style={{ padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--gold-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
               ⬇️ Descarcă imaginea (JPG)
             </button>
